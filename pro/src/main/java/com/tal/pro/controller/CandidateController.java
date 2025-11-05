@@ -1,14 +1,20 @@
 package com.tal.pro.controller;
 
 import com.tal.pro.model.Candidate;
+import com.tal.pro.model.Job;
 import com.tal.pro.repository.CandidateRepository;
+import com.tal.pro.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/candidate")
@@ -16,9 +22,14 @@ public class CandidateController {
 
     @Autowired
     private CandidateRepository candidateRepository;
+    
+    @Autowired
+    private JobService jobService;
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, Principal principal) {
+    public String dashboard(Model model, Principal principal,
+                          @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(defaultValue = "10") int size) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -28,12 +39,23 @@ public class CandidateController {
             Candidate candidate = candidateRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
             
+            // Get paginated active jobs
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Job> jobsPage = jobService.getAllActiveJobs(pageable);
+            
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
             model.addAttribute("username", username);
             model.addAttribute("fullName", candidate.getFullName());
             model.addAttribute("email", candidate.getEmail());
             model.addAttribute("isCandidate", true);
+            
+            // Add jobs to the model
+            model.addAttribute("jobs", jobsPage.getContent());
+            model.addAttribute("currentPage", jobsPage.getNumber());
+            model.addAttribute("totalItems", jobsPage.getTotalElements());
+            model.addAttribute("totalPages", jobsPage.getTotalPages());
+            model.addAttribute("pageSize", size);
             
             return "candidate/dashboard";
         } catch (Exception e) {
