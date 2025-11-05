@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TalentTrove</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .register-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .form-control:focus {
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 0.25rem rgba(74, 111, 165, 0.25);
+        }
+        .btn-primary {
+            background-color: #4a6fa5;
+            border-color: #4a6fa5;
+        }
+        .btn-primary:hover {
+            background-color: #3a5a8c;
+            border-color: #3a5a8c;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .logo i {
+            font-size: 3rem;
+            color: #4a6fa5;
+        }
+        .form-text {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <div class="logo">
+                <i class="bi bi-person-plus-fill"></i>
+                <h2 class="mt-2">Create an Account</h2>
+                <p class="text-muted">Join TalentTrove today</p>
+            </div>
+            
+            <div id="registrationForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email address</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                    <div class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="form-text">Password must be at least 8 characters long.</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">I am a</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="role" id="candidateRole" value="CANDIDATE" checked>
+                        <label class="form-check-label" for="candidateRole">
+                            Job Seeker
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="role" id="recruiterRole" value="RECRUITER">
+                        <label class="form-check-label" for="recruiterRole">
+                            Recruiter
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Recruiter-specific fields -->
+                <div id="recruiterFields" style="display: none;">
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="+1 (555) 123-4567">
+                        <div class="form-text">Your contact number (visible to candidates)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="company" class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="company" name="company">
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <button type="button" class="btn btn-primary" onclick="handleRegister()">Create Account</button>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div id="successMessage" class="alert alert-success mt-3" style="display: none;">
+                <p>Thank you for registering! 
+                    <a href="/auth/login" class="alert-link">Click here to sign in</a> 
+                    or you will be redirected in <span id="countdown">3</span> seconds...
+                </p>
+            </div>
+            
+            <div class="text-center mt-3">
+                <p class="mb-0">Already have an account? <a th:href="@{/login}">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script th:inline="javascript">
+        const API_BASE_URL = /*[[@{/api}]]*/ '/api';
+        
+        // Show/hide recruiter fields based on role selection
+        document.querySelectorAll('input[name="role"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const recruiterFields = document.getElementById('recruiterFields');
+                if (this.value === 'RECRUITER') {
+                    recruiterFields.style.display = 'block';
+                    // Make recruiter fields required
+                    document.getElementById('phoneNumber').setAttribute('required', '');
+                    document.getElementById('company').setAttribute('required', '');
+                } else {
+                    recruiterFields.style.display = 'none';
+                    // Remove required attribute for candidate registration
+                    document.getElementById('phoneNumber').removeAttribute('required');
+                    document.getElementById('company').removeAttribute('required');
+                }
+            });
+        });
+        
+        async function handleRegister() {
+            const formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                role: document.querySelector('input[name="role"]:checked').value,
+                phoneNumber: document.getElementById('phoneNumber') ? document.getElementById('phoneNumber').value : '',
+                company: document.getElementById('company') ? document.getElementById('company').value : ''
+            };
+            
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Client-side validation
+            if (formData.password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            if (formData.password.length < 8) {
+                alert('Password must be at least 8 characters long!');
+                return;
+            }
+            
+            try {
+                const response = await axios.post(API_BASE_URL + '/auth/signup', formData);
+                if (response.data.message) {
+                    // Hide form and show success message
+                    document.getElementById('registrationForm').style.display = 'none';
+                    const successMessage = document.getElementById('successMessage');
+                    successMessage.style.display = 'block';
+                    
+                    // Countdown and redirect to login page after 3 seconds
+                    let seconds = 3;
+                    const countdownElement = document.getElementById('countdown');
+                    const countdown = setInterval(() => {
+                        seconds--;
+                        countdownElement.textContent = seconds;
+                        if (seconds <= 0) {
+                            clearInterval(countdown);
+                            window.location.href = '/auth/login';
+                        }
+                    }, 1000);
+                }
+            } catch (error) {
+                let errorMessage = 'Registration failed. Please try again.';
+                if (error.response && error.response.data && error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                }
+                alert(errorMessage);
+            }
+        }
+    </script>
+</body>
+</html>
