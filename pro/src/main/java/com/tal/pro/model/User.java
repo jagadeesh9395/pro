@@ -1,18 +1,22 @@
 package com.tal.pro.model;
 
-import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "users")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "users")
 public class User {
-    // JPA requires a no-arg constructor
-    public User() {
-    }
-    
     public User(String username, String email, String password, String firstName, String lastName) {
         this.username = username;
         this.email = email;
@@ -27,28 +31,26 @@ public class User {
         this(username, email, password, null, null);
     }
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column(nullable = false, unique = true)
+    @Indexed(unique = true)
     private String username;
 
-    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Indexed(unique = true)
     private String email;
 
-    @Column(name = "first_name")
+    @Field("first_name")
     private String firstName;
 
-    @Column(name = "last_name")
+    @Field("last_name")
     private String lastName;
 
-    @Column(name = "full_name")
+    @Field("full_name")
     private String fullName;
     
-    @Column(name = "phone_number")
+    @Field("phone_number")
     private String phoneNumber;
     
     /**
@@ -66,20 +68,15 @@ public class User {
         }
     }
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @DBRef
     private Set<Role> roles = new HashSet<>();
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

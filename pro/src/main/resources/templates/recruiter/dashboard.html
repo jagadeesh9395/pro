@@ -229,9 +229,19 @@
                         <i class="bi bi-bell fs-5"></i>
                     </div>
                     <div class="d-flex align-items-center">
-                        <div class="profile-img me-2" th:text="${#strings.toUpperCase(#strings.substring(username, 0, 2))}">
-                            <span th:if="${#strings.length(username) >= 2}" th:text="${#strings.toUpperCase(#strings.substring(username, 0, 2))}">US</span>
-                            <span th:if="${#strings.length(username) == 1}" th:text="${#strings.toUpperCase(username)}">U</span>
+                        <div class="profile-img me-2" 
+                             th:with="nameParts=${fullName != null ? #strings.arraySplit(fullName, ' ') : null},
+                                     firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
+                                     lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
+                                     initials=${#strings.toUpperCase(
+                                         #strings.length(firstName) > 0 ? 
+                                             (#strings.length(lastName) > 0 ? 
+                                                 #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) : 
+                                                 #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
+                                             ) : 'US'
+                                     )}"
+                             th:text="${initials}">
+                            US
                         </div>
                         <div>
                             <div class="fw-medium" th:text="${fullName ?: username}">Recruiter</div>

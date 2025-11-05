@@ -649,6 +649,12 @@
     <script>
         // Check if user is logged in and update navigation
         document.addEventListener('DOMContentLoaded', function() {
+            // Show login/register buttons by default
+            document.getElementById('loginNavItem').style.display = 'block';
+            document.getElementById('registerNavItem').style.display = 'block';
+            document.getElementById('dashboardNavItem').style.display = 'none';
+            document.getElementById('logoutNavItem').style.display = 'none';
+
             // Function to update navigation based on login status
             function updateNavigation(isLoggedIn, username) {
                 if (isLoggedIn) {
@@ -672,32 +678,36 @@
                 }
             }
 
-            // Check if we're on the login page
-            if (window.location.pathname === '/login' || window.location.pathname === '/auth/login') {
+            // Check if we're on the login/register pages
+            if (window.location.pathname === '/login' || 
+                window.location.pathname === '/auth/login' ||
+                window.location.pathname === '/register' ||
+                window.location.pathname === '/auth/register') {
                 updateNavigation(false);
                 return;
             }
 
             // Try to get current user info
-            fetch('/current-username', {
+            fetch('/api/auth/current-username', {
+                method: 'GET',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'same-origin'  // Important for sending cookies
+                credentials: 'include'  // Important for sending cookies
             })
             .then(response => {
-                if (response.status === 200) {
-                    return response.text().then(text => {
-                        try {
-                            return text ? JSON.parse(text) : {};
-                        } catch (e) {
-                            console.error('Error parsing JSON:', e);
-                            return {};
+                if (response.ok) {
+                    return response.json().then(data => {
+                        if (data.id) {  // If we have a valid user
+                            updateNavigation(true, data.username);
+                        } else {
+                            updateNavigation(false);
                         }
-                    });
+                    }).catch(() => updateNavigation(false));
                 }
                 return Promise.reject('Not authenticated');
+            })
             })
             .then(data => {
                 updateNavigation(true, data.username || '');

@@ -1,22 +1,21 @@
 package com.tal.pro.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-@Entity
-@Table(name = "recruiters")
-@PrimaryKeyJoinColumn(name = "user_id")
+@Document(collection = "recruiters")
 public class Recruiter extends User {
     
-    @Column(name = "company")
+    @Field("company")
     private String company;
     
-    @Column(name = "position")
+    @Field("position")
     private String position;
     
-    @Column(name = "company_description", columnDefinition = "TEXT")
+    @Field("company_description")
     private String companyDescription;
     
-    @Column(name = "website")
+    @Field("website")
     private String website;
     
     public Recruiter() {

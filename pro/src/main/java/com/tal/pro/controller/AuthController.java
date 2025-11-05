@@ -9,11 +9,13 @@ import com.tal.pro.payload.request.LoginRequest;
 import com.tal.pro.payload.request.SignupRequest;
 import com.tal.pro.payload.response.MessageResponse;
 import com.tal.pro.payload.response.UserInfoResponse;
+import com.tal.pro.repository.CandidateRepository;
+import com.tal.pro.repository.RecruiterRepository;
 import com.tal.pro.repository.RoleRepository;
 import com.tal.pro.repository.UserRepository;
 import com.tal.pro.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,94 +33,71 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
-    
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder encoder;
+    @Autowired
+    AuthenticationManager authenticationManager;
 
-    @GetMapping("/user")
-    public ResponseEntity<?> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(401).body(new MessageResponse("Not authenticated"));
-        }
-        
-        if (authentication.getPrincipal() instanceof UserDetailsImpl) {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    RoleRepository roleRepository;
+
+    @Autowired
+    CandidateRepository candidateRepository;
+
+    @Autowired
+    RecruiterRepository recruiterRepository;
+
+    @Autowired
+    PasswordEncoder encoder;
+
+    
+
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();        
             List<String> roles = userDetails.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.toList());
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
 
             return ResponseEntity.ok(new UserInfoResponse(
-                    userDetails.getId(),
-                    userDetails.getUsername(),
-                    userDetails.getEmail(),
-                    userDetails.getFullName(),
-                    roles
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                userDetails.getFullName(),
+                roles
             ));
-        } else if (authentication.getPrincipal() instanceof String) {
-            String username = (String) authentication.getPrincipal();
-            User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-                
-            List<String> roles = user.getRoles().stream()
-                    .map(role -> role.getName().name())
-                    .collect(Collectors.toList());
-                    
-            return ResponseEntity.ok(new UserInfoResponse(
-                    user.getId(),
-                    user.getUsername(),
-                    user.getEmail(),
-                    user.getFullName(),
-                    roles
-            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(new MessageResponse("Error: Invalid username or password"));
         }
-        
-        return ResponseEntity.status(401).body(new MessageResponse("Authentication failed"));
-    }
-    
-    @GetMapping("/current-username")
-    public ResponseEntity<?> getCurrentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(401).body(new MessageResponse("Not authenticated"));
-        }
-        
-        String username = authentication.getName();
-        return ResponseEntity.ok(Collections.singletonMap("username", username));
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        // Check if username is already taken
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!"));
+                .badRequest()
+                .body(new MessageResponse("Error: Username is already taken!"));
         }
 
-        // Check if email is already in use
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+                .badRequest()
+                .body(new MessageResponse("Error: Email is already in use!"));
         }
 
-        // Validate role
-        if (signUpRequest.getRole() == null) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Role is required!"));
-        }
-
-        // Create new user's account based on role
+        // Create new user based on role
         User user;
         String role = signUpRequest.getRole().toLowerCase();
         
-        // Set common user fields
+        // Common user fields
         String encodedPassword = encoder.encode(signUpRequest.getPassword());
         
         // Create appropriate user type
@@ -153,8 +131,8 @@ public class AuthController {
             }
             default -> {
                 return ResponseEntity
-                        .badRequest()
-                        .body(new MessageResponse("Error: Invalid role specified!"));
+                    .badRequest()
+                    .body(new MessageResponse("Error: Invalid role specified!"));
             }
         }
 
@@ -179,10 +157,63 @@ public class AuthController {
             
         roles.add(userRole);
         user.setRoles(roles);
-
-        // Save the user to database
-        userRepository.save(user);
+        
+        // Save the user first to get the generated ID
+        User savedUser = userRepository.save(user);
+        
+        // If this is a candidate or recruiter, save to the appropriate collection
+        if (user instanceof Candidate) {
+            Candidate candidate = (Candidate) user;
+            candidate.setId(savedUser.getId()); // Ensure the ID is set
+            candidateRepository.save(candidate);
+        } else if (user instanceof Recruiter) {
+            Recruiter recruiter = (Recruiter) user;
+            recruiter.setId(savedUser.getId()); // Ensure the ID is set
+            recruiterRepository.save(recruiter);
+        }
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || 
+            authentication.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(401).body(new MessageResponse("Not authenticated"));
+        }
+
+        if (authentication.getPrincipal() instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new UserInfoResponse(
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getEmail(),
+                    userDetails.getFullName(),
+                    roles
+            ));
+        } else if (authentication.getPrincipal() instanceof String) {
+            String username = (String) authentication.getPrincipal();
+            User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+            List<String> roles = user.getRoles().stream()
+                    .map(role -> role.getName().name())
+                    .collect(Collectors.toList());
+                    
+            return ResponseEntity.ok(new UserInfoResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getFullName(),
+                    roles
+            ));
+        }
+        
+        return ResponseEntity.status(401).body(new MessageResponse("Authentication failed"));
     }
 }

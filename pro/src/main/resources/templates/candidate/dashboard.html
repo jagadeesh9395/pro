@@ -212,8 +212,19 @@
                     </div>
                     <div class="d-flex align-items-center">
                         <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
-                            <div class="profile-img me-2 d-inline-block" th:with="initials=${#strings.toUpperCase(#strings.substring(username, 0, 2))}" th:text="${#strings.length(username) >= 2 ? initials : 'US'}">
-                                JD
+                            <div class="profile-img me-2 d-inline-block" 
+                                 th:with="nameParts=${fullName != null ? #strings.arraySplit(fullName, ' ') : null},
+                                         firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
+                                         lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
+                                         initials=${#strings.toUpperCase(
+                                             #strings.length(firstName) > 0 ? 
+                                                 (#strings.length(lastName) > 0 ? 
+                                                     #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) : 
+                                                     #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
+                                                 ) : 'US'
+                                         )}"
+                                 th:text="${initials}">
+                                US
                             </div>
                         </a>
                         <div class="d-inline-block">
