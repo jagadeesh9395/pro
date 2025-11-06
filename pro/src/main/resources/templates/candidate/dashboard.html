@@ -160,60 +160,60 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <h4>TalentTrove</h4>
-        </div>
-        
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:href="@{/candidate/profile}">
-                    <i class="bi bi-person"></i> My Profile
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-briefcase"></i> My Applications
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-calendar-check"></i> Interviews
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-bell"></i> Notifications
-                </a>
-            </li>
-            <li class="nav-item mt-4">
-                <a class="nav-link text-danger" th:href="@{/logout}">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
-            </li>
-        </ul>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <h4>TalentTrove</h4>
     </div>
-    
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navigation -->
-        <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid">
-                <h5 class="mb-0">Dashboard</h5>
+
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link active" href="#">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/candidate/profile}">
+                <i class="bi bi-person"></i> My Profile
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">
+                <i class="bi bi-briefcase"></i> My Applications
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">
+                <i class="bi bi-calendar-check"></i> Interviews
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">
+                <i class="bi bi-bell"></i> Notifications
+            </a>
+        </li>
+        <li class="nav-item mt-4">
+            <a class="nav-link text-danger" th:href="@{/logout}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <h5 class="mb-0">Dashboard</h5>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-bell fs-5"></i>
+                </div>
                 <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="bi bi-bell fs-5"></i>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
-                            <div class="profile-img me-2 d-inline-block" 
-                                 th:with="nameParts=${fullName != null ? #strings.arraySplit(fullName, ' ') : null},
+                    <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
+                        <div class="profile-img me-2 d-inline-block"
+                             th:with="nameParts=${fullName != null ? #strings.arraySplit(fullName, ' ') : null},
                                          firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
                                          lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
                                          initials=${#strings.toUpperCase(
@@ -223,281 +223,290 @@
                                                      #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
                                                  ) : 'US'
                                          )}"
-                                 th:text="${initials}">
-                                US
-                            </div>
+                             th:text="${initials}">
+                            US
+                        </div>
+                    </a>
+                    <div class="d-inline-block">
+                        <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
+                            <div class="fw-medium" th:text="${fullName}">John Doe</div>
+                            <small class="text-muted">Candidate</small>
                         </a>
-                        <div class="d-inline-block">
-                            <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
-                                <div class="fw-medium" th:text="${fullName}">John Doe</div>
-                                <small class="text-muted">Candidate</small>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
-        </nav>
-        
-        <!-- Dashboard Content -->
-        <div class="container-fluid py-4">
-            <!-- Welcome Banner -->
-            <div class="welcome-banner">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2>Welcome back, <span th:text="${fullName}">John</span>!</h2>
-                        <p class="mb-0">Your job search journey just got easier. Check your applications, upcoming interviews, and personalized job recommendations.</p>
-                    </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <a th:href="@{/candidate/profile}" class="btn btn-light">Update Profile</a>
-                    </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="container-fluid py-4">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2>Welcome back, <span th:text="${fullName}">John</span>!</h2>
+                    <p class="mb-0">Your job search journey just got easier. Check your applications, upcoming interviews, and personalized job recommendations.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a th:href="@{/candidate/profile}" class="btn btn-light">Update Profile</a>
                 </div>
             </div>
-            
-            <!-- Job Search -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-5">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" placeholder="Job title, keywords, or company">
-                            </div>
+        </div>
+
+        <!-- Job Search Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="jobSearchForm" th:action="@{/candidate/dashboard}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="query" name="query" th:value="${param.query}"
+                                   placeholder="Job title, company, or keywords">
                         </div>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                                <input type="text" class="form-control" placeholder="Location">
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" class="form-control" id="location" name="location"
+                                   th:value="${param.location}" placeholder="Location">
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-primary w-100">
-                                <i class="bi bi-search me-2"></i>Find Jobs
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Find Jobs
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <a th:href="@{/candidate/dashboard}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Job Listings -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recommended Jobs</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Sort by: Most Recent
                             </button>
+                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                <li><a class="dropdown-item" href="#">Most Recent</a></li>
+                                <li><a class="dropdown-item" href="#">Relevance</a></li>
+                                <li><a class="dropdown-item" href="#">Salary: High to Low</a></li>
+                            </ul>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <!-- Main Content -->
-                <div class="col-lg-8">
-                    <!-- Job Listings -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Recommended Jobs</h5>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Sort by: Most Recent
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                                    <li><a class="dropdown-item" href="#">Most Recent</a></li>
-                                    <li><a class="dropdown-item" href="#">Relevance</a></li>
-                                    <li><a class="dropdown-item" href="#">Salary: High to Low</a></li>
-                                </ul>
-                            </div>
+                    <div class="list-group list-group-flush">
+                        <!-- Job Listing Items -->
+                        <div th:if="${jobs.empty}" class="text-center p-4">
+                            <p class="text-muted">No jobs available at the moment. Please check back later.</p>
                         </div>
-                        <div class="list-group list-group-flush">
-                            <!-- Job Listing Items -->
-                            <div th:if="${jobs.empty}" class="text-center p-4">
-                                <p class="text-muted">No jobs available at the moment. Please check back later.</p>
+
+                        <div th:each="job : ${jobs}" class="list-group-item p-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h5 class="mb-1">
+                                    <a th:href="@{/jobs/view/} + ${job.id}" class="text-decoration-none" th:text="${job.jobTitle}"></a>
+                                </h5>
+                                <button class="btn btn-sm btn-link text-muted p-0">
+                                    <i class="bi bi-bookmark"></i>
+                                </button>
                             </div>
-                            
-                            <div th:each="job : ${jobs}" class="list-group-item p-4">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <h5 class="mb-1">
-                                        <a th:href="@{/jobs/view/} + ${job.id}" class="text-decoration-none" th:text="${job.jobTitle}"></a>
-                                    </h5>
-                                    <button class="btn btn-sm btn-link text-muted p-0">
-                                        <i class="bi bi-bookmark"></i>
-                                    </button>
-                                </div>
-                                <p class="mb-2 text-muted">
-                                    <span th:text="${job.companyName}"></span> • 
-                                    <span class="text-success" th:text="${#temporals.format(job.postedAt, 'MMM d, yyyy')}"></span>
-                                </p>
-                                <div class="d-flex flex-wrap gap-2 mb-2" th:if="${job.skills != null && !job.skills.isEmpty()}">
-                                    <span th:each="skill : ${#strings.arraySplit(job.skills, ',')}" 
-                                          class="badge bg-light text-dark" 
+                            <p class="mb-2 text-muted">
+                                <span th:text="${job.companyName}"></span> •
+                                <span class="text-success" th:text="${#temporals.format(job.postedAt, 'MMM d, yyyy')}"></span>
+                            </p>
+                            <div class="d-flex flex-wrap gap-2 mb-2" th:if="${job.skills != null && !job.skills.isEmpty()}">
+                                    <span th:each="skill : ${#strings.arraySplit(job.skills, ',')}"
+                                          class="badge bg-light text-dark"
                                           th:text="${#strings.trim(skill)}">
                                     </span>
-                                </div>
-                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                                    <div class="d-flex align-items-center text-muted mb-2 mb-md-0">
-                                        <i class="bi bi-geo-alt me-2"></i>
-                                        <span th:text="${job.location}"></span> • 
-                                        <i class="bi bi-briefcase ms-2 me-1"></i>
-                                        <span th:text="${job.jobType}"></span> • 
-                                        <i class="bi bi-cash-stack ms-2 me-1"></i>
-                                        <span th:if="${job.minSalary != null && job.maxSalary != null}" 
-                                              th:text="'$' + ${job.minSalary} + ' - $' + ${job.maxSalary}">
-                                        </span>
-                                        <span th:if="${job.minSalary != null && job.maxSalary == null}" 
-                                              th:text="'From $' + ${job.minSalary}">
-                                        </span>
-                                        <span th:if="${job.minSalary == null && job.maxSalary != null}" 
-                                              th:text="'Up to $' + ${job.maxSalary}">
-                                        </span>
-                                    </div>
-                                    <a th:href="@{/jobs/view/} + ${job.id}" class="btn btn-outline-primary btn-sm">View Details</a>
-                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Pagination -->
-                        <div class="card-footer bg-white" th:if="${totalPages > 1}">
-                            <nav aria-label="Job listings pagination">
-                                <ul class="pagination justify-content-center mb-0">
-                                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                                        <a class="page-link" th:href="@{/candidate/dashboard?(page=${currentPage - 1}&size=${pageSize})}" 
-                                           aria-label="Previous">
-                                            <span aria-hidden="true">&laquo;</span>
-                                        </a>
-                                    </li>
-                                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
-                                        th:classappend="${currentPage == i} ? 'active'" 
-                                        class="page-item">
-                                        <a class="page-link" th:href="@{/candidate/dashboard?(page=${i}&size=${pageSize})}" 
-                                           th:text="${i + 1}"></a>
-                                    </li>
-                                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                                        <a class="page-link" th:href="@{/candidate/dashboard?(page=${currentPage + 1}&size=${pageSize})}" 
-                                           aria-label="Next">
-                                            <span aria-hidden="true">&raquo;</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Applications -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Recent Applications</h5>
-                            <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Position</th>
-                                            <th>Company</th>
-                                            <th>Applied On</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Senior Java Developer</td>
-                                            <td>Tech Corp</td>
-                                            <td>Oct 15, 2023</td>
-                                            <td><span class="status-badge status-applied">Applied</span></td>
-                                            <td><a href="#" class="text-primary">View</a></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Frontend Developer</td>
-                                            <td>Web Solutions</td>
-                                            <td>Oct 10, 2023</td>
-                                            <td><span class="status-badge status-interview">Interview</span></td>
-                                            <td><a href="#" class="text-primary">View</a></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                                <div class="d-flex align-items-center text-muted mb-2 mb-md-0">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    <span th:text="${job.location}"></span> •
+                                    <i class="bi bi-briefcase ms-2 me-1"></i>
+                                    <span th:text="${job.jobType}"></span> •
+                                    <i class="bi bi-cash-stack ms-2 me-1"></i>
+                                    <span th:if="${job.minSalary != null && job.maxSalary != null}"
+                                          th:text="'$' + ${job.minSalary} + ' - $' + ${job.maxSalary}">
+                                        </span>
+                                    <span th:if="${job.minSalary != null && job.maxSalary == null}"
+                                          th:text="'From $' + ${job.minSalary}">
+                                        </span>
+                                    <span th:if="${job.minSalary == null && job.maxSalary != null}"
+                                          th:text="'Up to $' + ${job.maxSalary}">
+                                        </span>
+                                </div>
+                                <a th:href="@{/jobs/view/} + ${job.id}" class="btn btn-outline-primary btn-sm">View Details</a>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Recommended Jobs -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Recommended Jobs</h5>
+
+                    <!-- Pagination -->
+                    <div class="card-footer bg-white" th:if="${totalPages > 1}">
+                        <nav aria-label="Job listings pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                    <a class="page-link"
+                                       th:with="queryParam=${param.query != null ? '&query=' + param.query[0] : ''}, locationParam=${param.location != null ? '&location=' + param.location[0] : ''}"
+                                       th:href="@{'/candidate/dashboard?page=' + (currentPage - 1) + '&size=' + pageSize + queryParam + locationParam}"
+                                       aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                    th:classappend="${currentPage == i} ? 'active'"
+                                    class="page-item">
+                                    <a class="page-link" th:href="@{/candidate/dashboard?(page=${i}&size=${pageSize})}"
+                                       th:text="${i + 1}"></a>
+                                </li>
+                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/candidate/dashboard?(page=${currentPage + 1}&size=${pageSize})}"
+                                       aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Recent Applications -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Applications</h5>
+                        <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Company</th>
+                                    <th>Applied On</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>Senior Java Developer</td>
+                                    <td>Tech Corp</td>
+                                    <td>Oct 15, 2023</td>
+                                    <td><span class="status-badge status-applied">Applied</span></td>
+                                    <td><a href="#" class="text-primary">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td>Frontend Developer</td>
+                                    <td>Web Solutions</td>
+                                    <td>Oct 10, 2023</td>
+                                    <td><span class="status-badge status-interview">Interview</span></td>
+                                    <td><a href="#" class="text-primary">View</a></td>
+                                </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Senior Java Developer</h6>
-                                            <p class="card-text text-muted small mb-2">Tech Solutions Inc.</p>
-                                            <p class="card-text small"><i class="bi bi-geo-alt"></i> Remote</p>
-                                            <p class="card-text small"><i class="bi bi-cash-stack"></i> $120,000 - $150,000</p>
-                                            <a href="#" class="btn btn-sm btn-primary w-100">Apply Now</a>
-                                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommended Jobs -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recommended Jobs</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Senior Java Developer</h6>
+                                        <p class="card-text text-muted small mb-2">Tech Solutions Inc.</p>
+                                        <p class="card-text small"><i class="bi bi-geo-alt"></i> Remote</p>
+                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> $120,000 - $150,000</p>
+                                        <a href="#" class="btn btn-sm btn-primary w-100">Apply Now</a>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-4">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Frontend Developer (React)</h6>
-                                            <p class="card-text text-muted small mb-2">Web Innovations</p>
-                                            <p class="card-text small"><i class="bi bi-geo-alt"></i> New York, NY</p>
-                                            <p class="card-text small"><i class="bi bi-cash-stack"></i> $90,000 - $120,000</p>
-                                            <a href="#" class="btn btn-sm btn-outline-primary w-100">View Details</a>
-                                        </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Frontend Developer (React)</h6>
+                                        <p class="card-text text-muted small mb-2">Web Innovations</p>
+                                        <p class="card-text small"><i class="bi bi-geo-alt"></i> New York, NY</p>
+                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> $90,000 - $120,000</p>
+                                        <a href="#" class="btn btn-sm btn-outline-primary w-100">View Details</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <!-- Profile Strength -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Profile Strength</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="profile-strength">
-                                <div class="profile-progress">
-                                    <div class="progress-circle">
-                                        <div class="progress-inner">
-                                            75%
-                                        </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Profile Strength -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Profile Strength</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-strength">
+                            <div class="profile-progress">
+                                <div class="progress-circle">
+                                    <div class="progress-inner">
+                                        75%
                                     </div>
                                 </div>
-                                <h5>Good Profile!</h5>
-                                <p class="text-muted small">Complete your profile to increase your chances of getting hired.</p>
-                                <button class="btn btn-sm btn-outline-primary">Complete Profile</button>
                             </div>
+                            <h5>Good Profile!</h5>
+                            <p class="text-muted small">Complete your profile to increase your chances of getting hired.</p>
+                            <button class="btn btn-sm btn-outline-primary">Complete Profile</button>
                         </div>
                     </div>
-                    
-                    <!-- Upcoming Interviews -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Upcoming Interviews</h5>
-                            <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+
+                <!-- Upcoming Interviews -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Upcoming Interviews</h5>
+                        <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <div class="me-3 text-center">
+                                <div class="bg-light rounded p-2">
+                                    <div class="fw-bold">NOV</div>
+                                    <div class="h4 mb-0">15</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Frontend Developer</h6>
+                                <p class="text-muted small mb-1">Web Solutions</p>
+                                <p class="small"><i class="bi bi-clock"></i> 10:00 AM - 11:00 AM</p>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Join Meeting</a>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="d-flex mb-3">
-                                <div class="me-3 text-center">
-                                    <div class="bg-light rounded p-2">
-                                        <div class="fw-bold">NOV</div>
-                                        <div class="h4 mb-0">15</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">Frontend Developer</h6>
-                                    <p class="text-muted small mb-1">Web Solutions</p>
-                                    <p class="small"><i class="bi bi-clock"></i> 10:00 AM - 11:00 AM</p>
-                                    <a href="#" class="btn btn-sm btn-outline-primary">Join Meeting</a>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="text-center">
-                                <a href="#" class="btn btn-sm btn-link">View Calendar</a>
-                            </div>
+                        <hr>
+                        <div class="text-center">
+                            <a href="#" class="btn btn-sm btn-link">View Calendar</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

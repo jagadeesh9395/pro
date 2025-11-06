@@ -29,7 +29,9 @@ public class CandidateController {
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
                           @RequestParam(defaultValue = "0") int page,
-                          @RequestParam(defaultValue = "10") int size) {
+                          @RequestParam(defaultValue = "10") int size,
+                          @RequestParam(required = false) String query,
+                          @RequestParam(required = false) String location) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -39,9 +41,22 @@ public class CandidateController {
             Candidate candidate = candidateRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
             
-            // Get paginated active jobs
+            // Get paginated and filtered jobs
             Pageable pageable = PageRequest.of(page, size);
-            Page<Job> jobsPage = jobService.getAllActiveJobs(pageable);
+            Page<Job> jobsPage;
+            
+            if ((query != null && !query.isEmpty()) || (location != null && !location.isEmpty())) {
+                // Use search with filters
+                jobsPage = jobService.searchJobsWithFilters(
+                    query != null ? query : "", 
+                    location != null ? location : "", 
+                    null, // jobType is null for now, can be added later
+                    pageable
+                );
+            } else {
+                // Get all active jobs if no search criteria
+                jobsPage = jobService.getAllActiveJobs(pageable);
+            }
             
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
@@ -56,6 +71,10 @@ public class CandidateController {
             model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("totalPages", jobsPage.getTotalPages());
             model.addAttribute("pageSize", size);
+            
+            // Add search parameters to model for form population and pagination
+            if (query != null) model.addAttribute("queryParam", query);
+            if (location != null) model.addAttribute("locationParam", location);
             
             return "candidate/dashboard";
         } catch (Exception e) {
