@@ -334,15 +334,15 @@
                                     <span th:text="${job.location}"></span> •
                                     <i class="bi bi-briefcase ms-2 me-1"></i>
                                     <span th:text="${job.jobType}"></span> •
-                                    <i class="bi bi-cash-stack ms-2 me-1"></i>
+                                    <i class="bi bi-currency-rupee ms-2 me-1"></i>
                                     <span th:if="${job.minSalary != null && job.maxSalary != null}"
-                                          th:text="'$' + ${job.minSalary} + ' - $' + ${job.maxSalary}">
+                                          th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000, 1, 2)} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000, 1, 2)} + ' LPA'">
                                         </span>
                                     <span th:if="${job.minSalary != null && job.maxSalary == null}"
-                                          th:text="'From $' + ${job.minSalary}">
+                                          th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000, 1, 2)} + ' LPA'">
                                         </span>
                                     <span th:if="${job.minSalary == null && job.maxSalary != null}"
-                                          th:text="'Up to $' + ${job.maxSalary}">
+                                          th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000, 1, 2)} + ' LPA'">
                                         </span>
                                 </div>
                                 <a th:href="@{/jobs/view/} + ${job.id}" class="btn btn-outline-primary btn-sm">View Details</a>
@@ -431,7 +431,7 @@
                                         <h6 class="card-title">Senior Java Developer</h6>
                                         <p class="card-text text-muted small mb-2">Tech Solutions Inc.</p>
                                         <p class="card-text small"><i class="bi bi-geo-alt"></i> Remote</p>
-                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> $120,000 - $150,000</p>
+                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> ₹10,00,000 - ₹12,50,000</p>
                                         <a href="#" class="btn btn-sm btn-primary w-100">Apply Now</a>
                                     </div>
                                 </div>
@@ -442,7 +442,7 @@
                                         <h6 class="card-title">Frontend Developer (React)</h6>
                                         <p class="card-text text-muted small mb-2">Web Innovations</p>
                                         <p class="card-text small"><i class="bi bi-geo-alt"></i> New York, NY</p>
-                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> $90,000 - $120,000</p>
+                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> ₹7,50,000 - ₹10,00,000</p>
                                         <a href="#" class="btn btn-sm btn-outline-primary w-100">View Details</a>
                                     </div>
                                 </div>

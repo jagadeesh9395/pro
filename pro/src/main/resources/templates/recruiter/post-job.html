@@ -153,12 +153,20 @@
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="minSalary" class="form-label">Minimum Salary (USD)</label>
-                                        <input type="number" class="form-control" id="minSalary" th:field="*{minSalary}">
+                                        <label for="minSalary" class="form-label">Minimum Salary (₹ LPA)</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="minSalary" th:field="*{minSalary}" step="0.1" min="0" onchange="formatLPA(this)">
+                                            <span class="input-group-text">LPA</span>
+                                        </div>
+                                        <div class="form-text">In Lakhs Per Annum (e.g., 8.5 for ₹8.5 LPA)</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="maxSalary" class="form-label">Maximum Salary (USD)</label>
-                                        <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}">
+                                        <label for="maxSalary" class="form-label">Maximum Salary (₹ LPA)</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}" step="0.1" min="0" onchange="formatLPA(this)">
+                                            <span class="input-group-text">LPA</span>
+                                        </div>
+                                        <div class="form-text">In Lakhs Per Annum (e.g., 15 for ₹15 LPA)</div>
                                     </div>
                                 </div>
                                 
@@ -196,5 +204,107 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to validate salary range
+        function validateSalaryRange() {
+            const minSalary = document.getElementById('minSalary');
+            const maxSalary = document.getElementById('maxSalary');
+            const minVal = parseFloat(minSalary.value) || 0;
+            const maxVal = parseFloat(maxSalary.value) || 0;
+            
+            // Reset any previous error states
+            minSalary.classList.remove('is-invalid');
+            maxSalary.classList.remove('is-invalid');
+            
+            // Remove any existing error messages
+            let existingError = document.getElementById('salaryError');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // If both fields have values, validate the range
+            if (minSalary.value && maxSalary.value) {
+                if (minVal > maxVal) {
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.id = 'salaryError';
+                    errorDiv.className = 'invalid-feedback d-block';
+                    errorDiv.textContent = 'Maximum salary must be greater than or equal to minimum salary';
+                    
+                    // Insert error message after the max salary field
+                    maxSalary.parentNode.parentNode.after(errorDiv);
+                    
+                    // Add invalid class to highlight the fields
+                    minSalary.classList.add('is-invalid');
+                    maxSalary.classList.add('is-invalid');
+                    
+                    return false;
+                }
+                
+                // Validate minimum difference
+                if ((maxVal - minVal) < 2 && minVal !== 0 && maxVal !== 0) {
+                    // Show warning for small range
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'salaryError';
+                    warningDiv.className = 'text-warning small mt-1';
+                    warningDiv.textContent = 'Consider a wider salary range to attract more candidates';
+                    
+                    // Insert warning message after the max salary field
+                    maxSalary.parentNode.parentNode.after(warningDiv);
+                }
+            }
+            
+            return true;
+        }
+        
+        // Function to format salary input as LPA
+        function formatLPA(input) {
+            // Ensure the value is a valid number
+            let value = parseFloat(input.value);
+            if (isNaN(value)) {
+                input.value = '';
+                validateSalaryRange();
+                return;
+            }
+            
+            // Round to 1 decimal place if needed
+            value = Math.round(value * 10) / 10;
+            input.value = value;
+            
+            // Validate the salary range
+            validateSalaryRange();
+        }
+        
+        // Add form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const minSalary = document.getElementById('minSalary');
+            const maxSalary = document.getElementById('maxSalary');
+            
+            // Add event listeners for real-time validation
+            minSalary.addEventListener('input', () => validateSalaryRange());
+            maxSalary.addEventListener('input', () => validateSalaryRange());
+            
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    // Final validation before form submission
+                    if (!validateSalaryRange()) {
+                        event.preventDefault();
+                        return false;
+                    }
+                    
+                    // Convert LPA to actual values if needed (for backend processing)
+                    if (minSalary.value) {
+                        minSalary.value = parseFloat(minSalary.value) * 100000; // Convert LPA to actual value
+                    }
+                    if (maxSalary.value) {
+                        maxSalary.value = parseFloat(maxSalary.value) * 100000; // Convert LPA to actual value
+                    }
+                    
+                    return true;
+                });
+            }
+        });
+    </script>
 </body>
 </html>
