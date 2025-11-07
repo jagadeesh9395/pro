@@ -25,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,7 +114,8 @@ public class AuthController {
                 candidate.setPhoneNumber(signUpRequest.getPhoneNumber());
                 candidate.setResumeUrl(signUpRequest.getResumeUrl());
                 candidate.setSkills(signUpRequest.getSkills());
-                candidate.setExperience(signUpRequest.getExperience());
+                // Initialize empty experiences list - experiences can be added later
+                candidate.setWorkExperiences(new ArrayList<>());
                 user = candidate;
             }
             case "recruiter" -> {
