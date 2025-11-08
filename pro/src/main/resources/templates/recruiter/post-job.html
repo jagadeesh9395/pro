@@ -5,51 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post New Job - TalentTrove</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #4a6fa5;
-            --primary-light: #e3f2fd;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --text-color: #2c3e50;
+            --secondary-color: #3a5a80;
+            --accent-color: #5d7fb8;
+            --light-color: #f8f9fa;
+            --dark-color: #2c3e50;
             --text-light: #6c757d;
             --border-color: #e9ecef;
-            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         }
         
         body {
-            background-color: #f8f9fa;
-            color: var(--text-color);
-        }
-        
-        .sidebar {
+            background: linear-gradient(135deg, #f3e5ff 0%, #e0aaff 100%);
             min-height: 100vh;
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: fixed;
-            width: 250px;
-            padding: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark-color);
         }
         
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
+        .register-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 15px;
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            min-height: 90vh;
+        }
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 1.5rem;
+        }
+        
+        .register-header i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        .register-header h2 {
+            color: var(--dark-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
         }
         
         .card {
             border: none;
             border-radius: 10px;
-            box-shadow: var(--box-shadow);
-            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
             border-left: 4px solid var(--primary-color);
         }
         
         .card-header {
             background-color: white;
             border-bottom: 1px solid var(--border-color);
-            padding: 15px 20px;
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e1e5ee;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
         }
         
         .form-control:focus, .form-select:focus {
@@ -57,137 +87,207 @@
             box-shadow: 0 0 0 0.25rem rgba(74, 111, 165, 0.25);
         }
         
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 1px solid #e1e5ee;
+            border-right: none;
+            border-radius: 8px 0 0 8px !important;
+            color: #6c757d;
+        }
+        
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: white;
         }
         
         .btn-primary:hover {
-            background-color: #3a5a80;
-            border-color: #3a5a80;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
+            color: white;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        }
+        
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .form-text {
+            font-size: 0.8rem;
+            color: var(--text-light) !important;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .invalid-feedback {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        
+        @media (max-width: 991.98px) {
+            .register-container {
+                margin: 1rem;
+                max-width: 100%;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .register-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .form-control, .form-select, .btn {
+                padding: 0.65rem 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="text-center mb-4">
-            <h4 class="text-primary">TalentTrove</h4>
-        </div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="/recruiter/dashboard">
-                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="/recruiter/jobs">
-                    <i class="bi bi-briefcase me-2"></i> Jobs
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/recruiter/candidates">
-                    <i class="bi bi-people me-2"></i> Candidates
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/recruiter/profile">
-                    <i class="bi bi-person me-2"></i> Profile
-                </a>
-            </li>
-            <li class="nav-item mt-3">
-                <form th:action="@{/logout}" method="post">
-                    <button type="submit" class="btn btn-outline-danger w-100">
-                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                    </button>
-                </form>
-            </li>
-        </ul>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Navigation -->
-        <nav class="navbar navbar-expand-lg mb-4">
-            <div class="container-fluid">
-                <h4 class="mb-0">Post a New Job</h4>
-            </div>
-        </nav>
-
-        <div class="container-fluid">
-            <div class="row justify-content-center">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Job Details</h5>
-                        </div>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <div class="register-form">
+                <div class="register-header">
+                    <i class="fas fa-briefcase"></i>
+                    <h2>Post a New Job</h2>
+                    <p>Fill in the job details to find the perfect candidate</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Job Details</h5>
+                    </div>
                         <div class="card-body">
-                            <form id="jobPostForm" th:action="@{/recruiter/jobs/post}" method="post" th:object="${job}" onsubmit="handleFormSubmit(event); return false;">
-                                <div class="mb-3">
+                            <form id="jobPostForm" class="needs-validation" th:action="@{/recruiter/jobs/post}" method="post" th:object="${job}" onsubmit="handleFormSubmit(event); return false;" novalidate>
+                                <div class="mb-4">
                                     <label for="jobTitle" class="form-label">Job Title *</label>
-                                    <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}" 
-                                           placeholder="e.g., Senior Software Engineer, Product Manager, Data Scientist" required>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                        <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}" 
+                                               placeholder="e.g., Senior Software Engineer, Product Manager, Data Scientist" required>
+                                    </div>
                                     <div class="form-text">Be specific and include the seniority level (e.g., Junior, Mid-level, Senior, Lead)</div>
+                                    <div class="invalid-feedback">Please enter a job title.</div>
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="companyName" class="form-label">Company Name *</label>
-                                    <input type="text" class="form-control" id="companyName" th:field="*{companyName}" 
-                                           placeholder="Your company name" required>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" class="form-control" id="companyName" th:field="*{companyName}" 
+                                               placeholder="Your company name" required>
+                                    </div>
                                     <div class="form-text">Your company's official name as you want it to appear in the job posting</div>
+                                    <div class="invalid-feedback">Please enter your company name.</div>
                                 </div>
                                 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-4">
                                         <label for="jobType" class="form-label">Job Type *</label>
-                                        <select class="form-select" id="jobType" th:field="*{jobType}" required>
-                                            <option value="">Select job type</option>
-                                            <option value="FULL_TIME">Full-time</option>
-                                            <option value="PART_TIME">Part-time</option>
-                                            <option value="CONTRACT">Contract</option>
-                                            <option value="INTERNSHIP">Internship</option>
-                                            <option value="TEMPORARY">Temporary</option>
-                                        </select>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                            <select class="form-select" id="jobType" th:field="*{jobType}" required>
+                                                <option value="">Select job type</option>
+                                                <option value="FULL_TIME">Full-time</option>
+                                                <option value="PART_TIME">Part-time</option>
+                                                <option value="CONTRACT">Contract</option>
+                                                <option value="INTERNSHIP">Internship</option>
+                                                <option value="TEMPORARY">Temporary</option>
+                                            </select>
+                                        </div>
+                                        <div class="invalid-feedback">Please select a job type.</div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-4">
                                         <label for="location" class="form-label">Location *</label>
-                                        <input type="text" class="form-control" id="location" th:field="*{location}" required>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                            <input type="text" class="form-control" id="location" th:field="*{location}" placeholder="e.g., New York, Remote" required>
+                                        </div>
+                                        <div class="invalid-feedback">Please enter a location.</div>
                                     </div>
                                 </div>
                                 
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-4">
                                         <label for="minSalary" class="form-label">Minimum Salary (₹ LPA)</label>
                                         <div class="input-group">
-                                            <input type="number" class="form-control" id="minSalary" th:field="*{minSalary}" step="0.1" min="0" onchange="formatLPA(this)">
+                                            <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
+                                            <input type="number" class="form-control" id="minSalary" th:field="*{minSalary}" step="0.1" min="0" onchange="formatLPA(this)" placeholder="0.0">
                                             <span class="input-group-text">LPA</span>
                                         </div>
                                         <div class="form-text">In Lakhs Per Annum (e.g., 8.5 for ₹8.5 LPA)</div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-4">
                                         <label for="maxSalary" class="form-label">Maximum Salary (₹ LPA)</label>
                                         <div class="input-group">
-                                            <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}" step="0.1" min="0" onchange="formatLPA(this)">
+                                            <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
+                                            <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}" step="0.1" min="0" onchange="formatLPA(this)" placeholder="0.0">
                                             <span class="input-group-text">LPA</span>
                                         </div>
                                         <div class="form-text">Maximum annual salary in LPA (e.g., 20 for ₹20 LPA, 0 for 'Not Disclosed')</div>
                                     </div>
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="description" class="form-label">Job Description *</label>
-                                    <textarea class="form-control" id="description" rows="5" th:field="*{description}" required></textarea>
+                                    <div class="input-group">
+                                        <span class="input-group-text align-items-start pt-3"><i class="fas fa-align-left"></i></span>
+                                        <textarea class="form-control" id="description" rows="5" th:field="*{description}" required 
+                                                  placeholder="Provide a detailed description of the job role, responsibilities, and expectations"></textarea>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a job description.</div>
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="requirements" class="form-label">Requirements *</label>
-                                    <textarea class="form-control" id="requirements" rows="3" th:field="*{requirements}" required></textarea>
+                                    <div class="input-group">
+                                        <span class="input-group-text align-items-start pt-3"><i class="fas fa-list-check"></i></span>
+                                        <textarea class="form-control" id="requirements" rows="3" th:field="*{requirements}" required
+                                                  placeholder="List key requirements, one per line"></textarea>
+                                    </div>
                                     <div class="form-text">List key requirements, one per line</div>
+                                    <div class="invalid-feedback">Please provide job requirements.</div>
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="skills" class="form-label">Required Skills *</label>
-                                    <input type="text" class="form-control" id="skills" th:field="*{skills}" 
-                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-code"></i></span>
+                                        <input type="text" class="form-control" id="skills" th:field="*{skills}" 
+                                               placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
+                                    </div>
                                     <div class="form-text">List relevant technical and soft skills, separated by commas. Include programming languages, frameworks, tools, and methodologies.</div>
                                     <div class="mt-2">
                                         <small class="text-muted fw-bold">Popular skills:</small>
@@ -204,78 +304,84 @@
                                             <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Agile')">Agile</span>
                                         </div>
                                     </div>
+                                    <div class="invalid-feedback">Please add required skills.</div>
                                 </div>
                                 
-                                <div class="d-flex justify-content-between mt-4">
+                                <div class="d-flex justify-content-between mt-5 pt-3 border-top">
                                     <a href="/recruiter/dashboard" class="btn btn-outline-secondary">
-                                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                                     </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-2"></i>Post Job
-                                    </button>
+                                    <div>
+                                        <button type="reset" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-undo me-2"></i>Reset
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-2"></i>Post Job
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                             
                             <!-- Success Message (initially hidden) -->
                             <div id="successMessage" class="d-none">
-                                <div class="alert alert-success">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-check-circle-fill fs-3 me-3"></i>
-                                        <h4 class="mb-0">Job Posted Successfully!</h4>
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                                        <h3 class="mt-3">Job Posted Successfully!</h3>
+                                        <p class="text-muted">Your job listing is now live and visible to candidates.</p>
                                     </div>
-                                    <p class="mt-3 mb-0">Your job listing is now live and visible to candidates. Here are the details:</p>
-                                </div>
-                                
-                                <div class="card mt-4">
-                                    <div class="card-header bg-light">
-                                        <h5 class="mb-0">Job Details</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <h5 id="previewJobTitle"></h5>
-                                                <h6 class="text-muted" id="previewCompany"></h6>
-                                            </div>
-                                            <div class="col-md-6 text-md-end">
-                                                <span class="badge bg-primary" id="previewJobType"></span>
-                                                <span class="badge bg-secondary ms-2" id="previewLocation"></span>
-                                            </div>
+                                    
+                                    <div class="card mt-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Job Details</h5>
                                         </div>
-                                        
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <i class="bi bi-currency-rupee me-2"></i>
-                                                    <span id="previewSalary"></span>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <h5 id="previewJobTitle"></h5>
+                                                    <h6 class="text-muted" id="previewCompany"></h6>
                                                 </div>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-calendar-check me-2"></i>
-                                                    <span>Posted: <span id="postDate"></span></span>
+                                                <div class="col-md-6 text-md-end">
+                                                    <span class="badge bg-primary" id="previewJobType"></span>
+                                                    <span class="badge bg-secondary ms-2" id="previewLocation"></span>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <h6>Required Skills:</h6>
-                                                <div id="previewSkills" class="d-flex flex-wrap gap-2"></div>
+                                            
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-indian-rupee-sign me-2"></i>
+                                                        <span id="previewSalary"></span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="far fa-calendar-alt me-2"></i>
+                                                        <span>Posted: <span id="postDate"></span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Required Skills:</h6>
+                                                    <div id="previewSkills" class="d-flex flex-wrap gap-2"></div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        
-                                        <div class="mt-4">
-                                            <h6>Job Description:</h6>
-                                            <div id="previewDescription" class="bg-light p-3 rounded"></div>
-                                        </div>
-                                        
-                                        <div class="mt-4">
-                                            <h6>Requirements:</h6>
-                                            <ul id="previewRequirements" class="list-unstyled"></ul>
-                                        </div>
-                                        
-                                        <div class="d-flex justify-content-between mt-5">
-                                            <a href="/recruiter/dashboard" class="btn btn-outline-primary">
-                                                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-                                            </a>
-                                            <button type="button" class="btn btn-primary" onclick="window.location.reload()">
-                                                <i class="bi bi-plus-circle me-2"></i>Post Another Job
-                                            </button>
+                                            
+                                            <div class="mt-4">
+                                                <h6><i class="fas fa-align-left me-2"></i>Job Description:</h6>
+                                                <div id="previewDescription" class="bg-light p-3 rounded"></div>
+                                            </div>
+                                            
+                                            <div class="mt-4">
+                                                <h6><i class="fas fa-list-check me-2"></i>Requirements:</h6>
+                                                <ul id="previewRequirements" class="list-unstyled"></ul>
+                                            </div>
+                                            
+                                            <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+                                                <a href="/recruiter/dashboard" class="btn btn-outline-primary">
+                                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                                </a>
+                                                <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                                                    <i class="fas fa-plus-circle me-2"></i>Post Another Job
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -288,7 +394,32 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js">
+    // Add Font Awesome for icons
+    document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">');
+    </script>
+    <script th:inline="javascript">
+        // Initialize form validation
+        (function () {
+            'use strict'
+            
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.querySelectorAll('.needs-validation')
+            
+            // Loop over them and prevent submission
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+        
         // Function to add skill to skills input
         function addSkill(skill) {
             const skillsInput = document.getElementById('skills');
@@ -414,104 +545,75 @@
         
         // Function to show success message with job details
         function showSuccessMessage(formData) {
+            // Scroll to top of the form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             // Hide the form
             document.querySelector('form').style.display = 'none';
             
             // Show success message
+            const form = document.getElementById('jobPostForm');
             const successMessage = document.getElementById('successMessage');
-            successMessage.classList.remove('d-none');
+            
+            form.style.opacity = '1';
+            successMessage.style.display = 'block';
+            successMessage.style.opacity = '0';
+            
+            // Animate form fade out and success message fade in
+            let opacity = 1;
+            const fadeOut = setInterval(() => {
+                if (opacity <= 0) {
+                    clearInterval(fadeOut);
+                    form.style.display = 'none';
+                    
+                    // Start fade in for success message
+                    let opacityIn = 0;
+                    const fadeIn = setInterval(() => {
+                        if (opacityIn >= 1) {
+                            clearInterval(fadeIn);
+                        } else {
+                            opacityIn += 0.05;
+                            successMessage.style.opacity = opacityIn;
+                        }
+                    }, 20);
+                } else {
+                    opacity -= 0.05;
+                    form.style.opacity = opacity;
+                }
+            }, 20);
             
             // Populate job details
             document.getElementById('previewJobTitle').textContent = formData.get('jobTitle');
             document.getElementById('previewCompany').textContent = formData.get('companyName');
             document.getElementById('previewJobType').textContent = 
-                Array.from(document.querySelector('#jobType option')
-                .selectedOptions)[0].textContent;
-            document.getElementById('previewLocation').textContent = formData.get('location');
-            
-            // Format salary
-            const minSalary = parseFloat(formData.get('minSalary') || 0);
-            const maxSalary = parseFloat(formData.get('maxSalary') || 0);
-            let salaryText = 'Not Disclosed';
-            if (minSalary > 0 && maxSalary > 0) {
-                salaryText = `₹${minSalary} - ₹${maxSalary} LPA`;
-            } else if (minSalary > 0) {
-                salaryText = `From ₹${minSalary} LPA`;
+{{ ... }}
             } else if (maxSalary > 0) {
                 salaryText = `Up to ₹${maxSalary} LPA`;
             }
             document.getElementById('previewSalary').textContent = salaryText;
             
-            // Set current date
+            // Format the posted date
             const today = new Date();
-            document.getElementById('postDate').textContent = today.toLocaleDateString('en-IN', {
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('postDate').textContent = today.toLocaleDateString('en-US', options) + ' at ' + today.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});{
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
             
-            // Add skills
-            const skillsContainer = document.getElementById('previewSkills');
-            skillsContainer.innerHTML = '';
-            const skills = formData.get('skills').split(',').map(skill => skill.trim());
-            skills.forEach(skill => {
-                if (skill) {
-                    const skillBadge = document.createElement('span');
-                    skillBadge.className = 'badge bg-light text-dark border';
-                    skillBadge.textContent = skill;
-                    skillsContainer.appendChild(skillBadge);
-                }
-            });
-            
-            // Set description and requirements
-            document.getElementById('previewDescription').textContent = formData.get('description');
-            
-            const requirementsList = document.getElementById('previewRequirements');
-            const requirements = formData.get('requirements').split('\n').filter(req => req.trim() !== '');
-            requirementsList.innerHTML = requirements.map(req => 
-                `<li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>${req}</li>`
-            ).join('');
-            
-            // Scroll to success message
+{{ ... }}
             successMessage.scrollIntoView({ behavior: 'smooth' });
         }
 
         // Add form validation and submission handling
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
+            const form = document.getElementById('jobPostForm');
             const minSalary = document.getElementById('minSalary');
-            
-            // Handle form submission
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // In a real application, you would submit the form via AJAX here
-                // For this example, we'll just show the success message
-                const formData = new FormData(form);
-                showSuccessMessage(formData);
-                
-                // In a real implementation, you would do something like:
-                /*
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showSuccessMessage(formData);
-                    } else {
-                        // Handle error
-                        alert('There was an error posting the job. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('There was an error posting the job. Please try again.');
-                });
                 */
             });
             const maxSalary = document.getElementById('maxSalary');
