@@ -1,6 +1,6 @@
 package com.tal.pro.service.impl;
 
-import com.tal.pro.model.Candidate;
+import com.tal.pro.criteria.ResumeSearchCriteria;
 import com.tal.pro.model.Resume;
 import com.tal.pro.repository.CandidateRepository;
 import com.tal.pro.repository.ResumeRepository;
@@ -13,10 +13,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 
@@ -24,6 +21,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,8 +36,6 @@ public class ResumeServiceImpl implements ResumeService {
     private final ResumeRepository resumeRepository;
     private final CandidateRepository candidateRepository;
 
-    @Override
-    @Transactional
     public Resume uploadAndConvertResume(MultipartFile file) throws IOException {
         log.info("Processing file: {}", file.getOriginalFilename());
 
@@ -44,14 +45,6 @@ public class ResumeServiceImpl implements ResumeService {
             throw new IOException("File size exceeds maximum limit of 100MB: " + file.getSize() + " bytes");
         }
 
-        // Get current authenticated user (candidate)
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-
-        // Find the candidate
-        Candidate candidate = candidateRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Candidate not found with email: " + currentUsername));
-
         // Create Resume document
         Resume resume = new Resume();
         resume.setOriginalFileName(file.getOriginalFilename());
@@ -60,10 +53,6 @@ public class ResumeServiceImpl implements ResumeService {
         resume.setUploadedAt(LocalDateTime.now());
         resume.setOriginalFileData(file.getBytes());
 
-        // Set the candidate reference
-        resume.setCandidate(candidate);
-
-
         // Convert to HTML using Tika
         String htmlContent = convertToHtml(file.getBytes());
         resume.setHtmlContent(htmlContent);
@@ -71,30 +60,13 @@ public class ResumeServiceImpl implements ResumeService {
         // Save to MongoDB
         Resume savedResume = resumeRepository.save(resume);
         log.info("Resume saved with ID: {}", savedResume.getId());
-        
-        // Update candidate's resume reference and URL
-        candidate.setResume(savedResume);
-        candidate.setResumeUrl("/api/resumes/" + savedResume.getId());
-        candidateRepository.save(candidate);
-        
-        log.info("Updated candidate {} with resume ID: {}", candidate.getUsername(), savedResume.getId());
 
         return savedResume;
     }
 
     @Override
-    public Resume getResumeById(String id) {
-        return resumeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + id));
-    }
-
-    @Override
-    public void deleteResume(String id) {
-        if (!resumeRepository.existsById(id)) {
-            throw new RuntimeException("Resume not found with id: " + id);
-        }
-        resumeRepository.deleteById(id);
-        log.info("Deleted resume with ID: {}", id);
+    public Optional<Resume> getResumeById(String id) {
+        return resumeRepository.findById(id);
     }
 
     /**
@@ -135,12 +107,14 @@ public class ResumeServiceImpl implements ResumeService {
             htmlBuilder.append("tr:hover { background: #e9ecef; }\n");
             htmlBuilder.append("ul, ol { margin: 10px 0; padding-left: 30px; }\n");
             htmlBuilder.append("li { margin: 5px 0; line-height: 1.6; }\n");
+            htmlBuilder.append("strong, b { font-weight: 600; color: #2c3e50; }\n");
             htmlBuilder.append("em, i { font-style: italic; color: #5a6c7d; }\n");
             htmlBuilder.append("a { color: #667eea; text-decoration: none; }\n");
             htmlBuilder.append("a:hover { text-decoration: underline; }\n");
             htmlBuilder.append("</style>\n");
             htmlBuilder.append("</head>\n<body>\n");
-            // Convert to HTML using Tika
+            htmlBuilder.append("<pre>").append(escapeHtml(textContent)).append("</pre>\n");
+            htmlBuilder.append("</body>\n</html>");
 
             return htmlBuilder.toString();
 
@@ -156,6 +130,227 @@ public class ResumeServiceImpl implements ResumeService {
     /**
      * Escape HTML special characters
      */
+
+
+
+    @Override
+    public String getResumeHtmlContent(String id, boolean maskPersonalInfo) {
+        Optional<Resume> resumeOpt = resumeRepository.findById(id);
+        if (resumeOpt.isEmpty()) {
+            return null;
+        }
+
+        String htmlContent = resumeOpt.get().getHtmlContent();
+
+        if (maskPersonalInfo) {
+            // Extract the content between <pre> tags to avoid breaking HTML
+            Pattern pattern = Pattern.compile("(?s)(?<=<pre>)(.*?)(?=</pre>)");
+            Matcher matcher = pattern.matcher(htmlContent);
+            StringBuffer sb = new StringBuffer();
+
+            while (matcher.find()) {
+                String matchedText = matcher.group(1);
+                String processedText = escapeHtml(maskPersonalInfo(matchedText));
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(processedText));
+            }
+            matcher.appendTail(sb);
+            htmlContent = sb.toString();
+        }
+
+        return htmlContent;
+    }
+
+    public String getResumeHtmlContent(String id) {
+        return getResumeHtmlContent(id, false);
+    }
+
+    /**
+     * Search resumes by various criteria
+     */
+    public List<Resume> searchResumes(ResumeSearchCriteria criteria) {
+        log.info("Searching resumes with criteria: {}", criteria);
+
+        List<Resume> results = new ArrayList<>();
+
+        // If no criteria specified, return all resumes
+        if (!hasAnyCriteria(criteria)) {
+            return resumeRepository.findAll();
+        }
+
+        // Try specific searches first
+        boolean hasResults = false;
+
+        // Basic text search across multiple fields - search HTML content since structured fields may not be populated
+        if (criteria.getKeyword() != null && !criteria.getKeyword().trim().isEmpty()) {
+            List<Resume> keywordResults = resumeRepository.findByHtmlContent(criteria.getKeyword());
+            log.debug("Keyword search for '{}' returned {} results", criteria.getKeyword(), keywordResults.size());
+            if (!keywordResults.isEmpty()) {
+                results.addAll(keywordResults);
+                hasResults = true;
+            }
+        }
+
+        // Name search (OR logic within name fields)
+//        if (criteria.getFirstName() != null && !criteria.getFirstName().trim().isEmpty()) {
+//            List<Resume> nameResults = resumeRepository.findByFirstNameIgnoreCase(criteria.getFirstName());
+//            log.debug("First name search for '{}' returned {} results", criteria.getFirstName(), nameResults.size());
+//            if (!nameResults.isEmpty()) {
+//                results.addAll(nameResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getLastName() != null && !criteria.getLastName().trim().isEmpty()) {
+//            List<Resume> nameResults = resumeRepository.findByLastNameIgnoreCase(criteria.getLastName());
+//            log.debug("Last name search for '{}' returned {} results", criteria.getLastName(), nameResults.size());
+//            if (!nameResults.isEmpty()) {
+//                results.addAll(nameResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getFullName() != null && !criteria.getFullName().trim().isEmpty()) {
+//            List<Resume> nameResults = resumeRepository.findByFirstNameIgnoreCaseOrLastNameIgnoreCase(
+//                    criteria.getFullName(), criteria.getFullName());
+//            log.debug("Full name search for '{}' returned {} results", criteria.getFullName(), nameResults.size());
+//            if (!nameResults.isEmpty()) {
+//                results.addAll(nameResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        // Contact search
+//        if (criteria.getEmail() != null && !criteria.getEmail().trim().isEmpty()) {
+//            List<Resume> emailResults = resumeRepository.findByEmail(criteria.getEmail());
+//            if (!emailResults.isEmpty()) {
+//                results.addAll(emailResults);
+//                hasResults = true;
+//            }
+//        }
+
+//        if (criteria.getPhone() != null && !criteria.getPhone().trim().isEmpty()) {
+//            // Search phone in HTML content since structured phone field may not be populated
+//            List<Resume> phoneResults = resumeRepository.findByHtmlContent(criteria.getPhone());
+//            if (!phoneResults.isEmpty()) {
+//                results.addAll(phoneResults);
+//                hasResults = true;
+//            }
+//        }
+
+//        // Location search
+//        if (criteria.getCity() != null && !criteria.getCity().trim().isEmpty()) {
+//            List<Resume> cityResults = resumeRepository.findByCityIgnoreCase(criteria.getCity());
+//            if (!cityResults.isEmpty()) {
+//                results.addAll(cityResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getState() != null && !criteria.getState().trim().isEmpty()) {
+//            List<Resume> stateResults = resumeRepository.findByStateIgnoreCase(criteria.getState());
+//            if (!stateResults.isEmpty()) {
+//                results.addAll(stateResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        // Skills search
+//        if (criteria.getProgrammingLanguages() != null && !criteria.getProgrammingLanguages().isEmpty()) {
+//            List<Resume> skillResults = resumeRepository.findByProgrammingLanguagesIn(criteria.getProgrammingLanguages());
+//            if (!skillResults.isEmpty()) {
+//                results.addAll(skillResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getFrameworks() != null && !criteria.getFrameworks().isEmpty()) {
+//            List<Resume> skillResults = resumeRepository.findByFrameworksIn(criteria.getFrameworks());
+//            if (!skillResults.isEmpty()) {
+//                results.addAll(skillResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        // Experience search
+//        if (criteria.getCompanyName() != null && !criteria.getCompanyName().trim().isEmpty()) {
+//            List<Resume> expResults = resumeRepository.findByCompanyNameRegex(criteria.getCompanyName());
+//            if (!expResults.isEmpty()) {
+//                results.addAll(expResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getJobTitle() != null && !criteria.getJobTitle().trim().isEmpty()) {
+//            List<Resume> expResults = resumeRepository.findByJobTitleRegex(criteria.getJobTitle());
+//            if (!expResults.isEmpty()) {
+//                results.addAll(expResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        // Education search
+//        if (criteria.getDegree() != null && !criteria.getDegree().trim().isEmpty()) {
+//            List<Resume> eduResults = resumeRepository.findByDegreeRegex(criteria.getDegree());
+//            if (!eduResults.isEmpty()) {
+//                results.addAll(eduResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        if (criteria.getInstitution() != null && !criteria.getInstitution().trim().isEmpty()) {
+//            List<Resume> eduResults = resumeRepository.findByInstitutionRegex(criteria.getInstitution());
+//            if (!eduResults.isEmpty()) {
+//                results.addAll(eduResults);
+//                hasResults = true;
+//            }
+//        }
+//
+//        // Date range search
+//        if ((criteria.getUploadedAfter() != null && !criteria.getUploadedAfter().trim().isEmpty()) ||
+//                (criteria.getUploadedBefore() != null && !criteria.getUploadedBefore().trim().isEmpty())) {
+//            LocalDateTime startDate = criteria.getUploadedAfter() != null && !criteria.getUploadedAfter().trim().isEmpty() ?
+//                    LocalDateTime.parse(criteria.getUploadedAfter()) : LocalDateTime.MIN;
+//            LocalDateTime endDate = criteria.getUploadedBefore() != null && !criteria.getUploadedBefore().trim().isEmpty() ?
+//                    LocalDateTime.parse(criteria.getUploadedBefore()) : LocalDateTime.now();
+//
+//            List<Resume> dateResults = resumeRepository.findByUploadedAtBetween(startDate, endDate);
+//            if (!dateResults.isEmpty()) {
+//                results.addAll(dateResults);
+//                hasResults = true;
+//            }
+//        }
+
+        // If no specific searches returned results, return empty list instead of all resumes
+        if (!hasResults) {
+            log.info("No search results found for criteria: {}, returning empty results", criteria);
+            return new ArrayList<>();
+        }
+
+        // Remove duplicates and return
+        List<Resume> finalResults = results.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        log.info("Search completed. Total results: {} (from {} initial matches)", finalResults.size(), results.size());
+        return finalResults;
+    }
+
+    /**
+     * Check if search criteria has any non-null values
+     */
+    public boolean hasAnyCriteria(ResumeSearchCriteria criteria) {
+        return criteria.getKeyword() != null ||
+                (criteria.getUploadedAfter() != null && !criteria.getUploadedAfter().trim().isEmpty()) ||
+                (criteria.getUploadedBefore() != null && !criteria.getUploadedBefore().trim().isEmpty());
+
+//        criteria.getFirstName() != null || criteria.getLastName() != null ||
+//                criteria.getFullName() != null || criteria.getEmail() != null ||
+//                criteria.getPhone() != null || criteria.getCity() != null ||
+//                criteria.getState() != null || criteria.getProgrammingLanguages() != null ||
+//                criteria.getFrameworks() != null || criteria.getCompanyName() != null ||
+//                criteria.getJobTitle() != null || criteria.getDegree() != null ||
+//                criteria.getInstitution() != null ||
+    }
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -163,5 +358,26 @@ public class ResumeServiceImpl implements ResumeService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
+    }
+    private String maskPersonalInfo(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        // Mask email addresses - keep first 3 chars, then ***@mail
+        text = text.replaceAll("(?i)([a-zA-Z0-9._%+-]{3})[a-zA-Z0-9._%+-]*@[a-z0-9.-]+\\.[a-z]{2,}", "$1***@mail");
+
+        // Mask phone numbers - keep last 4 digits, mask the rest with *
+        text = text.replaceAll("(\\+?\\(?\\d{1,3}\\)?[-.\s]?)?\\d{2,3}[-.\s]?\\d{2,3}[-.\s]?(\\d{4})", "******$2");
+
+        return text;
+    }
+
+    @Override
+    public void deleteResume(String id) {
+        if (!resumeRepository.existsById(id)) {
+            throw new RuntimeException("Resume not found with id: " + id);
+        }
+        resumeRepository.deleteById(id);
     }
 }

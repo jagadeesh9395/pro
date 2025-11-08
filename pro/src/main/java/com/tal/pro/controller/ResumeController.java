@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/resumes")
@@ -47,17 +48,18 @@ public class ResumeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getResume(@PathVariable String id) {
         try {
-            Resume resume = resumeService.getResumeById(id);
-            
-            // Return HTML content if available
-            if (resume.getHtmlContent() != null) {
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.TEXT_HTML);
-                return new ResponseEntity<>(resume.getHtmlContent(), headers, HttpStatus.OK);
-            }
-            
-            // Fallback to file download if no HTML content
-            return getResumeFile(id);
+            return resumeService.getResumeById(id)
+                .map(resume -> {
+                    // Return HTML content if available
+                    if (resume.getHtmlContent() != null) {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.TEXT_HTML);
+                        return new ResponseEntity<>(resume.getHtmlContent(), headers, HttpStatus.OK);
+                    }
+                    // Fallback to file download if no HTML content
+                    return getResumeFile(id);
+                })
+                .orElse(ResponseEntity.notFound().build());
             
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -65,19 +67,23 @@ public class ResumeController {
         }
     }
 
-    @GetMapping("/{id}/file")
     public ResponseEntity<?> getResumeFile(@PathVariable String id) {
         try {
-            Resume resume = resumeService.getResumeById(id);
-            
+            Optional<Resume> resumeOpt = resumeService.getResumeById(id);
+            if (resumeOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Resume not found with id: " + id);
+            }
+
+            Resume resume = resumeOpt.get();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", resume.getOriginalFileName());
-            
+
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(resume.getOriginalFileData());
-            
+
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Resume file not found: " + e.getMessage());
