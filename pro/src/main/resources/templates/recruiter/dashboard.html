@@ -207,8 +207,13 @@
     <div class="main-content">
         <!-- Top Navigation -->
         <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Welcome, <span th:text="${fullName}">User</span></h5>
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link d-md-none me-3 text-dark" onclick="toggleSidebar()">
+                        <i class="bi bi-list" style="font-size: 1.5rem;"></i>
+                    </button>
+                    <h5 class="mb-0 d-none d-md-block">Welcome, <span th:text="${fullName}">User</span></h5>
+                </div>
                 <div class="d-flex align-items-center">
                     <span class="me-3"><i class="bi bi-building me-2"></i><span th:text="${companyName}">Company</span></span>
                     <div class="dropdown">
@@ -301,13 +306,29 @@
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Jobs</h5>
-                            <div>
-                                <a href="/recruiter/search-candidates" class="btn btn-outline-primary me-2">
-                                    <i class="bi bi-search me-2"></i>Find Candidates
-                                </a>
-                                <a href="/recruiter/jobs/new" class="btn btn-primary">
-                                    <i class="bi bi-plus-lg me-2"></i>Post New Job
-                                </a>
+                            <div class="d-flex align-items-center w-100">
+                                <form id="searchForm" th:action="@{/recruiter/search-candidates}" method="get" class="flex-grow-1 me-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <i class="bi bi-search text-muted"></i>
+                                        </span>
+                                        <input type="text" 
+                                               name="q" 
+                                               class="form-control border-start-0" 
+                                               placeholder="Search candidates by skills, location, or experience..." 
+                                               aria-label="Search candidates"
+                                               th:value="${param.q}"
+                                               style="height: 44px;">
+                                    </div>
+                                </form>
+                                <div class="d-flex">
+                                    <button type="submit" form="searchForm" class="btn btn-primary me-2" style="height: 44px; min-width: 140px;">
+                                        <i class="bi bi-search me-2"></i>Find Candidates
+                                    </button>
+                                    <a href="/recruiter/jobs/new" class="btn btn-primary d-flex align-items-center" style="height: 44px;">
+                                        <i class="bi bi-plus-lg me-2"></i>Post New Job
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -431,5 +452,24 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('sidebar-visible');
+        }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Focus search input when search icon is clicked on mobile
+            document.querySelector('.search-icon').addEventListener('click', function() {
+                document.querySelector('.search-input').focus();
+            });
+        });
+    </script>
 </body>
 </html>

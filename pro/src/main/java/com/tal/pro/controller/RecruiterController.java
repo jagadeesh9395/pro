@@ -125,21 +125,19 @@ public class RecruiterController {
             model.addAttribute("fullName", recruiter.getFullName());
             model.addAttribute("email", recruiter.getEmail());
             model.addAttribute("companyName", recruiter.getCompany());
-            model.addAttribute("companyDescription", recruiter.getCompanyDescription());
-            model.addAttribute("website", recruiter.getWebsite());
             model.addAttribute("isRecruiter", true);
             
             // Add search results and pagination info
-            model.addAttribute("resumes", resumePage.getContent());
+            model.addAttribute("candidates", resumePage.getContent());
             model.addAttribute("totalItems", resumePage.getTotalElements());
             model.addAttribute("totalPages", resumePage.getTotalPages());
             model.addAttribute("currentPage", page);
             model.addAttribute("pageSize", size);
-            model.addAttribute("searchQuery", query != null ? query : "");
+            model.addAttribute("query", query != null ? query : "");
             model.addAttribute("location", location);
-            model.addAttribute("selectedSkills", skills != null ? String.join(",", skills) : "");
+            model.addAttribute("skills", skills);
             
-            return "recruiter/search-candidates";
+            return "recruiter/search-results";
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/auth/login?error=access_denied";
