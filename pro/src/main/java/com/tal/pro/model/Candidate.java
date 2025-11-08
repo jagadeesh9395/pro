@@ -2,9 +2,13 @@ package com.tal.pro.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 
 @Document(collection = "candidates")
 public class Candidate extends User {
+    
+    @DBRef
+    private Resume resume;
     
     @Field("resume_url")
     private String resumeUrl;
@@ -29,6 +33,19 @@ public class Candidate extends User {
     }
     
     // Getters and Setters
+    public Resume getResume() {
+        return resume;
+    }
+
+    public void setResume(Resume resume) {
+        this.resume = resume;
+        if (resume != null) {
+            this.resumeUrl = "/api/resumes/" + resume.getId();
+        } else {
+            this.resumeUrl = null;
+        }
+    }
+
     public String getResumeUrl() {
         return resumeUrl;
     }

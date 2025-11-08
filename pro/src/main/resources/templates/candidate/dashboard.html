@@ -248,7 +248,9 @@
                     <p class="mb-0">Your job search journey just got easier. Check your applications, upcoming interviews, and personalized job recommendations.</p>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <a th:href="@{/candidate/profile}" class="btn btn-light">Update Profile</a>
+                    <a th:href="@{/candidate/upload-resume}" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i> Upload Resume
+                    </a>
                 </div>
             </div>
         </div>
@@ -454,6 +456,47 @@
 
             <!-- Sidebar -->
             <div class="col-lg-4">
+                <!-- Resume Status -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Resume Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 id="resumeStatus" class="mb-0">
+                                    <span th:if="${candidate?.resume != null}">Resume Uploaded</span>
+                                    <span th:unless="${candidate?.resume != null}">No Resume Uploaded</span>
+                                </h6>
+                                <small class="text-muted" id="resumeDate" th:if="${candidate?.resume != null}">
+                                    Uploaded on <span th:text="${#temporals.format(candidate.resume.uploadedAt, 'MMM d, yyyy')}"></span>
+                                </small>
+                            </div>
+                        </div>
+                        <div th:if="${candidate?.resume != null}" class="border-top pt-3">
+                            <p class="mb-2">
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                <a th:href="${candidate.resumeUrl}" target="_blank" id="resumeFileName">
+                                    <span th:text="${candidate.resume.originalFileName}"></span>
+                                </a>
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a href="/candidate/upload-resume" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Update Resume
+                                </a>
+                            </div>
+                        </div>
+                        <div th:unless="${candidate?.resume != null}" class="d-grid gap-2">
+                            <a href="/candidate/upload-resume" class="btn btn-primary btn-sm">
+                                <i class="bi bi-upload me-1"></i> Upload Resume
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Profile Strength -->
                 <div class="card mb-4">
                     <div class="card-header">
