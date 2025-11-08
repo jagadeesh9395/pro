@@ -67,6 +67,7 @@ public class ResumeController {
         }
     }
 
+    @GetMapping("/{id}/download")
     public ResponseEntity<?> getResumeFile(@PathVariable String id) {
         try {
             Optional<Resume> resumeOpt = resumeService.getResumeById(id);

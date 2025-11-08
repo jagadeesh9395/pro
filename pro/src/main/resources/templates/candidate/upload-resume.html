@@ -24,6 +24,7 @@
         body {
             background-color: #f8f9fa;
             color: var(--text-color);
+            min-width: 1200px;
         }
         
         .sidebar {
@@ -31,22 +32,28 @@
             background: white;
             box-shadow: var(--box-shadow);
             position: fixed;
-            width: 250px;
+            width: 280px;
             padding: 20px 0;
+            z-index: 1000;
         }
         
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
+            margin-left: 280px;
+            padding: 30px 60px;
+            max-width: 1600px;
+            width: calc(100% - 280px);
         }
         
         .navbar {
             background: white;
             box-shadow: var(--box-shadow);
-            padding: 15px 20px;
+            padding: 15px 60px;
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 999;
+            width: 100%;
+            left: 0;
+            right: 0;
         }
         
         .card {
@@ -54,17 +61,29 @@
             border-radius: 10px;
             box-shadow: var(--box-shadow);
             margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            padding: 15px 20px;
         }
         
         .upload-area {
             border: 2px dashed #ced4da;
             border-radius: 10px;
-            padding: 40px 20px;
+            padding: 60px 20px;
             text-align: center;
             background-color: #f8f9fa;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
         
         .upload-area:hover, .upload-area.dragover {
@@ -73,9 +92,10 @@
         }
         
         .upload-icon {
-            font-size: 48px;
+            font-size: 64px;
             color: var(--primary-color);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            opacity: 0.8;
         }
         
         .file-info {
@@ -112,13 +132,43 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <h5 class="mb-0">Upload Resume</h5>
+            <div>
+                <span class="me-3">
+                    <i class="bi bi-bell text-muted"></i>
+                </span>
+                <span class="me-3">
+                    <i class="bi bi-envelope text-muted"></i>
+                </span>
+                <span class="d-inline-flex align-items-center">
+                    <div class="profile-img me-2">
+                        <span th:with="user=${#authentication?.principal}"
+                              th:text="${user != null ? #strings.substring(user.fullName, 0, 1) : 'U'}">U</span>
+                    </div>
+                    <span class="d-none d-md-inline" th:if="${#authentication?.principal != null}">
+                        <span th:text="${#authentication.principal.fullName}">User</span>
+                    </span>
+                    <span class="d-none d-md-inline" th:if="${#authentication?.principal == null}">
+                        User
+                    </span>
+                </span>
+            </div>
         </div>
     </nav>
 
     <!-- Page Content -->
     <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/candidate/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Upload Resume</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-lg-9">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">Upload Your Resume</h5>
@@ -165,17 +215,50 @@
                 </div>
                 
                 <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Resume Tips</h5>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Resume Tips</h5>
+                        <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
+                           title="Follow these tips to make your resume stand out to recruiters"></i>
                     </div>
                     <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Ensure your resume is up-to-date with your latest experience</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Use a clear, professional format</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Include relevant keywords from job descriptions</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Keep it concise (1-2 pages recommended)</li>
-                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Save as a PDF for best formatting</li>
-                        </ul>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Keep it Updated</h6>
+                                            <p class="small text-muted mb-0">Ensure your resume includes your most recent experience and skills</p>
+                                        </div>
+                                    </li>
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Professional Format</h6>
+                                            <p class="small text-muted mb-0">Use a clean, easy-to-read layout with consistent formatting</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">Keyword Optimization</h6>
+                                            <p class="small text-muted mb-0">Include relevant keywords from job descriptions</p>
+                                        </div>
+                                    </li>
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                        <div>
+                                            <h6 class="mb-1">File Format</h6>
+                                            <p class="small text-muted mb-0">Save as PDF for consistent formatting across devices</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

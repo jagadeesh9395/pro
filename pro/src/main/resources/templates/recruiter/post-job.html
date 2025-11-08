@@ -116,21 +116,24 @@
 
         <div class="container-fluid">
             <div class="row justify-content-center">
-                <div class="col-lg-8">
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">Job Details</h5>
                         </div>
                         <div class="card-body">
-                            <form th:action="@{/recruiter/jobs/post}" method="post" th:object="${job}">
+                            <form id="jobPostForm" th:action="@{/recruiter/jobs/post}" method="post" th:object="${job}" onsubmit="handleFormSubmit(event); return false;">
                                 <div class="mb-3">
                                     <label for="jobTitle" class="form-label">Job Title *</label>
-                                    <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}" required>
+                                    <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}" 
+                                           placeholder="e.g., Senior Software Engineer, Product Manager, Data Scientist" required>
+                                    <div class="form-text">Be specific and include the seniority level (e.g., Junior, Mid-level, Senior, Lead)</div>
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="companyName" class="form-label">Company Name *</label>
-                                    <input type="text" class="form-control" id="companyName" th:field="*{companyName}" required>
+                                    <input type="text" class="form-control" id="companyName" th:field="*{companyName}" 
+                                           placeholder="Your company name" required>
+                                    <div class="form-text">Your company's official name as you want it to appear in the job posting</div>
                                 </div>
                                 
                                 <div class="row">
@@ -166,7 +169,7 @@
                                             <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}" step="0.1" min="0" onchange="formatLPA(this)">
                                             <span class="input-group-text">LPA</span>
                                         </div>
-                                        <div class="form-text">In Lakhs Per Annum (e.g., 15 for ₹15 LPA)</div>
+                                        <div class="form-text">Maximum annual salary in LPA (e.g., 20 for ₹20 LPA, 0 for 'Not Disclosed')</div>
                                     </div>
                                 </div>
                                 
@@ -182,9 +185,25 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="skills" class="form-label">Required Skills</label>
-                                    <input type="text" class="form-control" id="skills" th:field="*{skills}">
-                                    <div class="form-text">Separate skills with commas (e.g., Java, React, SQL)</div>
+                                    <label for="skills" class="form-label">Required Skills *</label>
+                                    <input type="text" class="form-control" id="skills" th:field="*{skills}" 
+                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
+                                    <div class="form-text">List relevant technical and soft skills, separated by commas. Include programming languages, frameworks, tools, and methodologies.</div>
+                                    <div class="mt-2">
+                                        <small class="text-muted fw-bold">Popular skills:</small>
+                                        <div class="d-flex flex-wrap gap-2 mt-1">
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Java')">Java</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Python')">Python</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('JavaScript')">JavaScript</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('React')">React</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Node.js')">Node.js</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('AWS')">AWS</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Docker')">Docker</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Kubernetes')">Kubernetes</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('SQL')">SQL</span>
+                                            <span class="badge bg-light text-dark border cursor-pointer" onclick="addSkill('Agile')">Agile</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between mt-4">
@@ -196,6 +215,71 @@
                                     </button>
                                 </div>
                             </form>
+                            
+                            <!-- Success Message (initially hidden) -->
+                            <div id="successMessage" class="d-none">
+                                <div class="alert alert-success">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-check-circle-fill fs-3 me-3"></i>
+                                        <h4 class="mb-0">Job Posted Successfully!</h4>
+                                    </div>
+                                    <p class="mt-3 mb-0">Your job listing is now live and visible to candidates. Here are the details:</p>
+                                </div>
+                                
+                                <div class="card mt-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Job Details</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <h5 id="previewJobTitle"></h5>
+                                                <h6 class="text-muted" id="previewCompany"></h6>
+                                            </div>
+                                            <div class="col-md-6 text-md-end">
+                                                <span class="badge bg-primary" id="previewJobType"></span>
+                                                <span class="badge bg-secondary ms-2" id="previewLocation"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="bi bi-currency-rupee me-2"></i>
+                                                    <span id="previewSalary"></span>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-calendar-check me-2"></i>
+                                                    <span>Posted: <span id="postDate"></span></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Required Skills:</h6>
+                                                <div id="previewSkills" class="d-flex flex-wrap gap-2"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <h6>Job Description:</h6>
+                                            <div id="previewDescription" class="bg-light p-3 rounded"></div>
+                                        </div>
+                                        
+                                        <div class="mt-4">
+                                            <h6>Requirements:</h6>
+                                            <ul id="previewRequirements" class="list-unstyled"></ul>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between mt-5">
+                                            <a href="/recruiter/dashboard" class="btn btn-outline-primary">
+                                                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                                            </a>
+                                            <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                                                <i class="bi bi-plus-circle me-2"></i>Post Another Job
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,6 +289,59 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Function to add skill to skills input
+        function addSkill(skill) {
+            const skillsInput = document.getElementById('skills');
+            const currentSkills = skillsInput.value.trim();
+            
+            if (currentSkills === '') {
+                skillsInput.value = skill;
+            } else if (!currentSkills.includes(skill)) {
+                skillsInput.value = `${currentSkills}, ${skill}`;
+            }
+            // If skill already exists, do nothing
+        }
+
+        // Function to handle form submission
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            // Get form data
+            const form = document.getElementById('jobPostForm');
+            const formData = new FormData(form);
+            
+            // In a real application, you would submit the form via AJAX here
+            // For this example, we'll just show the success message
+            showSuccessMessage(formData);
+            
+            // In a real implementation, you would do something like:
+            /*
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage(formData);
+                } else {
+                    // Handle error
+                    alert('There was an error posting the job. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error posting the job. Please try again.');
+            });
+            */
+            
+            return false; // Prevent default form submission
+        }
+        
         // Function to validate salary range
         function validateSalaryRange() {
             const minSalary = document.getElementById('minSalary');
@@ -275,10 +412,108 @@
             validateSalaryRange();
         }
         
-        // Add form validation
+        // Function to show success message with job details
+        function showSuccessMessage(formData) {
+            // Hide the form
+            document.querySelector('form').style.display = 'none';
+            
+            // Show success message
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.remove('d-none');
+            
+            // Populate job details
+            document.getElementById('previewJobTitle').textContent = formData.get('jobTitle');
+            document.getElementById('previewCompany').textContent = formData.get('companyName');
+            document.getElementById('previewJobType').textContent = 
+                Array.from(document.querySelector('#jobType option')
+                .selectedOptions)[0].textContent;
+            document.getElementById('previewLocation').textContent = formData.get('location');
+            
+            // Format salary
+            const minSalary = parseFloat(formData.get('minSalary') || 0);
+            const maxSalary = parseFloat(formData.get('maxSalary') || 0);
+            let salaryText = 'Not Disclosed';
+            if (minSalary > 0 && maxSalary > 0) {
+                salaryText = `₹${minSalary} - ₹${maxSalary} LPA`;
+            } else if (minSalary > 0) {
+                salaryText = `From ₹${minSalary} LPA`;
+            } else if (maxSalary > 0) {
+                salaryText = `Up to ₹${maxSalary} LPA`;
+            }
+            document.getElementById('previewSalary').textContent = salaryText;
+            
+            // Set current date
+            const today = new Date();
+            document.getElementById('postDate').textContent = today.toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Add skills
+            const skillsContainer = document.getElementById('previewSkills');
+            skillsContainer.innerHTML = '';
+            const skills = formData.get('skills').split(',').map(skill => skill.trim());
+            skills.forEach(skill => {
+                if (skill) {
+                    const skillBadge = document.createElement('span');
+                    skillBadge.className = 'badge bg-light text-dark border';
+                    skillBadge.textContent = skill;
+                    skillsContainer.appendChild(skillBadge);
+                }
+            });
+            
+            // Set description and requirements
+            document.getElementById('previewDescription').textContent = formData.get('description');
+            
+            const requirementsList = document.getElementById('previewRequirements');
+            const requirements = formData.get('requirements').split('\n').filter(req => req.trim() !== '');
+            requirementsList.innerHTML = requirements.map(req => 
+                `<li class="mb-2"><i class="bi bi-check2 text-success me-2"></i>${req}</li>`
+            ).join('');
+            
+            // Scroll to success message
+            successMessage.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Add form validation and submission handling
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
             const minSalary = document.getElementById('minSalary');
+            
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // In a real application, you would submit the form via AJAX here
+                // For this example, we'll just show the success message
+                const formData = new FormData(form);
+                showSuccessMessage(formData);
+                
+                // In a real implementation, you would do something like:
+                /*
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccessMessage(formData);
+                    } else {
+                        // Handle error
+                        alert('There was an error posting the job. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an error posting the job. Please try again.');
+                });
+                */
+            });
             const maxSalary = document.getElementById('maxSalary');
             
             // Add event listeners for real-time validation

@@ -174,7 +174,12 @@ public class ResumeServiceImpl implements ResumeService {
 
         // If no criteria specified, return all resumes
         if (!hasAnyCriteria(criteria)) {
-            return resumeRepository.findAll();
+            List<Resume> allResumes = resumeRepository.findAll();
+            log.debug("All resumes in database ({}):", allResumes.size());
+            allResumes.forEach(resume ->
+                    log.debug("Resume ID: {}, Uploaded At: {}", resume.getId(), resume.getUploadedAt())
+            );
+            return allResumes;
         }
 
         // Try specific searches first
