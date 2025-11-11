@@ -2,6 +2,7 @@ package com.tal.pro.controller;
 import com.tal.pro.model.Resume;
 import com.tal.pro.service.ResumeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/resumes")
 @RequiredArgsConstructor
+@Slf4j
 public class ResumeController {
 
     private final ResumeService resumeService;
@@ -51,11 +53,23 @@ public class ResumeController {
                                         @RequestParam("file") MultipartFile file,
                                         Principal principal) {
         try {
-            if (file.isEmpty()) {
+            log.info("Received request to update resume with ID: {}", id);
+            
+            if (file == null || file.isEmpty()) {
+                log.warn("No file provided for resume update");
                 return ResponseEntity.badRequest().body("Please select a file to upload");
             }
             
+            log.info("Processing resume update for user: {}", principal.getName());
             Resume updatedResume = resumeService.updateResume(id, file, principal.getName());
+            
+            if (updatedResume == null) {
+                log.error("Failed to update resume: updateResume returned null");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to update resume");
+            }
+            
+            log.info("Resume updated successfully. ID: {}", updatedResume.getId());
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Resume updated successfully");
@@ -67,9 +81,11 @@ public class ResumeController {
             return ResponseEntity.ok(response);
             
         } catch (IOException e) {
+            log.error("Error updating resume: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to update resume: " + e.getMessage());
         } catch (RuntimeException e) {
+            log.error("Error updating resume: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Resume not found or not authorized: " + e.getMessage());
         }

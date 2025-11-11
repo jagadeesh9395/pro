@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title>Upload Resume - TalentTrove</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -20,13 +20,13 @@
             --border-color: #e9ecef;
             --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-        
+
         body {
             background-color: #f8f9fa;
             color: var(--text-color);
             min-width: 1200px;
         }
-        
+
         .sidebar {
             min-height: 100vh;
             background: white;
@@ -36,14 +36,14 @@
             padding: 20px 0;
             z-index: 1000;
         }
-        
+
         .main-content {
             margin-left: 280px;
             padding: 30px 60px;
             max-width: 1600px;
             width: calc(100% - 280px);
         }
-        
+
         .navbar {
             background: white;
             box-shadow: var(--box-shadow);
@@ -55,7 +55,7 @@
             left: 0;
             right: 0;
         }
-        
+
         .card {
             border: none;
             border-radius: 10px;
@@ -63,18 +63,18 @@
             margin-bottom: 20px;
             transition: transform 0.3s;
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
         }
-        
+
         .card-header {
             background: white;
             border-bottom: 1px solid var(--border-color);
             font-weight: 600;
             padding: 15px 20px;
         }
-        
+
         .upload-area {
             border: 2px dashed #ced4da;
             border-radius: 10px;
@@ -85,19 +85,20 @@
             transition: all 0.3s;
             margin: 20px 0;
         }
-        
-        .upload-area:hover, .upload-area.dragover {
+
+        .upload-area:hover,
+        .upload-area.dragover {
             border-color: var(--primary-color);
             background-color: #f0f7ff;
         }
-        
+
         .upload-icon {
             font-size: 64px;
             color: var(--primary-color);
             margin-bottom: 20px;
             opacity: 0.8;
         }
-        
+
         .file-info {
             margin-top: 20px;
             padding: 15px;
@@ -105,18 +106,18 @@
             border-radius: 5px;
             display: none;
         }
-        
+
         .file-info.show {
             display: block;
         }
-        
+
         .file-preview {
             max-width: 100%;
             max-height: 300px;
             margin-top: 15px;
             display: none;
         }
-        
+
         .file-preview.show {
             display: block;
         }
@@ -132,24 +133,23 @@
         <div class="container-fluid">
             <h5 class="mb-0">Upload Resume</h5>
             <div>
+                        <span class="me-3">
+                            <i class="bi bi-bell text-muted"></i>
+                        </span>
                 <span class="me-3">
-                    <i class="bi bi-bell text-muted"></i>
-                </span>
-                <span class="me-3">
-                    <i class="bi bi-envelope text-muted"></i>
-                </span>
+                            <i class="bi bi-envelope text-muted"></i>
+                        </span>
                 <span class="d-inline-flex align-items-center">
-                    <div class="profile-img me-2">
-                        <span th:with="user=${#authentication?.principal}"
-                              th:text="${user != null ? #strings.substring(user.fullName, 0, 1) : 'U'}">U</span>
-                    </div>
-                    <span class="d-none d-md-inline" th:if="${#authentication?.principal != null}">
-                        <span th:text="${#authentication.principal.fullName}">User</span>
-                    </span>
-                    <span class="d-none d-md-inline" th:if="${#authentication?.principal == null}">
-                        User
-                    </span>
-                </span>
+                            <div class="profile-img me-2">
+                                <span th:with="user=${#authentication?.principal}" th:text="${user != null ? #strings.substring(user.fullName, 0, 1) : 'U'}">U</span>
+                            </div>
+                            <span class="d-none d-md-inline" th:if="${#authentication?.principal != null}">
+                                <span th:text="${#authentication.principal.fullName}">User</span>
+                            </span>
+                            <span class="d-none d-md-inline" th:if="${#authentication?.principal == null}">
+                                User
+                            </span>
+                        </span>
             </div>
         </div>
     </nav>
@@ -183,20 +183,21 @@
                                         <span class="badge bg-primary ms-2">Current Resume</span>
                                     </div>
                                     <div>
-                                        <a th:href="@{/api/resumes/} + ${candidate.resume.id} + '/download'" 
-                                           class="btn btn-sm btn-outline-primary me-2">
-                                            <i class="bi bi-download me-1"></i>Download
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" id="deleteResumeBtn">
-                                            <i class="bi bi-trash me-1"></i>Remove
-                                        </button>
+                                        <a th:href="@{/api/resumes/} + ${candidate.resume.id} + '/download'" class="btn btn-sm btn-outline-primary me-2"> <i class="bi bi-download me-1"></i>Download </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="deleteResumeBtn"><i class="bi bi-trash me-1"></i>Remove</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <form id="resumeUploadForm" th:action="${candidate.resume != null} ? @{/api/resumes/} + ${candidate.resume.id} : @{/api/resumes/upload}" 
-                              method="post" th:data-method="${candidate.resume != null} ? 'PUT' : 'POST'" enctype="multipart/form-data">
+                        <form
+                                id="resumeUploadForm"
+                                th:action="${candidate.resume != null} ? @{/api/resumes/} + ${candidate.resume.id} : @{/api/resumes/upload}"
+                                th:data-resume-id="${candidate.resume?.id}"
+                                method="post"
+                                th:data-method="${candidate.resume != null} ? 'PUT' : 'POST'"
+                                enctype="multipart/form-data"
+                        >
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <div class="upload-area" id="dropZone" th:classappend="${candidate.resume != null} ? 'has-existing-resume'">
                                 <div class="upload-icon">
@@ -204,15 +205,14 @@
                                 </div>
                                 <h5 th:text="${candidate.resume == null} ? 'Drag & drop your resume here' : 'Drag & drop to update your resume'"></h5>
                                 <p class="text-muted mb-3">or</p>
-                                <button type="button" class="btn" th:class="${candidate.resume == null} ? 'btn-primary' : 'btn-outline-primary'" 
-                                        onclick="document.getElementById('fileInput').click()">
+                                <button type="button" class="btn" th:class="${candidate.resume == null} ? 'btn-primary' : 'btn-outline-primary'" onclick="document.getElementById('fileInput').click()">
                                     <i class="bi" th:class="${candidate.resume == null} ? 'bi-upload' : 'bi-arrow-repeat'"></i>
                                     <span th:text="${candidate.resume == null} ? 'Choose File' : 'Update Resume'"></span>
                                 </button>
                                 <p class="small text-muted mt-2 mb-0">Supported formats: PDF, DOC, DOCX (Max 5MB)</p>
-                                <input type="file" id="fileInput" name="file" accept=".pdf,.doc,.docx" style="display: none;" th:required="${candidate.resume == null}">
+                                <input type="file" id="fileInput" name="file" accept=".pdf,.doc,.docx" style="display: none;" th:required="${candidate.resume == null}" />
                             </div>
-                            
+
                             <div id="fileInfo" class="file-info">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -226,7 +226,7 @@
                                     <div id="uploadProgress" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </div>
-                            
+
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                                 <a th:href="@{/candidate/dashboard}" class="btn btn-outline-secondary me-md-2">Cancel</a>
                                 <button type="submit" class="btn btn-primary" id="uploadButton" disabled>
@@ -237,12 +237,11 @@
                         </form>
                     </div>
                 </div>
-                
+
                 <div class="card mt-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Resume Tips</h5>
-                        <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
-                           title="Follow these tips to make your resume stand out to recruiters"></i>
+                        <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Follow these tips to make your resume stand out to recruiters"></i>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -303,29 +302,28 @@
         const uploadForm = document.getElementById('resumeUploadForm');
         const uploadButton = document.querySelector('button[type="submit"]');
         let selectedFile = null;
-        
+
         // Initialize button state
         const updateButtonState = () => {
-            const hasFile = selectedFile !== null;
+            const hasFile = selectedFile !== null || document.querySelector('.has-existing-resume');
             console.log('Updating button state. Has file:', hasFile, 'Upload button found:', !!uploadButton);
             if (uploadButton) {
-                console.log('Current button disabled state:', uploadButton.disabled, 'Setting to:', !hasFile);
                 uploadButton.disabled = !hasFile;
             }
         };
-        
+
         // Set initial button state
         updateButtonState();
-        
+
         // Initialize upload spinner
         const uploadSpinner = document.getElementById('uploadSpinner');
         const uploadButtonText = document.getElementById('uploadButtonText');
         const uploadProgress = document.getElementById('uploadProgress');
-        
+
         // CSRF token for form submission
         const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-        
+
         // Show alert function
         function showAlert(message, type = 'success') {
             const alertDiv = document.createElement('div');
@@ -335,88 +333,90 @@
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
-            
+
             // Insert alert before the form
             uploadForm.parentNode.insertBefore(alertDiv, uploadForm);
-            
+
             // Auto-remove alert after 5 seconds
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
         }
-        
-        // Handle drag and drop events
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
+
+        // Handle drag and drop events if dropZone exists
+        if (dropZone) {
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight() {
+                dropZone.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                dropZone.classList.remove('dragover');
+            }
+
+            function handleDrop(e) {
+                preventDefaults(e);
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Highlight drop zone when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            // Remove highlight when item leaves drop zone
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            // Handle dropped files
+            dropZone.addEventListener('drop', handleDrop, false);
+        } else {
+            console.warn('Drop zone element not found');
         }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight() {
-            dropZone.classList.add('dragover');
-        }
-        
-        function unhighlight() {
-            dropZone.classList.remove('dragover');
-        }
-        
-        // Handle dropped files
-        dropZone.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-        
+
         // Handle file selection via button
-        console.log('Setting up file input handler');
         if (fileInput) {
-            console.log('File input found, adding change listener');
             fileInput.addEventListener('change', function() {
-                console.log('File input changed, files:', this.files);
                 if (this.files && this.files.length > 0) {
-                    console.log('Calling handleFiles with', this.files[0].name);
                     handleFiles(this.files);
-                } else {
-                    console.log('No files selected');
                 }
             });
         } else {
-            console.error('File input element not found!');
+            console.warn('File input element not found');
         }
-        
+
         function handleFiles(files) {
             if (files.length > 0) {
                 const file = files[0];
-                
+
                 // Validate file type
                 const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
                 if (!validTypes.includes(file.type)) {
                     alert('Please upload a valid file (PDF, DOC, or DOCX)');
                     return;
                 }
-                
+
                 // Validate file size (5MB max)
                 const maxSize = 5 * 1024 * 1024; // 5MB
                 if (file.size > maxSize) {
                     alert('File size exceeds 5MB limit');
                     return;
                 }
-                
+
                 selectedFile = file;
-                
+
                 // Update UI
                 console.log('Updating UI with file:', file.name);
                 if (fileName) fileName.textContent = file.name;
@@ -426,7 +426,7 @@
                 updateButtonState();
             }
         }
-        
+
         // Format file size
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
@@ -435,10 +435,11 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
-        
+
         // Remove file
         if (removeFileBtn) {
             removeFileBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
                 fileInput.value = '';
                 selectedFile = null;
@@ -446,170 +447,73 @@
                 updateButtonState();
             });
         }
-        // Handle form submission
-        uploadForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            if (!fileInput.files || fileInput.files.length === 0) {
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            
-            // Show loading state
-            uploadButton.disabled = true;
-            uploadSpinner.classList.remove('d-none');
-            uploadButtonText.textContent = 'Uploading...';
-            
-            try {
-                const response = await fetch('/api/resumes/upload', {
-                    method: 'POST',
-                    body: formData,
+
+        // Form submission handler
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!selectedFile) {
+                    showAlert('Please select a file to upload', 'warning');
+                    return;
+                }
+                
+                const formData = new FormData(uploadForm);
+                const isUpdate = uploadForm.getAttribute('data-method') === 'PUT';
+                let url = uploadForm.getAttribute('action');
+                
+                // Add _method=PUT for updates if using form data
+                if (isUpdate) {
+                    formData.append('_method', 'PUT');
+                }
+                
+                // Show loading state
+                if (uploadButton) {
+                    uploadButton.disabled = true;
+                    const spinner = uploadButton.querySelector('.spinner-border');
+                    if (spinner) spinner.classList.remove('d-none');
+                    uploadButtonText.textContent = isUpdate ? 'Updating...' : 'Uploading...';
+                }
+                
+                // Send the request
+                fetch(url, {
+                    method: isUpdate ? 'PUT' : 'POST',
                     headers: {
                         [csrfHeader]: csrfToken
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Upload failed');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showAlert(data.message || 'Resume uploaded successfully!', 'success');
+                    // Redirect to dashboard after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/candidate/dashboard';
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('Upload error:', error);
+                    showAlert(error.message || 'Failed to upload resume. Please try again.', 'danger');
+                })
+                .finally(() => {
+                    // Reset loading state
+                    if (uploadButton) {
+                        uploadButton.disabled = false;
+                        const spinner = uploadButton.querySelector('.spinner-border');
+                        if (spinner) spinner.classList.add('d-none');
+                        uploadButtonText.textContent = isUpdate ? 'Update Resume' : 'Upload Resume';
                     }
                 });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Failed to upload resume');
-                }
-                
-                const data = await response.json();
-                
-                // Show success message
-                showAlert('Resume uploaded successfully!', 'success');
-                
-                // Update UI with uploaded file info
-                const file = fileInput.files[0];
-                fileName.textContent = file.name;
-                fileSize.textContent = formatFileSize(file.size);
-                fileInfo.classList.add('show');
-                
-                // Update progress bar
-                uploadProgress.style.width = '100%';
-                uploadProgress.setAttribute('aria-valuenow', '100');
-                
-                // Redirect to dashboard after 1.5 seconds
-                setTimeout(() => {
-                    window.location.href = '/candidate/dashboard';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Upload error:', error);
-                showAlert(error.message || 'Failed to upload resume. Please try again.', 'danger');
-                
-                // Reset UI
-                uploadProgress.style.width = '0%';
-                uploadProgress.setAttribute('aria-valuenow', '0');
-                
-            } finally {
-                // Reset loading state
-                uploadButton.disabled = false;
-                uploadSpinner.classList.add('d-none');
-                uploadButtonText.textContent = 'Upload Resume';
-            }
-        });
-        
-        // Helper function to format file size
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        // Track if form is being submitted
-        let isSubmitting = false;
-        
-        // Handle form submission
-        uploadForm.addEventListener('submit', function(e) {
-            // Prevent default form submission
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Prevent double submission
-            if (isSubmitting || uploadButton.disabled) {
-                return false;
-            }
-            
-            if (!selectedFile && !document.querySelector('.has-existing-resume')) {
-                showAlert('Please select a file to upload', 'danger');
-                return false;
-            }
-            
-            // Set submitting flag
-            isSubmitting = true;
-            
-            // Show loading state
-            const submitBtn = uploadForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + 
-                                (document.querySelector('.has-existing-resume') ? 'Updating...' : 'Uploading...');
-            
-            // Create FormData and append the file
-            const formData = new FormData();
-            if (selectedFile) {
-                formData.append('file', selectedFile);
-            }
-            
-            // Get the CSRF token
-            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-            
-            // Get URL and method from form attributes
-            const url = uploadForm.getAttribute('action');
-            const method = uploadForm.getAttribute('data-method') || 'POST';
-            const isUpdate = method === 'PUT';
-            
-            // Update the form's _method parameter for Spring's HiddenHttpMethodFilter
-            formData.append('_method', method);
-            
-            // Add CSRF token to the form data for form submission
-            formData.append('_csrf', csrfToken);
-            
-            // Send the request
-            // Create headers object
-            const headers = {};
-            headers[csrfHeader] = csrfToken;
-            
-            // Only proceed if we're not already submitting
-            if (uploadButton.disabled) {
-                return false;
-            }
-            
-            fetch(url, {
-                method: method,
-                headers: headers,
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(function(response) {
-                if (!response.ok) {
-                    return response.text().then(function(text) {
-                        throw new Error(text || 'Failed to ' + (isUpdate ? 'update' : 'upload') + ' resume');
-                    });
-                }
-                return response.json();
-            })
-            .then(function(data) {
-                showAlert(data.message || 'Resume ' + (isUpdate ? 'updated' : 'uploaded') + ' successfully', 'success');
-                // Reload the page to show the updated resume
-                setTimeout(function() { window.location.reload(); }, 1500);
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                showAlert(error.message || 'An error occurred while ' + (isUpdate ? 'updating' : 'uploading') + ' the resume', 'danger');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                    isSubmitting = false; // Reset flag on error
-                }
             });
-        });
+        }
     });
 </script>
 </body>
+</html>

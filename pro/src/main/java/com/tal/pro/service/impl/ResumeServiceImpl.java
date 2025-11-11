@@ -94,31 +94,39 @@ public class ResumeServiceImpl implements ResumeService {
             throw new SecurityException("Not authorized to update this resume");
         }
 
-        // Update resume fields
-        existingResume.setOriginalFileName(file.getOriginalFilename());
-        existingResume.setOriginalFileType(file.getContentType());
-        existingResume.setOriginalFileSize(file.getSize());
-        existingResume.setUploadedAt(LocalDateTime.now());
+        // Create a new Resume instance with the same ID to ensure update operation
+        Resume updatedResume = new Resume();
+        updatedResume.setId(existingResume.getId()); // This is crucial for update
+        updatedResume.setOriginalFileName(file.getOriginalFilename());
+        updatedResume.setOriginalFileType(file.getContentType());
+        updatedResume.setOriginalFileSize(file.getSize());
+        updatedResume.setUploadedAt(LocalDateTime.now());
+        updatedResume.setCandidate(candidate);
         
         // Update the file data and convert to HTML
         byte[] fileData = file.getBytes();
-        existingResume.setOriginalFileData(fileData);
+        updatedResume.setOriginalFileData(fileData);
         
         // Convert to HTML using Tika
         String htmlContent = convertToHtml(fileData);
-        existingResume.setHtmlContent(htmlContent);
+        updatedResume.setHtmlContent(htmlContent);
         
-        // Save the updated resume
-        Resume updatedResume = resumeRepository.save(existingResume);
-        
-        // Make sure the candidate's resume reference is set
-        if (candidate.getResume() == null || !candidate.getResume().getId().equals(updatedResume.getId())) {
-            candidate.setResume(updatedResume);
-            candidateRepository.save(candidate);
+        try {
+            // Save the updated resume - this should update the existing document
+            Resume savedResume = resumeRepository.save(updatedResume);
+            
+            // Update the candidate's resume reference if needed
+            if (candidate.getResume() == null || !candidate.getResume().getId().equals(savedResume.getId())) {
+                candidate.setResume(savedResume);
+                candidateRepository.save(candidate);
+            }
+            
+            log.info("Resume updated with ID: {} for user: {}", savedResume.getId(), username);
+            return savedResume;
+        } catch (Exception e) {
+            log.error("Error updating resume: {}", e.getMessage(), e);
+            throw new IOException("Failed to update resume: " + e.getMessage(), e);
         }
-        
-        log.info("Resume updated with ID: {} for user: {}", updatedResume.getId(), username);
-        return updatedResume;
     }
 
     private void validateFile(MultipartFile file) throws IOException {
