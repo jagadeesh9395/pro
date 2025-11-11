@@ -35,6 +35,9 @@ public class JobDto {
     @NotBlank(message = "Requirements are required")
     private String requirements;
 
+    @NotBlank(message = "Experience is required")
+    private String experience;
+
     private String skills; // Comma-separated skills
 
     // For form submission
@@ -53,6 +56,7 @@ public class JobDto {
         dto.setMaxSalary(job.getMaxSalary());
         dto.setDescription(job.getDescription());
         dto.setRequirements(job.getRequirements());
+        dto.setExperience(job.getExperience());
         dto.setSkills(job.getSkills());
         return dto;
     }
@@ -70,6 +74,7 @@ public class JobDto {
         job.setMinSalary(this.minSalary);
         job.setDescription(this.description);
         job.setRequirements(this.requirements);
+        job.setExperience(this.experience);
         job.setSkills(this.skills);
         return job;
     }

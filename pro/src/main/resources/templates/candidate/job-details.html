@@ -91,21 +91,10 @@
         }
         
         .requirements-list {
-            padding-left: 1.25rem;
-        }
-        
-        .requirements-list li {
-            margin-bottom: 0.5rem;
-            position: relative;
-        }
-        
-        .requirements-list li:before {
-            content: "•";
-            color: var(--primary-color);
-            font-weight: bold;
-            display: inline-block;
-            width: 1em;
-            margin-left: -1em;
+            white-space: pre-wrap;      /* Preserve line breaks and spaces */
+            word-wrap: break-word;      /* Break long words if needed */
+            line-height: 1.6;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
@@ -127,14 +116,14 @@
                         <span th:if="${job?.minSalary != null || job?.maxSalary != null}">
                             <i class="bi bi-cash-stack"></i>
                             <span th:if="${job.minSalary != null && job.maxSalary != null}">
-                                $<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> - 
-                                $<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span>
+                                ₹<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> - 
+                                ₹<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> LPA
                             </span>
                             <span th:if="${job.minSalary != null && job.maxSalary == null}">
-                                From $<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span>
+                                From ₹<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> LPA
                             </span>
                             <span th:if="${job.minSalary == null && job.maxSalary != null}">
-                                Up to $<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span>
+                                Up to ₹<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> LPA
                             </span>
                         </span>
                     </div>
@@ -148,14 +137,14 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <div th:if="${isCandidate}">
-                        <button th:if="!${hasApplied}" 
+                    <div th:if="${isCandidate == true}">
+                        <button th:if="${hasApplied == false}" 
                                 class="btn btn-primary btn-apply" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#applyModal">
                             Apply Now
                         </button>
-                        <button th:if="${hasApplied}" 
+                        <button th:if="${hasApplied == true}" 
                                 class="btn btn-success" 
                                 disabled>
                             <i class="bi bi-check-circle"></i> Applied
@@ -188,18 +177,18 @@
                             <p>As a Frontend Developer, you will work closely with our design and backend teams to deliver high-quality, responsive, and performant user experiences.</p>
                         </div>
                         
-                        <h6 class="mb-3">Key Responsibilities:</h6>
-                        <div th:if="${job.requirements != null && !job.requirements.isEmpty()}">
-                            <ul class="requirements-list">
-                                <li th:each="requirement : ${#strings.arraySplit(job.requirements, '\n')}" 
-                                    th:text="${#strings.trim(requirement)}">
-                                    Develop new user-facing features using React.js
-                                </li>
-                            </ul>
-                        </div>
-                        <div th:unless="${job.requirements != null && !job.requirements.isEmpty()}" class="text-muted">
-                            No specific requirements listed.
-                        </div>
+<!--                        <h6 class="mb-3">Key Responsibilities:</h6>-->
+<!--                        <div th:if="${job.requirements != null && !job.requirements.isEmpty()}">-->
+<!--                            <ul class="requirements-list">-->
+<!--                                <li th:each="requirement : ${#strings.arraySplit(job.requirements, '\n')}" -->
+<!--                                    th:text="${#strings.trim(requirement)}">-->
+<!--                                    Develop new user-facing features using React.js-->
+<!--                                </li>-->
+<!--                            </ul>-->
+<!--                        </div>-->
+<!--                        <div th:unless="${job.requirements != null && !job.requirements.isEmpty()}" class="text-muted">-->
+<!--                            No specific requirements listed.-->
+<!--                        </div>-->
                     </div>
                 </div>
                 
@@ -209,15 +198,12 @@
                         <h5 class="mb-0">Requirements</h5>
                     </div>
                     <div class="card-body">
-                        <div th:if="${job.requirements != null && !job.requirements.isEmpty()}">
-                            <ul class="requirements-list">
-                                <li th:each="requirement : ${#strings.arraySplit(job.requirements, '\n')}" 
-                                    th:text="${#strings.trim(requirement)}">
-                                    3+ years of experience with React.js
-                                </li>
-                            </ul>
+                        <div th:if="${job.requirements != null && !job.requirements.trim().isEmpty()}" class="requirements-list">
+                            <div th:utext="${job.requirements}">
+                                <!-- Content will be rendered as HTML with preserved line breaks -->
+                            </div>
                         </div>
-                        <div th:unless="${job.requirements != null && !job.requirements.isEmpty()}" class="text-muted">
+                        <div th:unless="${job.requirements != null && !job.requirements.trim().isEmpty()}" class="text-muted">
                             No specific requirements listed.
                         </div>
                     </div>
@@ -257,14 +243,14 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-cash-stack me-2 text-primary"></i>
                                 <span th:if="${job?.minSalary != null && job?.maxSalary != null}">
-                                    $<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> - 
-                                    $<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> per year
+                                    ₹<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> - 
+                                    ₹<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> LPA
                                 </span>
                                 <span th:if="${job?.minSalary != null && job?.maxSalary == null}">
-                                    From $<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> per year
+                                    From ₹<span th:text="${#numbers.formatDecimal(job.minSalary, 1, 0)}">0</span> LPA
                                 </span>
                                 <span th:if="${job?.minSalary == null && job?.maxSalary != null}">
-                                    Up to $<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> per year
+                                    Up to ₹<span th:text="${#numbers.formatDecimal(job.maxSalary, 1, 0)}">0</span> LPA
                                 </span>
                                 <span th:if="${job?.minSalary == null && job?.maxSalary == null}">
                                     Not specified
@@ -305,36 +291,36 @@
                     </div>
                 </div>
                 
-                <!-- Job Overview -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Job Overview</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-3">
-                                <div class="text-muted small">Job Posted</div>
-                                <div>2 days ago</div>
-                            </li>
-                            <li class="mb-3">
-                                <div class="text-muted small">Job Type</div>
-                                <div th:text="${job.jobType}">Full-time</div>
-                            </li>
-                            <li class="mb-3">
-                                <div class="text-muted small">Location</div>
-                                <div th:text="${job.location}">New York, NY</div>
-                            </li>
-                            <li class="mb-3">
-                                <div class="text-muted small">Salary</div>
-                                <div>$<span th:text="${job.minSalary}">90,000</span> - $<span th:text="${job.maxSalary}">120,000</span> per year</div>
-                            </li>
-                            <li class="mb-3">
-                                <div class="text-muted small">Experience</div>
-                                <div>3+ years</div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+<!--                &lt;!&ndash; Job Overview &ndash;&gt;-->
+<!--                <div class="card">-->
+<!--                    <div class="card-header">-->
+<!--                        <h5 class="mb-0">Job Overview</h5>-->
+<!--                    </div>-->
+<!--                    <div class="card-body">-->
+<!--                        <ul class="list-unstyled">-->
+<!--                            <li class="mb-3">-->
+<!--                                <div class="text-muted small">Job Posted</div>-->
+<!--                                <div>2 days ago</div>-->
+<!--                            </li>-->
+<!--                            <li class="mb-3">-->
+<!--                                <div class="text-muted small">Job Type</div>-->
+<!--                                <div th:text="${job.jobType}">Full-time</div>-->
+<!--                            </li>-->
+<!--                            <li class="mb-3">-->
+<!--                                <div class="text-muted small">Location</div>-->
+<!--                                <div th:text="${job.location}">New York, NY</div>-->
+<!--                            </li>-->
+<!--                            <li class="mb-3">-->
+<!--                                <div class="text-muted small">Salary</div>-->
+<!--                                <div>$<span th:text="${job.minSalary}">90,000</span> - $<span th:text="${job.maxSalary}">120,000</span> per year</div>-->
+<!--                            </li>-->
+<!--                            <li class="mb-3">-->
+<!--                                <div class="text-muted small">Experience</div>-->
+<!--                                <div>3+ years</div>-->
+<!--                            </li>-->
+<!--                        </ul>-->
+<!--                    </div>-->
+<!--                </div>-->
             </div>
         </div>
     </div>

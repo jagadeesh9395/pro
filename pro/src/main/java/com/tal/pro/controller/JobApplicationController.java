@@ -64,14 +64,20 @@ public class JobApplicationController {
             
             model.addAttribute("job", job);
             
-            // Check if the current user is a candidate
-            boolean isCandidate = (principal != null && principal instanceof Candidate);
+            // Since this is a candidate-specific page, if user is authenticated, they are a candidate
+            boolean isCandidate = (principal != null);
+            System.out.println("User is authenticated (candidate): " + isCandidate);
             model.addAttribute("isCandidate", isCandidate);
             
             if (isCandidate) {
-                boolean hasApplied = jobApplicationService.hasApplied((Candidate) principal, job);
-                System.out.println("User has applied: " + hasApplied);
-                model.addAttribute("hasApplied", hasApplied);
+                try {
+                    boolean hasApplied = jobApplicationService.hasApplied((Candidate) principal, job);
+                    System.out.println("User has applied: " + hasApplied);
+                    model.addAttribute("hasApplied", hasApplied);
+                } catch (Exception e) {
+                    System.err.println("Error checking application status: " + e.getMessage());
+                    model.addAttribute("hasApplied", false);
+                }
             } else {
                 model.addAttribute("hasApplied", false);
             }
