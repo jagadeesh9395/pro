@@ -8,18 +8,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #7209b7;
-            --secondary-color: #560bad;
-            --accent-color: #b5179e;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
+            --primary-color: #4a6fa5;
+            --primary-light: #e3f2fd;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-light: #6c757d;
+            --border-color: #e9ecef;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         body {
-            background: linear-gradient(135deg, #f3e5ff 0%, #e0aaff 100%);
+            background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
+            color: var(--text-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -36,7 +41,7 @@
         }
 
         .register-illustration {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background: linear-gradient(135deg, #3a5a80, #4a6fa5);
             color: white;
             padding: 3rem 2rem;
             display: flex;
@@ -101,7 +106,7 @@
             font-size: 2.5rem;
             color: var(--primary-color);
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background: var(--primary-color);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: inline-block;
@@ -110,39 +115,15 @@
         .register-header h2 {
             color: var(--dark-color);
             font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 1.8rem;
-        }
-
         .register-header p {
-            color: #6c757d;
-            margin-bottom: 0;
-            font-size: 1rem;
-        }
-
-        .form-control, .form-select {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #e1e5ee;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(114, 9, 183, 0.25);
-        }
-
-        .input-group-text {
-            background-color: #f8f9fa;
-            border: 1px solid #e1e5ee;
+            color: var(--text-light);
             border-right: none;
             border-radius: 8px 0 0 8px !important;
             color: #6c757d;
         }
 
         .btn-register {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background: var(--primary-color);
             border: none;
             padding: 0.75rem;
             font-weight: 600;
@@ -156,7 +137,8 @@
 
         .btn-register:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(114, 9, 183, 0.3);
+            box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
+            background: #3a5a80;
             color: white;
         }
 
