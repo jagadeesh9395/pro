@@ -1,6 +1,7 @@
 package com.tal.pro.service.impl;
 
 import com.tal.pro.criteria.ResumeSearchCriteria;
+import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Resume;
 import com.tal.pro.repository.CandidateRepository;
 import com.tal.pro.repository.ResumeRepository;
@@ -14,6 +15,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 
@@ -36,14 +38,17 @@ public class ResumeServiceImpl implements ResumeService {
     private final ResumeRepository resumeRepository;
     private final CandidateRepository candidateRepository;
 
-    public Resume uploadAndConvertResume(MultipartFile file) throws IOException {
-        log.info("Processing file: {}", file.getOriginalFilename());
+    @Override
+    @Transactional
+    public Resume uploadAndConvertResume(MultipartFile file, String username) throws IOException {
+        log.info("Processing new resume upload for user: {}", username);
 
         // Check file size before processing to prevent overflow
-        long maxSize = 100 * 1024 * 1024; // 100MB limit
-        if (file.getSize() > maxSize) {
-            throw new IOException("File size exceeds maximum limit of 100MB: " + file.getSize() + " bytes");
-        }
+        validateFile(file);
+
+        // Get the candidate
+        Candidate candidate = candidateRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Candidate not found: " + username));
 
         // Create Resume document
         Resume resume = new Resume();
@@ -52,6 +57,7 @@ public class ResumeServiceImpl implements ResumeService {
         resume.setOriginalFileSize(file.getSize());
         resume.setUploadedAt(LocalDateTime.now());
         resume.setOriginalFileData(file.getBytes());
+        resume.setCandidate(candidate);
 
         // Convert to HTML using Tika
         String htmlContent = convertToHtml(file.getBytes());
@@ -59,14 +65,105 @@ public class ResumeServiceImpl implements ResumeService {
 
         // Save to MongoDB
         Resume savedResume = resumeRepository.save(resume);
-        log.info("Resume saved with ID: {}", savedResume.getId());
+        log.info("New resume saved with ID: {} for user: {}", savedResume.getId(), username);
+
+        // Update candidate's resume reference
+        candidate.setResume(savedResume);
+        candidateRepository.save(candidate);
 
         return savedResume;
     }
 
     @Override
+    @Transactional
+    public Resume updateResume(String id, MultipartFile file, String username) throws IOException {
+        log.info("Updating resume with ID: {} for user: {}", id, username);
+
+        // Check file size before processing to prevent overflow
+        validateFile(file);
+
+        // Get the candidate
+        Candidate candidate = candidateRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Candidate not found: " + username));
+
+        // Get the existing resume and verify ownership
+        Resume existingResume = resumeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resume not found: " + id));
+
+        if (!existingResume.getCandidate().getId().equals(candidate.getId())) {
+            throw new SecurityException("Not authorized to update this resume");
+        }
+
+        // Update resume fields
+        existingResume.setOriginalFileName(file.getOriginalFilename());
+        existingResume.setOriginalFileType(file.getContentType());
+        existingResume.setOriginalFileSize(file.getSize());
+        existingResume.setUploadedAt(LocalDateTime.now());
+        
+        // Update the file data and convert to HTML
+        byte[] fileData = file.getBytes();
+        existingResume.setOriginalFileData(fileData);
+        
+        // Convert to HTML using Tika
+        String htmlContent = convertToHtml(fileData);
+        existingResume.setHtmlContent(htmlContent);
+        
+        // Save the updated resume
+        Resume updatedResume = resumeRepository.save(existingResume);
+        
+        // Make sure the candidate's resume reference is set
+        if (candidate.getResume() == null || !candidate.getResume().getId().equals(updatedResume.getId())) {
+            candidate.setResume(updatedResume);
+            candidateRepository.save(candidate);
+        }
+        
+        log.info("Resume updated with ID: {} for user: {}", updatedResume.getId(), username);
+        return updatedResume;
+    }
+
+    private void validateFile(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IOException("File is empty");
+        }
+
+        // Check file size before processing to prevent overflow
+        long maxSize = 100 * 1024 * 1024; // 100MB limit
+        if (file.getSize() > maxSize) {
+            throw new IOException("File size exceeds maximum limit of 100MB: " + file.getSize() + " bytes");
+        }
+
+        // Validate file type
+        String contentType = file.getContentType();
+        if (contentType == null || !(contentType.equals("application/pdf") ||
+                contentType.equals("application/msword") ||
+                contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
+            throw new IOException("Unsupported file type. Please upload a PDF, DOC, or DOCX file.");
+        }
+    }
+
+    @Override
     public Optional<Resume> getResumeById(String id) {
         return resumeRepository.findById(id);
+    }
+
+    @Override
+    @Transactional
+    public void deleteResume(String id) {
+        // First find the resume to get the candidate ID
+        Resume resume = resumeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resume not found: " + id));
+
+        // Remove the resume reference from the candidate
+        candidateRepository.findById(resume.getCandidate().getId()).ifPresent(candidate -> {
+            if (candidate.getResume() != null && candidate.getResume().getId().equals(id)) {
+                candidate.setResume(null);
+                candidateRepository.save(candidate);
+            }
+        });
+
+        // Delete the resume
+        resumeRepository.deleteById(id);
+        log.info("Resume deleted with ID: {}", id);
     }
 
     /**
@@ -130,7 +227,6 @@ public class ResumeServiceImpl implements ResumeService {
     /**
      * Escape HTML special characters
      */
-
 
 
     @Override
@@ -356,6 +452,7 @@ public class ResumeServiceImpl implements ResumeService {
 //                criteria.getJobTitle() != null || criteria.getDegree() != null ||
 //                criteria.getInstitution() != null ||
     }
+
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -364,6 +461,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
     }
+
     private String maskPersonalInfo(String text) {
         if (text == null || text.isEmpty()) {
             return text;
@@ -378,11 +476,4 @@ public class ResumeServiceImpl implements ResumeService {
         return text;
     }
 
-    @Override
-    public void deleteResume(String id) {
-        if (!resumeRepository.existsById(id)) {
-            throw new RuntimeException("Resume not found with id: " + id);
-        }
-        resumeRepository.deleteById(id);
-    }
 }

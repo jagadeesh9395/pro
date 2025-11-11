@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -22,13 +23,13 @@ public class ResumeController {
     private final ResumeService resumeService;
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadResume(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadResume(@RequestParam("file") MultipartFile file, Principal principal) {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body("Please select a file to upload");
             }
 
-            Resume resume = resumeService.uploadAndConvertResume(file);
+            Resume resume = resumeService.uploadAndConvertResume(file, principal.getName());
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Resume uploaded successfully");
@@ -42,6 +43,35 @@ public class ResumeController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload resume: " + e.getMessage());
+        }
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateResume(@PathVariable String id, 
+                                        @RequestParam("file") MultipartFile file,
+                                        Principal principal) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("Please select a file to upload");
+            }
+            
+            Resume updatedResume = resumeService.updateResume(id, file, principal.getName());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Resume updated successfully");
+            response.put("resumeId", updatedResume.getId());
+            response.put("fileName", updatedResume.getOriginalFileName());
+            response.put("fileSize", updatedResume.getOriginalFileSize());
+            response.put("uploadedAt", updatedResume.getUploadedAt());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update resume: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Resume not found or not authorized: " + e.getMessage());
         }
     }
 

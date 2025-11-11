@@ -289,10 +289,9 @@
                                                           th:text="${candidate.candidate.firstName} + ' ' + ${candidate.candidate.lastName}">John Doe</span>
                                                     <span th:if="${candidate.candidate == null}">Anonymous Candidate</span>
                                                 </h5>
-                                                <p class="text-muted mb-2" th:if="${candidate.candidate != null}">
-                                                    <span th:if="${candidate.candidate.jobTitle != null}" 
-                                                          th:text="${candidate.candidate.jobTitle} + (${candidate.candidate.currentCompany != null ? ' at ' + candidate.candidate.currentCompany : ''})">
-                                                        Job Title at Company
+                                                <p class="text-muted mb-2" th:if="${candidate.candidate != null and candidate.candidate.skills != null and not #strings.isEmpty(candidate.candidate.skills)}">
+                                                    <span th:text="${candidate.candidate.skills}">
+                                                        Skills
                                                     </span>
                                                 </p>
                                             </div>

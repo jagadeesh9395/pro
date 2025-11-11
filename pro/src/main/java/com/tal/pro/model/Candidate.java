@@ -19,6 +19,9 @@ public class Candidate extends User {
     @Field("experience")
     private String experience;
     
+    @Field("location")
+    private String location;
+    
     public Candidate() {
         // Default constructor for JPA
     }
@@ -64,6 +67,14 @@ public class Candidate extends User {
 
     public String getExperience() {
         return experience;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public void setExperience(String experience) {

@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ResumeService {
-    Resume uploadAndConvertResume(MultipartFile file) throws IOException;
-
+    Resume uploadAndConvertResume(MultipartFile file, String username) throws IOException;
+    
+    Resume updateResume(String id, MultipartFile file, String username) throws IOException;
+    
     Optional<Resume> getResumeById(String id);
-
+    
     String getResumeHtmlContent(String id, boolean maskSensitiveInfo);
 
     List<Resume> searchResumes(ResumeSearchCriteria criteria);
