@@ -72,6 +72,10 @@ public class WebSecurityConfig {
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.disable())
             )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .sessionFixation().migrateSession()
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/",
@@ -92,6 +96,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/recruiter/**").hasRole("RECRUITER")
                 .requestMatchers("/candidate/**").hasRole("CANDIDATE")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                // Allow access to job application endpoints for any authenticated user
+                .requestMatchers("/jobs/*/apply").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

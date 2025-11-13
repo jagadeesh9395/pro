@@ -32,13 +32,20 @@ public class JobApplication {
     private String resumePath;
 
     private String coverLetter;
+    private String currentCompany;
+    private Integer noticePeriod;
+    private Double expectedSalary;
+    private String additionalInfo;
     private ApplicationStatus status = ApplicationStatus.PENDING;
     private LocalDateTime appliedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
+    private String updatedBy;
+    private String notes; // For internal recruiter notes
 
     // Enums
     public enum ApplicationStatus {
         PENDING, REVIEWING, SHORTLISTED, INTERVIEWING,
-        OFFER_EXTENDED, HIRED, REJECTED, WITHDRAWN
+        OFFER_EXTENDED, HIRED, REJECTED, APPLIED, WITHDRAWN
     }
 
 }

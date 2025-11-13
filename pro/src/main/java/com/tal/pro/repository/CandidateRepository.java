@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.repository.Query;
 public interface CandidateRepository extends MongoRepository<Candidate, String> {
     Optional<Candidate> findById(String id);
     Optional<Candidate> findByUsername(String username);
+    Optional<Candidate> findByEmail(String email);
     
     @Query(value = "{ 'username' : ?0 }", fields = "{ 'resume' : 1, 'resumeUrl' : 1, 'username' : 1, 'email' : 1, 'fullName' : 1, 'skills' : 1, 'experience' : 1 }")
     Optional<Candidate> findByUsernameWithResume(String username);

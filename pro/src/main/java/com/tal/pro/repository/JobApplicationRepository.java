@@ -18,6 +18,8 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
     @Query("{ 'job.$id': ?0 }")
     List<JobApplication> findByJobId(String jobId);
 
+    List<JobApplication> findByStatus(JobApplication.ApplicationStatus status);
+
     @Query("{ 'candidate.$id': ?0 }")
     List<JobApplication> findByCandidateId(String candidateId);
 
@@ -26,4 +28,7 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
 
     @Query(value = "{ 'job.$id': ?0, 'candidate.$id': ?1 }", exists = true)
     boolean existsByJobAndCandidate(String jobId, String candidateId);
+    
+    @Query("{ 'job.postedBy.$id': ?0 }")
+    List<JobApplication> findByJob_PostedById(String recruiterId);
 }

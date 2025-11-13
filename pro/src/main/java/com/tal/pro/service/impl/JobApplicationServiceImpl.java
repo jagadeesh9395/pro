@@ -36,17 +36,68 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
-    public List<JobApplication> getApplicationsByCandidate(Candidate candidate) {
-        return jobApplicationRepository.findByCandidateId(candidate.getId());
+    public List<JobApplication> getApplicationsByCandidateId(String candidateId) {
+        return jobApplicationRepository.findByCandidateId(candidateId);
     }
-    
+
     @Override
     public List<JobApplication> getApplicationsByJobId(String jobId) {
         return jobApplicationRepository.findByJobId(jobId);
     }
-    
+
     @Override
     public boolean hasCandidateApplied(String jobId, String candidateId) {
         return jobApplicationRepository.existsByJobIdAndCandidateId(jobId, candidateId);
     }
+
+    @Override
+    public JobApplication updateApplicationStatus(String applicationId, JobApplication.ApplicationStatus status, String updatedBy) {
+        return jobApplicationRepository.findById(applicationId)
+                .map(application -> {
+                    application.setStatus(status);
+                    application.setUpdatedBy(updatedBy);
+                    return jobApplicationRepository.save(application);
+                })
+                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
+    }
+
+    @Override
+    public boolean hasApplied(Candidate candidate, Job job) {
+        return jobApplicationRepository.existsByJobIdAndCandidateId(job.getId(), candidate.getId());
+    }
+
+    @Override
+    public JobApplication updateApplication(JobApplication application, String updatedBy) {
+        return jobApplicationRepository.findById(application.getId())
+                .map(existingApp -> {
+                    existingApp.setStatus(application.getStatus());
+                    existingApp.setNotes(application.getNotes());
+                    existingApp.setUpdatedBy(updatedBy);
+                    return jobApplicationRepository.save(existingApp);
+                })
+                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + application.getId()));
+    }
+
+    @Override
+    public List<JobApplication> getApplicationsByRecruiterId(String recruiterId) {
+        return jobApplicationRepository.findByJob_PostedById(recruiterId);
+    }
+
+    @Override
+    public List<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status) {
+        return jobApplicationRepository.findByStatus(status);
+    }
+
+    @Override
+    public JobApplication addNoteToApplication(String applicationId, String note, String updatedBy) {
+        return jobApplicationRepository.findById(applicationId)
+                .map(application -> {
+                    String currentNotes = application.getNotes() != null ? application.getNotes() + "\n" : "";
+                    application.setNotes(currentNotes + "[" + updatedBy + "] " + note);
+                    application.setUpdatedBy(updatedBy);
+                    return jobApplicationRepository.save(application);
+                })
+                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
+    }
 }
+

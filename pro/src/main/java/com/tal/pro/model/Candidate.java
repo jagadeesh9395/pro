@@ -22,6 +22,9 @@ public class Candidate extends User {
     @Field("location")
     private String location;
     
+    @Field("current_company")
+    private String currentCompany;
+    
     public Candidate() {
         // Default constructor for JPA
     }
@@ -79,5 +82,13 @@ public class Candidate extends User {
 
     public void setExperience(String experience) {
         this.experience = experience;
+    }
+    
+    public String getCurrentCompany() {
+        return currentCompany;
+    }
+    
+    public void setCurrentCompany(String currentCompany) {
+        this.currentCompany = currentCompany;
     }
 }

@@ -7,6 +7,8 @@ import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
 import com.tal.pro.service.JobService;
 import com.tal.pro.service.JobApplicationService;
+import com.tal.pro.service.CandidateService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +18,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import com.tal.pro.security.services.UserDetailsImpl;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,14 +41,18 @@ public class JobApplicationController {
 
     private final JobService jobService;
     private final JobApplicationService jobApplicationService;
+    private final CandidateService candidateService;
 
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Autowired
-    public JobApplicationController(JobService jobService, JobApplicationService jobApplicationService) {
+    public JobApplicationController(JobService jobService, 
+                                  JobApplicationService jobApplicationService,
+                                  CandidateService candidateService) {
         this.jobService = jobService;
         this.jobApplicationService = jobApplicationService;
+        this.candidateService = candidateService;
     }
 
     @GetMapping("/view/{id}")
@@ -109,24 +117,57 @@ public class JobApplicationController {
     @GetMapping("/{jobId}/apply")
     public String showApplicationForm(
             @PathVariable String jobId,
-            @AuthenticationPrincipal Candidate candidate,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            HttpServletRequest request,
             Model model) {
+        
+        // Debug logging
+        System.out.println("=== DEBUG: showApplicationForm called ===");
+        System.out.println("Job ID: " + jobId);
+        System.out.println("Authenticated User: " + (userDetails != null ? userDetails.getUsername() : "null"));
+        
+        // Check if user is authenticated
+        if (userDetails == null) {
+            System.out.println("DEBUG: No authenticated user, redirecting to login");
+            return "redirect:/auth/login?redirect=/jobs/" + jobId + "/apply";
+        }
+        
+        // Get the candidate details
+        Candidate candidate = candidateService.getOrCreateCandidate(userDetails);
+        
+        System.out.println("DEBUG: Candidate found: " + candidate.getEmail());
 
         return jobService.getJobById(jobId)
                 .map(job -> {
+                    // Check if already applied
+                    if (jobApplicationService.hasCandidateApplied(jobId, candidate.getId())) {
+                        return "redirect:/jobs/" + jobId + "?error=already_applied";
+                    }
+                    
                     model.addAttribute("job", job);
 
+                    // Create and populate DTO with candidate data
                     JobApplicationDto applicationDto = new JobApplicationDto();
-                    if (candidate != null) {
-                        applicationDto.setFullName(candidate.getFullName());
-                        applicationDto.setEmail(candidate.getEmail());
-                        applicationDto.setPhone(candidate.getPhoneNumber());
+                    applicationDto.setFullName(candidate.getFullName());
+                    applicationDto.setEmail(candidate.getEmail());
+                    applicationDto.setPhone(candidate.getPhoneNumber());
+                    applicationDto.setCurrentCompany(candidate.getCurrentCompany());
+                    
+                    // Set resume path if available
+                    if (candidate.getResumeUrl() != null && !candidate.getResumeUrl().isEmpty()) {
+                        applicationDto.setResumePath(candidate.getResumeUrl());
                     }
 
+                    // Log for debugging
+                    System.out.println("Pre-filled application data for " + candidate.getEmail() + ": " + applicationDto);
+                    
+                    // Add to model
                     model.addAttribute("applicationDto", applicationDto);
+                    model.addAttribute("currentPath", request.getRequestURI());
+                    
                     return "candidate/apply-job";
                 })
-                .orElse("redirect:/jobs");
+                .orElse("redirect:/jobs?error=job_not_found");
     }
 
     @PostMapping("/{jobId}/apply")
@@ -134,56 +175,86 @@ public class JobApplicationController {
             @PathVariable String jobId,
             @ModelAttribute("applicationDto") @Valid JobApplicationDto applicationDto,
             BindingResult result,
-            @RequestParam("resumeFile") MultipartFile resumeFile,
+            @RequestParam(value = "resumeFile", required = false) MultipartFile resumeFile,
             @AuthenticationPrincipal Candidate candidate,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            Model model) {
 
+        // Add job to model for form re-rendering in case of errors
+        jobService.getJobById(jobId).ifPresent(job -> model.addAttribute("job", job));
+        
+        // Validate required fields
         if (result.hasErrors()) {
             return "candidate/apply-job";
         }
 
-        if (resumeFile.isEmpty()) {
+        // Check if resume exists (either new upload or existing)
+        if ((resumeFile == null || resumeFile.isEmpty()) && 
+            (applicationDto.getResumePath() == null || applicationDto.getResumePath().isEmpty())) {
             result.rejectValue("resumeFile", "file.required", "Please upload your resume");
             return "candidate/apply-job";
         }
 
         try {
-            // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+            String resumeFilename = applicationDto.getResumePath(); // Use existing resume by default
+            
+            // Handle new resume upload
+            if (resumeFile != null && !resumeFile.isEmpty()) {
+                // Validate file size (5MB max)
+                if (resumeFile.getSize() > 5 * 1024 * 1024) {
+                    result.rejectValue("resumeFile", "file.size", "File size must be less than 5MB");
+                    return "candidate/apply-job";
+                }
+                
+                // Create upload directory if it doesn't exist
+                Path uploadPath = Paths.get(uploadDir);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Generate a unique filename
+                String originalFilename = resumeFile.getOriginalFilename();
+                String fileExtension = "";
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                }
+                resumeFilename = UUID.randomUUID().toString() + fileExtension;
+
+                // Save the file
+                Path filePath = uploadPath.resolve(resumeFilename);
+                Files.copy(resumeFile.getInputStream(), filePath);
+                
+                // Update candidate's resume path if this is a new upload
+                if (candidate != null) {
+                    candidate.setResumeUrl(resumeFilename);
+                    // You'll need to inject and use a CandidateService to save the candidate
+                    // candidateService.save(candidate);
+                }
             }
 
-            // Generate a unique filename
-            String originalFilename = resumeFile.getOriginalFilename();
-            String fileExtension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String newFilename = UUID.randomUUID().toString() + fileExtension;
-
-            // Save the file
-            Path filePath = uploadPath.resolve(newFilename);
-            Files.copy(resumeFile.getInputStream(), filePath);
-
-            // Save application
+            // Create and save application
             JobApplication application = new JobApplication();
             application.setFullName(applicationDto.getFullName());
             application.setEmail(applicationDto.getEmail());
             application.setPhone(applicationDto.getPhone());
-            application.setResumePath(newFilename);
+            application.setCurrentCompany(applicationDto.getCurrentCompany());
+            application.setResumePath(resumeFilename);
             application.setCoverLetter(applicationDto.getCoverLetter());
+            application.setNoticePeriod(applicationDto.getNoticePeriod());
+            application.setExpectedSalary(applicationDto.getExpectedSalary());
+            application.setAdditionalInfo(applicationDto.getAdditionalInfo());
+            application.setStatus(JobApplication.ApplicationStatus.APPLIED);
 
             jobApplicationService.submitApplication(jobId, candidate, application);
 
-            redirectAttributes.addFlashAttribute("success", "Application submitted successfully!");
+            redirectAttributes.addFlashAttribute("success", "Your application has been submitted successfully!");
             return "redirect:/candidate/dashboard";
 
         } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("error", "Error uploading file: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error processing your application: " + e.getMessage());
             return "redirect:/jobs/" + jobId + "/apply";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error submitting application: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "An error occurred while submitting your application. Please try again.");
             return "redirect:/jobs/" + jobId + "/apply";
         }
     }

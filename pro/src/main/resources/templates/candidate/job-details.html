@@ -137,24 +137,27 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <div th:if="${isCandidate == true}">
-                        <button th:if="${hasApplied == false}" 
-                                class="btn btn-primary btn-apply" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#applyModal">
-                            Apply Now
-                        </button>
-                        <button th:if="${hasApplied == true}" 
-                                class="btn btn-success" 
-                                disabled>
-                            <i class="bi bi-check-circle"></i> Applied
-                        </button>
-                        <button class="btn btn-outline-secondary ms-2">
-                            <i class="bi bi-bookmark"></i> Save
-                        </button>
-                    </div>
-                    <div th:unless="${isCandidate}" class="alert alert-info">
-                        <a href="/auth/login" class="btn btn-primary">Sign in to apply</a>
+                    <!-- Apply Now Button - Simplified since we're already in candidate dashboard -->
+                    <div th:with="jobId=${job?.id}">
+                        <div th:if="${jobId == null}" class="alert alert-warning">
+                            Job ID not found. Please try again.
+                        </div>
+                        
+                        <div th:if="${!hasApplied}">
+                            <a th:href="@{/jobs/{jobId}/apply(jobId=${jobId})}" 
+                               class="btn btn-primary btn-apply">
+                                <i class="bi bi-send-check me-1"></i> Apply Now
+                            </a>
+                        </div>
+                        
+                        <div th:if="${hasApplied}" class="d-flex align-items-center">
+                            <button class="btn btn-success" disabled>
+                                <i class="bi bi-check-circle me-1"></i> Applied
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-bookmark"></i> Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
