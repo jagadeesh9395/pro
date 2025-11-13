@@ -384,53 +384,118 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                <tr>
-                                    <th>Position</th>
-                                    <th>Company</th>
-                                    <th>Applied On</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Position</th>
+                                        <th>Company</th>
+                                        <th>Location</th>
+                                        <th>Applied On</th>
+                                        <th>Last Updated</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                <!-- Dynamic Applications from Database -->
-                                <tr th:each="app : ${recentApplications}" th:with="jobTitle=${app.job?.jobTitle} ?: 'N/A', companyName=${app.job?.companyName} ?: 'N/A'">
-                                    <td th:text="${jobTitle}">Senior Java Developer</td>
-                                    <td th:text="${companyName}">Tech Corp</td>
-                                    <td th:if="${app.appliedAt != null}" th:text="${#temporals.format(app.appliedAt, 'MMM d, yyyy')}">Oct 15, 2023</td>
-                                    <td th:unless="${app.appliedAt != null}">N/A</td>
-                                    <td>
-                                        <span th:with="statusClass=${app.status != null ? 'status-badge status-' + #strings.toLowerCase(app.status.name()) : 'status-badge'}"
-                                              th:class="${statusClass}"
-                                              th:text="${app.status?.displayName ?: 'N/A'}">Applied</span>
-                                    </td>
-                                    <td>
-                                        <a th:if="${app.id != null}" 
-                                           th:href="@{/candidate/applications/} + ${app.id}" 
-                                           class="text-primary">View</a>
-                                        <span th:unless="${app.id != null}" class="text-muted">N/A</span>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Fallback dummy data when no applications exist -->
-                                <tr th:if="${#lists.isEmpty(recentApplications)}">
-                                    <td>Senior Java Developer</td>
-                                    <td>Tech Corp</td>
-                                    <td>Oct 15, 2023</td>
-                                    <td><span class="status-badge status-applied">Applied</span></td>
-                                    <td><a href="#" class="text-primary">View</a></td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(recentApplications)}">
-                                    <td>Frontend Developer</td>
-                                    <td>Web Solutions</td>
-                                    <td>Oct 10, 2023</td>
-                                    <td><span class="status-badge status-interview">Interview</span></td>
-                                    <td><a href="#" class="text-primary">View</a></td>
-                                </tr>
+                                    <!-- Dynamic Applications from Database -->
+                                    <tr th:each="app : ${recentApplications}" 
+                                        th:with="jobTitle=${app.job?.jobTitle} ?: 'N/A', 
+                                                companyName=${app.job?.companyName} ?: 'N/A',
+                                                location=${app.job?.location} ?: 'N/A',
+                                                appliedDate=${#temporals.format(app.appliedAt, 'MMM d, yyyy')} ?: 'N/A',
+                                                statusName=${app.status?.name()},
+                                                statusDisplay=${app.status?.displayName} ?: 'N/A',
+                                                statusClass=${app.status?.name() == 'REJECTED' ? 'bg-danger' : 
+                                                           (app.status?.name() == 'HIRED' ? 'bg-success' : 
+                                                           (app.status?.name() == 'WITHDRAWN' ? 'bg-secondary' : 
+                                                           (app.status?.name() == 'INTERVIEW_SCHEDULED' || app.status?.name() == 'INTERVIEWING' ? 'bg-warning text-dark' : 
+                                                           (app.status?.name() == 'OFFER_EXTENDED' ? 'bg-info text-dark' : 'bg-primary'))))}">
+                                        
+                                        <td>
+                                            <div class="fw-semibold" th:text="${jobTitle}">Senior Java Developer</div>
+                                            <div class="small text-muted" th:if="${app.job?.jobType}" 
+                                                 th:text="${T(com.tal.pro.model.Job.JobType).valueOf(app.job.jobType).name().replace('_', ' ')}">
+                                                Full-time
+                                            </div>
+                                        </td>
+                                        
+                                        <td th:text="${companyName}">Tech Corp</td>
+                                        
+                                        <td th:text="${location}">City, Country</td>
+                                        
+                                        <td>
+                                            <span th:if="${app.appliedAt != null}" 
+                                                  th:text="${#temporals.format(app.appliedAt, 'MMM d, yyyy')}">
+                                                Oct 15, 2023
+                                            </span>
+                                            <span th:if="${app.appliedAt == null}" class="text-muted">N/A</span>
+                                        </td>
+                                        
+                                        <td>
+                                            <span th:if="${app.updatedAt != null}" 
+                                                  th:text="${#temporals.format(app.updatedAt, 'MMM d, yyyy')}">
+                                                Oct 15, 2023
+                                            </span>
+                                            <span th:if="${app.updatedAt == null}" class="text-muted">N/A</span>
+                                        </td>
+                                        
+                                        <td>
+                                            <span th:with="statusClass=${'badge ' + 
+                                                (statusName == 'REJECTED' ? 'bg-danger' : 
+                                                statusName == 'HIRED' ? 'bg-success' : 
+                                                statusName == 'WITHDRAWN' ? 'bg-secondary' : 
+                                                statusName == 'INTERVIEW_SCHEDULED' || statusName == 'INTERVIEWING' ? 'bg-warning text-dark' : 
+                                                statusName == 'OFFER_EXTENDED' ? 'bg-info text-dark' : 'bg-primary')}"
+                                                  th:class="${statusClass} rounded-pill px-3 py-1"
+                                                  th:text="${app.status?.displayName ?: 'N/A'}">
+                                                Applied
+                                            </span>
+                                        </td>
+                                        
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <a th:if="${app.id != null}" 
+                                                   th:href="@{/candidate/applications/} + ${app.id}" 
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   data-bs-toggle="tooltip"
+                                                   data-bs-placement="top"
+                                                   title="View Application Details">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                                 
+                                                <a th:if="${app.id != null && app.status?.name() != 'WITHDRAWN' && app.status?.name() != 'REJECTED'}" 
+                                                   th:href="@{{id}/withdraw(id=${app.id})}" 
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   data-bs-toggle="tooltip"
+                                                   data-bs-placement="top"
+                                                   title="Withdraw Application"
+                                                   onclick="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Fallback dummy data when no applications exist -->
+                                    <tr th:if="${#lists.isEmpty(recentApplications)}">
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                                <h5>No applications found</h5>
+                                                <p class="mb-0">You haven't applied to any jobs yet.</p>
+                                                <a href="/jobs" class="btn btn-primary mt-3">Browse Jobs</a>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
+                            
+                            <!-- View All Applications Link -->
+                            <div class="text-end mt-3" th:if="${not #lists.isEmpty(recentApplications)}">
+                                <a href="/candidate/applications" class="btn btn-link text-decoration-none">
+                                    View All Applications <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

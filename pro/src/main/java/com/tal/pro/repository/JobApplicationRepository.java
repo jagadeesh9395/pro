@@ -20,10 +20,10 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
 
     List<JobApplication> findByStatus(JobApplication.ApplicationStatus status);
 
-    @Query("{ 'candidate.$id': ?0 }")
+    @Query("{ 'candidate': { '$ref': 'candidates', '$id': ?0 } }")
     List<JobApplication> findByCandidateId(String candidateId);
     
-    @Query("{ 'candidate.$id': ?0 }")
+    @Query("{ 'candidate': { '$ref': 'candidates', '$id': ?0 } }")
     List<JobApplication> findByCandidateIdOrderByAppliedAtDesc(String candidateId);
     
     @Query(value = "{ 'candidate.$id': ?0 }", fields = "{ 'statusHistory': 0 }")

@@ -148,8 +148,8 @@
     <div class="container my-5">
         <div class="row mb-4">
             <div class="col-12">
-                <a href="/candidate/applications" class="text-decoration-none d-inline-flex align-items-center mb-3">
-                    <i class="bi bi-arrow-left me-2"></i> Back to Applications
+                <a href="/candidate/dashboard" class="text-decoration-none d-inline-flex align-items-center mb-3">
+                    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
                 </a>
                 <h2>Application Details</h2>
             </div>
@@ -220,48 +220,34 @@
                             <h5>Your Application</h5>
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <h6>Resume</h6>
                                     <div class="mb-3">
-                                        <th:block th:if="${application.resumePath != null and !#strings.isEmpty(application.resumePath)}">
-                                            <a th:href="@{/api/resumes/} + ${#strings.substringAfterLast(application.resumePath, '/')} + '/download'" 
-                                               class="btn btn-outline-primary btn-sm"
-                                               target="_blank"
-                                               download>
-                                                <i class="bi bi-download me-1"></i> Download Resume
-                                            </a>
-                                        </th:block>
-                                        <span th:if="${application.resumePath == null or #strings.isEmpty(application.resumePath)}" class="text-muted">
-                                            No resume attached
-                                        </span>
-                                        <span th:if="${application.resumePath == null}" class="text-muted">No resume uploaded</span>
-                                    </div>
-                                    
-                                    <h6 class="mt-4">Cover Letter</h6>
-                                    <div th:if="${application.coverLetter != null and !#strings.isEmpty(application.coverLetter)}" class="border rounded p-3 bg-white">
-                                        <div th:utext="${application.coverLetter}">
-                                            Your cover letter content goes here...
-                                        </div>
-                                    </div>
-                                    <p th:unless="${application.coverLetter}" class="text-muted fst-italic">
-                                        No cover letter was submitted with this application.
-                                    </p>
-                                    
-                                    <div class="mt-3">
                                         <h6>Resume</h6>
                                         <th:block th:with="hasResume=${application.resumePath != null and !#strings.isEmpty(application.resumePath)}">
                                             <a th:if="${hasResume}" 
-                                               th:href="@{/api/resumes/} + ${application.resumeId} + '/download'"
+                                               th:href="@{/api/resumes/} + ${application.resumeId ?: #strings.substringAfterLast(application.resumePath, '/')} + '/download'"
                                                class="btn btn-outline-primary btn-sm"
                                                target="_blank"
                                                download>
                                                 <i class="bi bi-download me-1"></i> Download Resume
                                             </a>
-                                            <p th:unless="${hasResume}" class="text-muted">
-                                                No resume attached
+                                            <p th:unless="${hasResume}" class="text-muted mb-0">
+                                                No resume attached to this application.
                                             </p>
                                         </th:block>
-                                        <p th:if="${candidate != null and candidate.resumeUrl != null}" class="small mt-2">
+                                        <p th:if="${candidate != null and candidate.resumeUrl != null}" class="small mt-2 mb-0">
                                             <i class="bi bi-info-circle me-1"></i> You can update your resume in your <a th:href="@{/candidate/profile}">profile settings</a>.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <h6>Cover Letter</h6>
+                                        <div th:if="${application.coverLetter != null and !#strings.isEmpty(application.coverLetter)}" class="border rounded p-3 bg-white">
+                                            <div th:utext="${application.coverLetter}">
+                                                Your cover letter content goes here...
+                                            </div>
+                                        </div>
+                                        <p th:if="${application.coverLetter == null or #strings.isEmpty(application.coverLetter)}" class="text-muted fst-italic mb-0">
+                                            No cover letter was submitted with this application.
                                         </p>
                                     </div>
                                 </div>
@@ -345,19 +331,20 @@
                             </div>
                             
                             <!-- Application Status Timeline -->
+                            <!-- Status Timeline -->
                             <div th:with="statusName=${application.status?.name()}">
-                                <div class="timeline-item" th:classappend="${statusName != null and statusName != 'APPLIED'} ? 'text-muted' : ''">
+                                <!-- Applied Status -->
+                                <div class="timeline-item" th:classappend="${statusName != 'APPLIED' ? 'text-muted' : ''}">
                                     <h6>Applied</h6>
-                                    <p class="text-muted small mb-1" th:if="${application.appliedAt != null}" 
+                                    <p class="small text-muted" th:if="${application.appliedAt != null}" 
                                        th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
                                         Applied on Date
                                     </p>
                                     <p class="small">Your application has been received and is under review.</p>
                                 </div>
-                            </div>
-                            
-                            <div th:with="statusName=${application.status?.name()}">
-                                <div class="timeline-item" th:classappend="${statusName != null and !T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).equals(T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW) and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()} ? 'text-muted' : ''">
+
+                                <!-- Under Review Status -->
+                                <div class="timeline-item" th:classappend="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal() ? 'text-muted' : ''}">
                                     <h6>Under Review</h6>
                                     <p class="small" th:if="${statusName == 'UNDER_REVIEW'}">
                                         Your application is currently being reviewed by our hiring team.
@@ -369,10 +356,8 @@
                                         Your application is pending review.
                                     </p>
                                 </div>
-                            </div>
-                            </div>
-                            
-                            <div th:with="statusName=${application.status?.name()}">
+
+                                <!-- Shortlisted Status -->
                                 <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal() ? 'text-muted' : ''}">
                                     <h6>Shortlisted</h6>
                                     <p class="small" th:if="${statusName == 'SHORTLISTED'}">
@@ -385,10 +370,8 @@
                                         Pending shortlisting decision
                                     </p>
                                 </div>
-                            </div>
-                            </div>
-                            
-                            <div th:with="statusName=${application.status?.name()}">
+
+                                <!-- Interview Scheduled Status -->
                                 <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal() ? 'text-muted' : ''}">
                                     <h6>Interview Scheduled</h6>
                                     <p class="small" th:if="${statusName == 'INTERVIEW_SCHEDULED'}">
@@ -401,10 +384,8 @@
                                         Interview scheduling pending
                                     </p>
                                 </div>
-                            </div>
-                            </div>
-                            
-                            <div th:with="statusName=${application.status?.name()}">
+
+                                <!-- Interviewing Status -->
                                 <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal() ? 'text-muted' : ''}">
                                     <h6>Interviewing</h6>
                                     <p class="small" th:if="${statusName == 'INTERVIEWING'}">
@@ -417,16 +398,8 @@
                                         Interview pending
                                     </p>
                                 </div>
-                            </div>
-                            </div>
-                            
-                            <div th:if="${#lists.isEmpty(application.statusHistory)}" class="text-muted">
-                                No status history available
-                            </div>
-                        </div>
-                            
-                            <!-- Offer Extended Status -->
-                            <div th:with="statusName=${application.status?.name()}">
+
+                                <!-- Offer Extended Status -->
                                 <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal() ? 'text-muted' : ''}">
                                     <h6>Offer Extended</h6>
                                     <p class="small" th:if="${statusName == 'OFFER_EXTENDED'}">
@@ -439,33 +412,59 @@
                                         Offer not extended yet
                                     </p>
                                 </div>
-                            </div>
-                            </div>
-                            
-                            <!-- Hired Status -->
-                            <div th:with="statusName=${application.status?.name()}">
+
+                                <!-- Hired Status -->
                                 <div class="timeline-item" th:classappend="${statusName != 'HIRED' ? 'text-muted' : ''}">
                                     <h6>Hired</h6>
                                     <p class="small" th:if="${statusName == 'HIRED'}">
                                         Congratulations! You've been hired for this position.
                                     </p>
-                                    <p class="small" th:if="${statusName != 'HIRED'}">
+                                    <p class="small" th:if="${statusName != 'HIRED' and statusName != 'REJECTED' and statusName != 'WITHDRAWN'}">
                                         Pending hiring decision
                                     </p>
                                 </div>
-                            </div>
+
+                                <!-- Rejected Status -->
+                                <div class="timeline-item" th:if="${statusName == 'REJECTED'}">
+                                    <h6>Application Rejected</h6>
+                                    <p class="small">
+                                        We appreciate your interest, but we've decided to move forward with other candidates.
+                                    </p>
+                                </div>
+
+                                <!-- Withdrawn Status -->
+                                <div class="timeline-item" th:if="${statusName == 'WITHDRAWN'}">
+                                    <h6>Application Withdrawn</h6>
+                                    <p class="small">
+                                        You have withdrawn your application from consideration.
+                                    </p>
+                                </div>
                             </div>
                             
-                            <!-- Rejected/Withdrawn Status -->
-                            <div th:with="statusName=${application.status?.name()}" th:if="${statusName == 'REJECTED' or statusName == 'WITHDRAWN'}" class="timeline-item">
-                                <h6 th:text="${statusName == 'REJECTED' ? 'Application Rejected' : 'Application Withdrawn'}"></h6>
-                                <p class="small" th:if="${statusName == 'REJECTED'}">
-                                    We appreciate your interest, but we've decided to move forward with other candidates.
-                                </p>
-                                <p class="small" th:if="${statusName == 'WITHDRAWN'}">
-                                    You have withdrawn your application from consideration.
-                                </p>
+                            <!-- Status History -->
+                            <div th:if="${not #lists.isEmpty(application.statusHistory)}" class="mt-4">
+                                <h6>Status History</h6>
+                                <div class="list-group list-group-flush">
+                                    <div th:each="history : ${application.statusHistory}" class="list-group-item border-0 px-0 py-2">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <strong th:text="${history.status?.displayName}">Status</strong>
+                                                <p class="mb-0 small" th:if="${history.notes}" th:text="${history.notes}">Status update notes</p>
+                                            </div>
+                                            <small class="text-muted" 
+                                                   th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
+                                                Oct 15, 2023
+                                            </small>
+                                        </div>
+                                        <small class="text-muted" th:if="${history.changedBy}" 
+                                               th:text="'Updated by: ' + ${history.changedBy}">
+                                            Updated by: System
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
+                            <div th:if="${#lists.isEmpty(application.statusHistory)}" class="text-muted mt-4">
+                                No status history available
                             </div>
                         </div>
                     </div>

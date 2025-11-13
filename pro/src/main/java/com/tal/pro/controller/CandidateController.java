@@ -2,7 +2,9 @@ package com.tal.pro.controller;
 
 import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
+import com.tal.pro.model.JobApplication;
 import com.tal.pro.repository.CandidateRepository;
+import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,9 @@ public class CandidateController {
 
     @Autowired
     private JobService jobService;
+    
+    @Autowired
+    private JobApplicationService jobApplicationService;
 
     @GetMapping("/upload-resume")
     public String showUploadResumePage(Model model, Principal principal) {
@@ -79,6 +84,17 @@ public class CandidateController {
                 jobsPage = jobService.getAllActiveJobs(pageable);
             }
 
+            // Get candidate's applications with job details
+            List<JobApplication> applications = jobApplicationService.getApplicationsByCandidateId(candidate.getId());
+            
+            // Log the number of applications found for debugging
+            System.out.println("Found " + applications.size() + " applications for candidate: " + candidate.getId());
+            applications.forEach(app -> {
+                System.out.println("Application ID: " + app.getId() + 
+                                 ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") + 
+                                 ", Status: " + (app.getStatus() != null ? app.getStatus().name() : "No Status"));
+            });
+            
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
             model.addAttribute("username", username);
@@ -86,8 +102,9 @@ public class CandidateController {
             model.addAttribute("email", candidate.getEmail());
             model.addAttribute("isCandidate", true);
 
-            // Add jobs to the model
+            // Add jobs and applications to the model
             model.addAttribute("jobs", jobsPage.getContent());
+            model.addAttribute("recentApplications", applications);
             model.addAttribute("currentPage", jobsPage.getNumber());
             model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("totalPages", jobsPage.getTotalPages());

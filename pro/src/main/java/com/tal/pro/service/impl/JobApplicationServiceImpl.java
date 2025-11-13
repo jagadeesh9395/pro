@@ -55,7 +55,18 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Override
     public List<JobApplication> getApplicationsByCandidateId(String candidateId) {
-        return jobApplicationRepository.findByCandidateId(candidateId);
+        // Fetch applications with job details
+        List<JobApplication> applications = jobApplicationRepository.findByCandidateIdOrderByAppliedAtDesc(candidateId);
+        
+        // Eagerly load job details for each application
+        applications.forEach(application -> {
+            if (application.getJob() != null && application.getJob().getId() != null) {
+                jobService.getJobById(application.getJob().getId())
+                    .ifPresent(application::setJob);
+            }
+        });
+        
+        return applications;
     }
 
     @Override
