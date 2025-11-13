@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -182,8 +183,35 @@ public class JobApplicationController {
             @RequestParam(value = "resumeFile", required = false) MultipartFile resumeFile,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             RedirectAttributes redirectAttributes,
-            Model model) {
-
+            Model model,
+            HttpServletRequest request) {
+        
+        String requestInfo = String.format("Request: %s %s", request.getMethod(), request.getRequestURI());
+        System.out.println("\n=== DEBUG: Submit application called ===");
+        System.out.println("Request: " + requestInfo);
+        System.out.println("Job ID: " + jobId);
+        System.out.println("User: " + (userDetails != null ? userDetails.getUsername() : "null"));
+        System.out.println("New resume file present: " + (resumeFile != null && !resumeFile.isEmpty()));
+        System.out.println("Using existing resume: " + ("true".equalsIgnoreCase(request.getParameter("useExistingResume"))));
+        System.out.println("Application DTO: " + applicationDto);
+        
+        // Log form data for debugging
+        if (result.hasErrors()) {
+            System.err.println("\n=== FORM VALIDATION ERRORS ===");
+            result.getAllErrors().forEach(error -> 
+                System.err.println(" - " + error.getDefaultMessage())
+            );
+            model.addAttribute("org.springframework.validation.BindingResult.applicationDto", result);
+            model.addAttribute("error", "Please correct the following errors:");
+            
+            // Re-add the job to the model for form re-rendering
+            Job job = jobService.getJobById(jobId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
+            model.addAttribute("job", job);
+            
+            return "candidate/apply-job";
+        }
+        
         try {
             // Add job to model for form re-rendering in case of errors
             Job job = jobService.getJobById(jobId)
@@ -201,17 +229,49 @@ public class JobApplicationController {
                 return "candidate/apply-job";
             }
 
-            // Check if resume exists (either new upload or existing)
-            if ((resumeFile == null || resumeFile.isEmpty()) && 
-                (applicationDto.getResumePath() == null || applicationDto.getResumePath().isEmpty())) {
-                result.rejectValue("resumeFile", "file.required", "Please upload your resume");
+            // Check if using existing resume - handle different possible parameter types
+            Object useExistingResumeObj = request.getParameter("useExistingResume");
+            boolean useExistingResume = false;
+            
+            if (useExistingResumeObj != null) {
+                if (useExistingResumeObj instanceof Boolean) {
+                    useExistingResume = (Boolean) useExistingResumeObj;
+                } else if (useExistingResumeObj instanceof String) {
+                    useExistingResume = Boolean.parseBoolean((String) useExistingResumeObj);
+                } else if (useExistingResumeObj instanceof Number) {
+                    useExistingResume = ((Number) useExistingResumeObj).intValue() != 0;
+                }
+            }
+            
+            // Debug log
+            System.out.println("useExistingResume parameter type: " + (useExistingResumeObj != null ? useExistingResumeObj.getClass().getName() : "null"));
+            System.out.println("useExistingResume parameter value: " + useExistingResumeObj);
+            System.out.println("Parsed useExistingResume: " + useExistingResume);
+            System.out.println("Resume file: " + (resumeFile != null ? "provided" : "not provided"));
+            
+            // If not using existing resume and no file is provided, show error
+            if (!useExistingResume && (resumeFile == null || resumeFile.isEmpty())) {
+                result.rejectValue("resumeFile", "file.required", "Please upload your resume or select to use your existing resume");
+                model.addAttribute("job", job);
                 return "candidate/apply-job";
             }
 
-            String resumeFilename = applicationDto.getResumePath(); // Use existing resume by default
+            // Initialize resume filename
+            String resumeFilename = null;
             
-            // Handle new resume upload
-            if (resumeFile != null && !resumeFile.isEmpty()) {
+            if (useExistingResume) {
+                // Use existing resume path from the candidate's profile
+                resumeFilename = candidate.getResumeUrl();
+                System.out.println("Using existing resume: " + resumeFilename);
+                
+                if (resumeFilename == null || resumeFilename.isEmpty()) {
+                    result.rejectValue("resumeFile", "file.missing", "No existing resume found. Please upload a new resume.");
+                    model.addAttribute("job", job);
+                    return "candidate/apply-job";
+                }
+            } 
+            // Handle new resume upload if not using existing resume
+            else if (resumeFile != null && !resumeFile.isEmpty()) {
                 // Validate file size (5MB max)
                 if (resumeFile.getSize() > 5 * 1024 * 1024) {
                     result.rejectValue("resumeFile", "file.size", "File size must be less than 5MB");
@@ -224,7 +284,7 @@ public class JobApplicationController {
                     Files.createDirectories(uploadPath);
                 }
 
-                // Generate a unique filename
+                // Generate a unique filename for the new resume
                 String originalFilename = resumeFile.getOriginalFilename();
                 String fileExtension = "";
                 if (originalFilename != null && originalFilename.contains(".")) {
@@ -233,21 +293,18 @@ public class JobApplicationController {
                     fileExtension = ".pdf"; // Default extension if none provided
                 }
                 resumeFilename = UUID.randomUUID().toString() + fileExtension;
-
-                try {
-                    // Save the file
-                    Path filePath = uploadPath.resolve(resumeFilename);
-                    Files.copy(resumeFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                    
-                    // Update candidate's resume path
-                    candidate.setResumeUrl(resumeFilename);
-                    candidateService.saveCandidate(candidate);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to save resume file: " + e.getMessage(), e);
-                }
+                
+                // Save the file
+                Path filePath = uploadPath.resolve(resumeFilename);
+                Files.copy(resumeFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                // Update candidate's resume path
+                candidate.setResumeUrl(resumeFilename);
+                candidate = candidateService.saveCandidate(candidate);
+                System.out.println("Saved new resume for candidate: " + candidate.getResumeUrl());
             }
-
-            // Create and save application
+            
+            // Create the application with the resume path
             JobApplication application = new JobApplication();
             application.setFullName(applicationDto.getFullName() != null ? applicationDto.getFullName() : "");
             application.setEmail(applicationDto.getEmail() != null ? applicationDto.getEmail() : "");
@@ -266,14 +323,26 @@ public class JobApplicationController {
             application.setJob(job);
 
             // Save the application
-            JobApplication savedApplication = jobApplicationService.submitApplication(jobId, candidate, application);
-            if (savedApplication == null || savedApplication.getId() == null) {
-                throw new RuntimeException("Failed to save application");
+            try {
+                JobApplication savedApplication = jobApplicationService.submitApplication(jobId, candidate, application);
+                
+                if (savedApplication == null || savedApplication.getId() == null) {
+                    throw new RuntimeException("Failed to save application - no ID returned");
+                }
+                
+                // Log successful submission
+                System.out.println("Application submitted successfully with ID: " + savedApplication.getId());
+                
+                // Add success message and redirect to application details
+                redirectAttributes.addFlashAttribute("success", "Your application has been submitted successfully!");
+                return "redirect:/jobs/applications/" + savedApplication.getId();
+                
+            } catch (Exception e) {
+                System.err.println("Error in submitApplication: " + e.getMessage());
+                e.printStackTrace();
+                redirectAttributes.addFlashAttribute("error", "Error submitting application: " + e.getMessage());
+                return "redirect:/jobs/" + jobId + "/apply";
             }
-
-            // Add success message and redirect to application details
-            redirectAttributes.addFlashAttribute("success", "Your application has been submitted successfully!");
-            return "redirect:/jobs/applications/" + savedApplication.getId();
 
         } catch (ResourceNotFoundException e) {
             redirectAttributes.addFlashAttribute("error", "Job not found: " + e.getMessage());
@@ -290,37 +359,72 @@ public class JobApplicationController {
     public String viewApplicationDetails(
             @PathVariable String applicationId,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        
+        System.out.println("Viewing application details for ID: " + applicationId);
         
         try {
             // Get the application
             JobApplication application = jobApplicationService.getApplicationById(applicationId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + applicationId));
+                    .orElseThrow(() -> {
+                        System.err.println("Application not found: " + applicationId);
+                        return new ResourceNotFoundException("Application not found with id: " + applicationId);
+                    });
+            
+            System.out.println("Found application: " + application);
             
             // Verify the current user is the owner of the application
+            if (application.getCandidate() == null || application.getCandidate().getId() == null) {
+                System.err.println("Application has no candidate or candidate ID is null");
+                return "redirect:/candidate/dashboard?error=invalid_application";
+            }
+            
             if (!application.getCandidate().getId().equals(userDetails.getId())) {
+                System.err.println("Unauthorized access attempt for application: " + applicationId + " by user: " + userDetails.getId());
                 return "redirect:/candidate/dashboard?error=unauthorized";
             }
             
             // Get the job details
-            Job job = jobService.getJobById(application.getJob().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+            if (application.getJob() == null || application.getJob().getId() == null) {
+                System.err.println("Application has no job or job ID is null");
+                return "redirect:/candidate/dashboard?error=invalid_job";
+            }
+            
+            String jobId = application.getJob().getId();
+            System.out.println("Looking up job with ID: " + jobId);
+            
+            Job job = jobService.getJobById(jobId)
+                    .orElseThrow(() -> {
+                        System.err.println("Job not found for application: " + applicationId + ", job ID: " + jobId);
+                        return new ResourceNotFoundException("Job not found for this application");
+                    });
+            
+            System.out.println("Found job: " + job);
             
             // Get application status history
             List<ApplicationStatusHistory> statusHistory = 
                     jobApplicationService.getApplicationStatusHistory(applicationId);
             
+            System.out.println("Status history size: " + (statusHistory != null ? statusHistory.size() : 0));
+            
             // Add attributes to the model
             model.addAttribute("application", application);
             model.addAttribute("job", job);
-            model.addAttribute("statusHistory", statusHistory);
+            model.addAttribute("statusHistory", statusHistory != null ? statusHistory : new ArrayList<ApplicationStatusHistory>());
             model.addAttribute("currentPath", "/candidate/applications/" + applicationId);
             
+            System.out.println("Rendering application details page");
             return "candidate/application-details";
             
         } catch (ResourceNotFoundException e) {
+            System.err.println("Resource not found: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/candidate/dashboard?error=not_found";
         } catch (Exception e) {
+            System.err.println("Error in viewApplicationDetails: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "An error occurred while loading the application details.");
             return "redirect:/candidate/dashboard?error=server_error";
         }
     }

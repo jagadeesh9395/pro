@@ -222,11 +222,17 @@
                                 <div class="card-body">
                                     <h6>Resume</h6>
                                     <div class="mb-3">
-                                        <a th:if="${application.resumePath != null}" 
-                                           th:href="@{/applications/} + ${application.id} + '/resume'" 
-                                           class="btn btn-outline-primary btn-sm">
-                                            <i class="bi bi-download me-1"></i> Download Resume
-                                        </a>
+                                        <th:block th:if="${application.resumePath != null and !#strings.isEmpty(application.resumePath)}">
+                                            <a th:href="@{/api/resumes/} + ${#strings.substringAfterLast(application.resumePath, '/')} + '/download'" 
+                                               class="btn btn-outline-primary btn-sm"
+                                               target="_blank"
+                                               download>
+                                                <i class="bi bi-download me-1"></i> Download Resume
+                                            </a>
+                                        </th:block>
+                                        <span th:if="${application.resumePath == null or #strings.isEmpty(application.resumePath)}" class="text-muted">
+                                            No resume attached
+                                        </span>
                                         <span th:if="${application.resumePath == null}" class="text-muted">No resume uploaded</span>
                                     </div>
                                     
@@ -244,16 +250,17 @@
                                         <h6>Resume</h6>
                                         <th:block th:with="hasResume=${application.resumePath != null and !#strings.isEmpty(application.resumePath)}">
                                             <a th:if="${hasResume}" 
-                                               th:href="@{'/candidate/applications/' + ${application.id} + '/resume'}"
+                                               th:href="@{/api/resumes/} + ${application.resumeId} + '/download'"
                                                class="btn btn-outline-primary btn-sm"
-                                               target="_blank">
+                                               target="_blank"
+                                               download>
                                                 <i class="bi bi-download me-1"></i> Download Resume
                                             </a>
                                             <p th:unless="${hasResume}" class="text-muted">
                                                 No resume attached
                                             </p>
                                         </th:block>
-                                        <p th:if="${candidate.resumeUrl}" class="small mt-2">
+                                        <p th:if="${candidate != null and candidate.resumeUrl != null}" class="small mt-2">
                                             <i class="bi bi-info-circle me-1"></i> You can update your resume in your <a th:href="@{/candidate/profile}">profile settings</a>.
                                         </p>
                                     </div>
@@ -287,16 +294,22 @@
                                         </div>
                                     </div>
                                     
-                                    <div th:if="${job.minSalary || job.maxSalary}" class="mt-3">
+                                    <div class="mt-3">
                                         <h6>Salary Range</h6>
-                                        <div th:if="${job.minSalary && job.maxSalary}" th:text="'$' + ${#numbers.formatDecimal(job.minSalary, 1, 2)} + ' - $' + ${#numbers.formatDecimal(job.maxSalary, 1, 2)}">
+                                        <div th:if="${job.minSalary != null and job.maxSalary != null}" 
+                                             th:text="'₹' + ${#numbers.formatDecimal(job.minSalary, 0, 'POINT', 0, 'COMMA')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary, 0, 'POINT', 0, 'COMMA')}">
                                             Salary range
                                         </div>
-                                        <div th:if="${job.minSalary && !job.maxSalary}" th:text="'From $' + ${#numbers.formatDecimal(job.minSalary, 1, 2)}">
+                                        <div th:if="${job.minSalary != null and job.maxSalary == null}" 
+                                             th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary, 0, 'POINT', 0, 'COMMA')}">
                                             Minimum salary
                                         </div>
-                                        <div th:if="${!job.minSalary && job.maxSalary}" th:text="'Up to $' + ${#numbers.formatDecimal(job.maxSalary, 1, 2)}">
+                                        <div th:if="${job.minSalary == null and job.maxSalary != null}" 
+                                             th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary, 0, 'POINT', 0, 'COMMA')}">
                                             Maximum salary
+                                        </div>
+                                        <div th:if="${job.minSalary == null and job.maxSalary == null}" class="text-muted">
+                                            Not specified
                                         </div>
                                     </div>
                                 </div>
@@ -331,27 +344,80 @@
                                 </div>
                             </div>
                             
-                            <!-- Default status items -->
-                            <div class="timeline-item">
-                                <h6>Application Submitted</h6>
-                                <p class="text-muted small mb-1" 
-                                   th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
-                                    Applied on Date
-                                </p>
-                                <p class="small">Your application has been received and is under review.</p>
+                            <!-- Application Status Timeline -->
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName != null and statusName != 'APPLIED'} ? 'text-muted' : ''">
+                                    <h6>Applied</h6>
+                                    <p class="text-muted small mb-1" th:if="${application.appliedAt != null}" 
+                                       th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
+                                        Applied on Date
+                                    </p>
+                                    <p class="small">Your application has been received and is under review.</p>
+                                </div>
                             </div>
                             
-                            <div class="timeline-item" 
-                                 th:classappend="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal() ? '' : 'text-muted'}">
-                                <h6>Application Reviewed</h6>
-                                <p class="small" 
-                                   th:if="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
-                                    Your application has been reviewed by the hiring team.
-                                </p>
-                                <p class="small" 
-                                   th:unless="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
-                                    Your application is pending review.
-                                </p>
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName != null and !T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).equals(T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW) and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()} ? 'text-muted' : ''">
+                                    <h6>Under Review</h6>
+                                    <p class="small" th:if="${statusName == 'UNDER_REVIEW'}">
+                                        Your application is currently being reviewed by our hiring team.
+                                    </p>
+                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()}">
+                                        Your application has been reviewed.
+                                    </p>
+                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()}">
+                                        Your application is pending review.
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal() ? 'text-muted' : ''}">
+                                    <h6>Shortlisted</h6>
+                                    <p class="small" th:if="${statusName == 'SHORTLISTED'}">
+                                        Your application has been shortlisted!
+                                    </p>
+                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal()}">
+                                        Your application was shortlisted and has progressed to the next stage.
+                                    </p>
+                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal()}">
+                                        Pending shortlisting decision
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal() ? 'text-muted' : ''}">
+                                    <h6>Interview Scheduled</h6>
+                                    <p class="small" th:if="${statusName == 'INTERVIEW_SCHEDULED'}">
+                                        Interview details will be shared with you soon.
+                                    </p>
+                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
+                                        Interview was completed.
+                                    </p>
+                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
+                                        Interview scheduling pending
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal() ? 'text-muted' : ''}">
+                                    <h6>Interviewing</h6>
+                                    <p class="small" th:if="${statusName == 'INTERVIEWING'}">
+                                        Your interview is in progress.
+                                    </p>
+                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal()}">
+                                        Interview completed.
+                                    </p>
+                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal()}">
+                                        Interview pending
+                                    </p>
+                                </div>
+                            </div>
                             </div>
                             
                             <div th:if="${#lists.isEmpty(application.statusHistory)}" class="text-muted">
@@ -359,30 +425,47 @@
                             </div>
                         </div>
                             
-                            <div class="timeline-item" th:classappend="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).INTERVIEW_SCHEDULED.ordinal() ? '' : 'text-muted'}">
-                                <h6>Interview</h6>
-                                <p class="small" th:if="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
-                                    Interview details will be shared with you soon.
-                                </p>
-                                <p class="small" th:unless="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
-                                    Interview details will be shared if you are shortlisted.
-                                </p>
+                            <!-- Offer Extended Status -->
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal() ? 'text-muted' : ''}">
+                                    <h6>Offer Extended</h6>
+                                    <p class="small" th:if="${statusName == 'OFFER_EXTENDED'}">
+                                        Congratulations! An offer has been extended to you.
+                                    </p>
+                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal()}">
+                                        Offer was extended.
+                                    </p>
+                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal()}">
+                                        Offer not extended yet
+                                    </p>
+                                </div>
+                            </div>
                             </div>
                             
-                            <div class="timeline-item" th:classappend="${application.status == T(com.tal.pro.model.JobApplication.ApplicationStatus).HIRED ? '' : 'text-muted'}">
-                                <h6>Decision</h6>
-                                <p class="small" th:if="${application.status == T(com.tal.pro.model.JobApplication.ApplicationStatus).HIRED}">
-                                    Congratulations! Your application was successful.
+                            <!-- Hired Status -->
+                            <div th:with="statusName=${application.status?.name()}">
+                                <div class="timeline-item" th:classappend="${statusName != 'HIRED' ? 'text-muted' : ''}">
+                                    <h6>Hired</h6>
+                                    <p class="small" th:if="${statusName == 'HIRED'}">
+                                        Congratulations! You've been hired for this position.
+                                    </p>
+                                    <p class="small" th:if="${statusName != 'HIRED'}">
+                                        Pending hiring decision
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
+                            
+                            <!-- Rejected/Withdrawn Status -->
+                            <div th:with="statusName=${application.status?.name()}" th:if="${statusName == 'REJECTED' or statusName == 'WITHDRAWN'}" class="timeline-item">
+                                <h6 th:text="${statusName == 'REJECTED' ? 'Application Rejected' : 'Application Withdrawn'}"></h6>
+                                <p class="small" th:if="${statusName == 'REJECTED'}">
+                                    We appreciate your interest, but we've decided to move forward with other candidates.
                                 </p>
-                                <p class="small" th:if="${application.status == T(com.tal.pro.model.JobApplication.ApplicationStatus).REJECTED}">
-                                    We regret to inform you that your application was not successful.
+                                <p class="small" th:if="${statusName == 'WITHDRAWN'}">
+                                    You have withdrawn your application from consideration.
                                 </p>
-                                <p class="small" th:if="${application.status == T(com.tal.pro.model.JobApplication.ApplicationStatus).WITHDRAWN}">
-                                    You have withdrawn this application.
-                                </p>
-                                <p class="small" th:if="${application.status.ordinal() < T(com.tal.pro.model.JobApplication.ApplicationStatus).HIRED.ordinal() && application.status != T(com.tal.pro.model.JobApplication.ApplicationStatus).REJECTED && application.status != T(com.tal.pro.model.JobApplication.ApplicationStatus).WITHDRAWN}">
-                                    Decision pending.
-                                </p>
+                            </div>
                             </div>
                         </div>
                     </div>
