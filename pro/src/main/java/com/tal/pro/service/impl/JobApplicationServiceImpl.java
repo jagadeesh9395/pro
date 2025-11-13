@@ -1,13 +1,18 @@
 package com.tal.pro.service.impl;
 
+import com.tal.pro.model.ApplicationStatusHistory;
 import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
 import com.tal.pro.repository.JobApplicationRepository;
 import com.tal.pro.service.JobApplicationService;
+import com.tal.pro.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,18 +20,31 @@ import java.util.Optional;
 public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
+    private final JobService jobService;
 
     @Autowired
-    public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository) {
+    public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository, JobService jobService) {
         this.jobApplicationRepository = jobApplicationRepository;
+        this.jobService = jobService;
     }
 
     @Override
+    @Transactional
     public JobApplication submitApplication(String jobId, Candidate candidate, JobApplication application) {
-        application.setCandidate(candidate);
-        Job job = new Job();
-        job.setId(jobId);
+        // Set job and candidate references
+        Job job = jobService.getJobById(jobId).orElseThrow(() -> new RuntimeException("Job not found"));
         application.setJob(job);
+        application.setCandidate(candidate);
+        application.setStatus(JobApplication.ApplicationStatus.APPLIED);
+        application.setAppliedAt(LocalDateTime.now());
+        application.setUpdatedAt(LocalDateTime.now());
+        application.setUpdatedBy(candidate.getId());
+        
+        // Initialize status history
+        application.setStatusHistory(new ArrayList<>());
+        addStatusHistory(application, JobApplication.ApplicationStatus.APPLIED, "Application submitted", candidate.getId());
+
+        // Save the application
         return jobApplicationRepository.save(application);
     }
 
@@ -51,14 +69,60 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
+    @Transactional
     public JobApplication updateApplicationStatus(String applicationId, JobApplication.ApplicationStatus status, String updatedBy) {
-        return jobApplicationRepository.findById(applicationId)
-                .map(application -> {
-                    application.setStatus(status);
-                    application.setUpdatedBy(updatedBy);
-                    return jobApplicationRepository.save(application);
-                })
-                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
+        return updateApplicationStatus(applicationId, status, "Status updated", updatedBy);
+    }
+    
+    @Override
+    @Transactional
+    public JobApplication updateApplicationStatus(String applicationId, JobApplication.ApplicationStatus status, 
+                                                String notes, String updatedBy) {
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        // Only update if status has changed
+        if (application.getStatus() != status) {
+            // Add to status history
+            addStatusHistory(application, status, notes, updatedBy);
+            
+            // Update status and timestamps
+            application.setStatus(status);
+            application.setUpdatedAt(LocalDateTime.now());
+            application.setUpdatedBy(updatedBy);
+            
+            return jobApplicationRepository.save(application);
+        }
+        
+        return application;
+    }
+    
+    /**
+     * Adds a new status history entry to the application
+     */
+    private void addStatusHistory(JobApplication application, JobApplication.ApplicationStatus status, 
+                                String notes, String changedBy) {
+        if (application.getStatusHistory() == null) {
+            application.setStatusHistory(new ArrayList<>());
+        }
+        
+        ApplicationStatusHistory history = new ApplicationStatusHistory();
+        history.setStatus(status);
+        history.setNotes(notes);
+        history.setChangedAt(LocalDateTime.now());
+        history.setChangedBy(changedBy);
+        
+        application.getStatusHistory().add(history);
+        
+        // Keep only the last 50 status updates to prevent unbounded growth
+        if (application.getStatusHistory().size() > 50) {
+            application.setStatusHistory(
+                application.getStatusHistory().subList(
+                    application.getStatusHistory().size() - 50, 
+                    application.getStatusHistory().size()
+                )
+            );
+        }
     }
 
     @Override
@@ -67,15 +131,22 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
+    @Transactional
     public JobApplication updateApplication(JobApplication application, String updatedBy) {
-        return jobApplicationRepository.findById(application.getId())
-                .map(existingApp -> {
-                    existingApp.setStatus(application.getStatus());
-                    existingApp.setNotes(application.getNotes());
-                    existingApp.setUpdatedBy(updatedBy);
-                    return jobApplicationRepository.save(existingApp);
-                })
-                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + application.getId()));
+        // If status has changed, add to history
+        JobApplication existing = jobApplicationRepository.findById(application.getId())
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+                
+        if (existing.getStatus() != application.getStatus()) {
+            addStatusHistory(application, application.getStatus(), 
+                           "Application updated with status: " + application.getStatus().getDisplayName(), 
+                           updatedBy);
+        }
+        
+        application.setUpdatedAt(LocalDateTime.now());
+        application.setUpdatedBy(updatedBy);
+        
+        return jobApplicationRepository.save(application);
     }
 
     @Override
@@ -97,6 +168,13 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                     application.setUpdatedBy(updatedBy);
                     return jobApplicationRepository.save(application);
                 })
+                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
+    }
+    
+    @Override
+    public List<ApplicationStatusHistory> getApplicationStatusHistory(String applicationId) {
+        return jobApplicationRepository.findById(applicationId)
+                .map(JobApplication::getStatusHistory)
                 .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
     }
 }

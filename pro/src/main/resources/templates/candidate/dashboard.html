@@ -380,7 +380,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Applications</h5>
-                        <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                        <a th:href="@{/candidate/applications}" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -395,14 +395,34 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
+                                <!-- Dynamic Applications from Database -->
+                                <tr th:each="app : ${recentApplications}" th:with="jobTitle=${app.job?.jobTitle} ?: 'N/A', companyName=${app.job?.companyName} ?: 'N/A'">
+                                    <td th:text="${jobTitle}">Senior Java Developer</td>
+                                    <td th:text="${companyName}">Tech Corp</td>
+                                    <td th:if="${app.appliedAt != null}" th:text="${#temporals.format(app.appliedAt, 'MMM d, yyyy')}">Oct 15, 2023</td>
+                                    <td th:unless="${app.appliedAt != null}">N/A</td>
+                                    <td>
+                                        <span th:with="statusClass=${app.status != null ? 'status-badge status-' + #strings.toLowerCase(app.status.name()) : 'status-badge'}"
+                                              th:class="${statusClass}"
+                                              th:text="${app.status?.displayName ?: 'N/A'}">Applied</span>
+                                    </td>
+                                    <td>
+                                        <a th:if="${app.id != null}" 
+                                           th:href="@{/candidate/applications/} + ${app.id}" 
+                                           class="text-primary">View</a>
+                                        <span th:unless="${app.id != null}" class="text-muted">N/A</span>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Fallback dummy data when no applications exist -->
+                                <tr th:if="${#lists.isEmpty(recentApplications)}">
                                     <td>Senior Java Developer</td>
                                     <td>Tech Corp</td>
                                     <td>Oct 15, 2023</td>
                                     <td><span class="status-badge status-applied">Applied</span></td>
                                     <td><a href="#" class="text-primary">View</a></td>
                                 </tr>
-                                <tr>
+                                <tr th:if="${#lists.isEmpty(recentApplications)}">
                                     <td>Frontend Developer</td>
                                     <td>Web Solutions</td>
                                     <td>Oct 10, 2023</td>

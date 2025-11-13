@@ -161,8 +161,12 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-4">
                             <div>
-                                <h3 th:text="${job.jobTitle}">Job Title</h3>
-                                <p class="text-muted mb-1" th:if="${job.companyName}" th:text="${job.companyName} + (job.location ? ' • ' + job.location : '')">Company • Location</p>
+                                <h3 th:text="${application.job?.jobTitle ?: 'Job Title'}">Job Title</h3>
+                                <p class="text-muted mb-1" th:if="${application.job?.companyName}" 
+                                   th:text="${application.job.companyName} + 
+                                   (application.job?.location ? ' • ' + application.job.location : '')">
+                                    Company • Location
+                                </p>
                                 <p class="text-muted" th:if="${job.jobType}" th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}">Job Type</p>
                                 <p class="text-muted" th:if="${job.experience}" th:text="'Experience: ' + ${job.experience}">Experience</p>
                             </div>
@@ -216,7 +220,17 @@
                             <h5>Your Application</h5>
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <h6>Cover Letter</h6>
+                                    <h6>Resume</h6>
+                                    <div class="mb-3">
+                                        <a th:if="${application.resumePath != null}" 
+                                           th:href="@{/applications/} + ${application.id} + '/resume'" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-download me-1"></i> Download Resume
+                                        </a>
+                                        <span th:if="${application.resumePath == null}" class="text-muted">No resume uploaded</span>
+                                    </div>
+                                    
+                                    <h6 class="mt-4">Cover Letter</h6>
                                     <div th:if="${application.coverLetter != null and !#strings.isEmpty(application.coverLetter)}" class="border rounded p-3 bg-white">
                                         <div th:utext="${application.coverLetter}">
                                             Your cover letter content goes here...
@@ -297,23 +311,53 @@
                     <div class="card-body">
                         <h5>Application Status</h5>
                         <div class="timeline mt-4">
+                            <!-- Dynamic status history -->
+                            <div th:if="${not #lists.isEmpty(application.statusHistory)}">
+                                <div class="timeline-item" th:each="history : ${application.statusHistory}">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="mb-1" th:text="${history.status?.displayName}">Status</h6>
+                                            <p class="mb-1" th:text="${history.notes}">Status update notes</p>
+                                        </div>
+                                        <small class="text-muted" 
+                                               th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
+                                            Oct 15, 2023
+                                        </small>
+                                    </div>
+                                    <small class="text-muted" th:if="${history.changedBy != null}" 
+                                           th:text="'Updated by: ' + ${history.changedBy}">
+                                        Updated by: System
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Default status items -->
                             <div class="timeline-item">
                                 <h6>Application Submitted</h6>
-                                <p class="text-muted small mb-1" th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
+                                <p class="text-muted small mb-1" 
+                                   th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
                                     Applied on Date
                                 </p>
                                 <p class="small">Your application has been received and is under review.</p>
                             </div>
                             
-                            <div class="timeline-item" th:classappend="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal() ? '' : 'text-muted'}">
+                            <div class="timeline-item" 
+                                 th:classappend="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal() ? '' : 'text-muted'}">
                                 <h6>Application Reviewed</h6>
-                                <p class="small" th:if="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
+                                <p class="small" 
+                                   th:if="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
                                     Your application has been reviewed by the hiring team.
                                 </p>
-                                <p class="small" th:unless="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
+                                <p class="small" 
+                                   th:unless="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).SHORTLISTED.ordinal()}">
                                     Your application is pending review.
                                 </p>
                             </div>
+                            
+                            <div th:if="${#lists.isEmpty(application.statusHistory)}" class="text-muted">
+                                No status history available
+                            </div>
+                        </div>
                             
                             <div class="timeline-item" th:classappend="${application.status.ordinal() >= T(com.tal.pro.model.JobApplication.ApplicationStatus).INTERVIEW_SCHEDULED.ordinal() ? '' : 'text-muted'}">
                                 <h6>Interview</h6>

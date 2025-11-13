@@ -123,19 +123,19 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/candidate/dashboard}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/dashboard') ? 'active' : ''}">
+                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/dashboard')) ? 'active' : ''}">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/candidate/applications}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/applications') ? 'active' : ''}">
+                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/applications')) ? 'active' : ''}">
                             <i class="bi bi-briefcase me-1"></i> My Applications
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/candidate/profile}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/profile') ? 'active' : ''}">
+                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/profile')) ? 'active' : ''}">
                             <i class="bi bi-person me-1"></i> My Profile
                         </a>
                     </li>
@@ -552,45 +552,60 @@
             }
             
             // Form validation
-            if (form) {
-                form.addEventListener('submit', function(event) {
-                    let isValid = true;
-                    
-                    // Check if resume is provided (either existing or new upload)
-                    const hasExistingResume = document.getElementById('useExistingResume')?.checked || false;
-                    const resumeFile = document.getElementById('resume')?.files[0];
-                    
-                    if (!hasExistingResume && !resumeFile) {
-                        if (resumeWarning) {
-                            resumeWarning.style.display = 'block';
-                            isValid = false;
-                        }
-                    } else if (resumeWarning) {
-                        resumeWarning.style.display = 'none';
-                    }
-                    
-                    if (!form.checkValidity() || !isValid) {
-                        event.preventDefault();
-                        event.stopPropagation();
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('jobApplicationForm');
+                const resumeWarning = document.getElementById('resumeWarning');
+                const useExistingResume = document.getElementById('useExistingResume');
+                const resumeUploadSection = document.getElementById('resumeUploadSection');
+                
+                if (form) {
+                    form.addEventListener('submit', function(event) {
+                        let isValid = true;
                         
-                        // Scroll to first invalid field
-                        const firstInvalid = form.querySelector('.is-invalid');
-                        if (firstInvalid) {
-                            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Check if resume is provided (either existing or new upload)
+                        const hasExistingResume = useExistingResume?.checked || false;
+                        const resumeFile = document.getElementById('resume')?.files[0];
+                        
+                        if (!hasExistingResume && !resumeFile) {
+                            if (resumeWarning) {
+                                resumeWarning.style.display = 'block';
+                                isValid = false;
+                            }
+                        } else if (resumeWarning) {
+                            resumeWarning.style.display = 'none';
                         }
-                    }
-                    
-                    form.classList.add('was-validated');
-                }, false);
-            }
+                        
+                        if (!form.checkValidity() || !isValid) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            
+                            // Scroll to first invalid field
+                            const firstInvalid = form.querySelector('.is-invalid');
+                            if (firstInvalid) {
+                                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                        
+                        form.classList.add('was-validated');
+                    }, false);
+                }
+                
+                // Toggle resume sections when checkbox changes
+                if (useExistingResume && resumeUploadSection) {
+                    useExistingResume.addEventListener('change', function() {
+                        if (this.checked) {
+                            resumeUploadSection.classList.add('collapse');
+                        } else {
+                            resumeUploadSection.classList.remove('collapse');
+                        }
+                    });
+                }
+            });
             
             // Helper function to show alerts
             function showAlert(message, type = 'info') {
                 // You can implement a more sophisticated alert system if needed
                 alert(message);
-            }
-        });form.classList.add('was-validated');
-                }, false);
             }
         });
     </script>
