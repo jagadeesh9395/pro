@@ -37,6 +37,8 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -304,23 +306,96 @@ public class JobApplicationController {
                 System.out.println("Saved new resume for candidate: " + candidate.getResumeUrl());
             }
             
+            // Update candidate's profile with new information from the application
+            boolean candidateUpdated = false;
+            
+            // 1. Update phone number if provided and different
+            if (applicationDto.getPhone() != null && !applicationDto.getPhone().trim().isEmpty() && 
+                !applicationDto.getPhone().trim().equals(candidate.getPhoneNumber())) {
+                System.out.println("Updating candidate's phone number from '" + candidate.getPhoneNumber() + "' to '" + applicationDto.getPhone().trim() + "'");
+                try {
+                    candidate.setPhoneNumber(applicationDto.getPhone().trim());
+                    candidateUpdated = true;
+                } catch (Exception e) {
+                    System.err.println("Error updating candidate's phone number: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            // 2. Update current company if provided and different
+            if (applicationDto.getCurrentCompany() != null && !applicationDto.getCurrentCompany().trim().isEmpty() && 
+                !applicationDto.getCurrentCompany().trim().equals(candidate.getCurrentCompany())) {
+                System.out.println("Updating candidate's current company from '" + candidate.getCurrentCompany() + "' to '" + applicationDto.getCurrentCompany().trim() + "'");
+                try {
+                    candidate.setCurrentCompany(applicationDto.getCurrentCompany().trim());
+                    candidateUpdated = true;
+                } catch (Exception e) {
+                    System.err.println("Error updating candidate's current company: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            // 3. Update resume URL if a new resume was uploaded
+            if (resumeFilename != null && !resumeFilename.equals(candidate.getResumeUrl())) {
+                System.out.println("Updating candidate's resume URL to: " + resumeFilename);
+                try {
+                    candidate.setResumeUrl(resumeFilename);
+                    candidateUpdated = true;
+                } catch (Exception e) {
+                    System.err.println("Error updating candidate's resume URL: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            // Save candidate if any updates were made
+            if (candidateUpdated) {
+                try {
+                    candidate = candidateService.saveCandidate(candidate);
+                    System.out.println("Successfully updated candidate profile");
+                } catch (Exception e) {
+                    System.err.println("Error saving candidate profile: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("No candidate profile updates needed");
+            }
+            
             // Create the application with the resume path
             JobApplication application = new JobApplication();
-            application.setFullName(applicationDto.getFullName() != null ? applicationDto.getFullName() : "");
-            application.setEmail(applicationDto.getEmail() != null ? applicationDto.getEmail() : "");
-            application.setPhone(applicationDto.getPhone() != null ? applicationDto.getPhone() : "");
-            application.setCurrentCompany(applicationDto.getCurrentCompany() != null ? applicationDto.getCurrentCompany() : "");
-            application.setResumePath(resumeFilename);
+            
+            // Set personal information - use DTO values if provided, otherwise fall back to candidate profile
+            application.setFullName(applicationDto.getFullName() != null && !applicationDto.getFullName().trim().isEmpty() ? 
+                applicationDto.getFullName().trim() : candidate.getFullName());
+                
+            application.setEmail(applicationDto.getEmail() != null && !applicationDto.getEmail().trim().isEmpty() ? 
+                applicationDto.getEmail().trim() : candidate.getEmail());
+                
+            application.setPhone(applicationDto.getPhone() != null && !applicationDto.getPhone().trim().isEmpty() ? 
+                applicationDto.getPhone().trim() : candidate.getPhoneNumber());
+                
+            application.setCurrentCompany(applicationDto.getCurrentCompany() != null && !applicationDto.getCurrentCompany().trim().isEmpty() ? 
+                applicationDto.getCurrentCompany().trim() : candidate.getCurrentCompany());
+            
+            // Set application-specific fields
+            application.setResumePath(resumeFilename != null ? resumeFilename : candidate.getResumeUrl());
             application.setCoverLetter(applicationDto.getCoverLetter() != null ? applicationDto.getCoverLetter() : "");
             application.setNoticePeriod(applicationDto.getNoticePeriod() != null ? applicationDto.getNoticePeriod() : 0);
             application.setExpectedSalary(applicationDto.getExpectedSalary() != null ? applicationDto.getExpectedSalary() : 0.0);
-            application.setAdditionalInfo(applicationDto.getAdditionalInfo() != null ? applicationDto.getAdditionalInfo() : "");
+            application.setAdditionalInfo(applicationDto.getAdditionalInfo() != null ? applicationDto.getAdditionalInfo().trim() : "");
+            
+            // Set application metadata
             application.setStatus(JobApplication.ApplicationStatus.APPLIED);
             application.setAppliedAt(LocalDateTime.now());
             application.setUpdatedAt(LocalDateTime.now());
             application.setUpdatedBy(candidate.getId());
             application.setCandidate(candidate);
             application.setJob(job);
+            
+            // Log the final application data for debugging
+            System.out.println("Final application data - Name: " + application.getFullName() + 
+                             ", Email: " + application.getEmail() + 
+                             ", Phone: " + application.getPhone() + 
+                             ", Company: " + application.getCurrentCompany());
 
             // Save the application
             try {
@@ -355,6 +430,25 @@ public class JobApplicationController {
         }
     }
 
+    // Debug endpoint to check application data
+    @ResponseBody
+    @GetMapping("/api/debug/application/{applicationId}")
+    public Map<String, Object> debugApplication(@PathVariable String applicationId) {
+        JobApplication application = jobApplicationService.getApplicationById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+                
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", application.getId());
+        result.put("noticePeriod", application.getNoticePeriod());
+        result.put("expectedSalary", application.getExpectedSalary());
+        result.put("coverLetter", application.getCoverLetter() != null ? "[present]" : null);
+        result.put("appliedAt", application.getAppliedAt());
+        result.put("status", application.getStatus() != null ? application.getStatus().name() : null);
+        
+        return result;
+    }
+    
+    
     @GetMapping("/applications/{applicationId}")
     public String viewApplicationDetails(
             @PathVariable String applicationId,
@@ -406,24 +500,39 @@ public class JobApplicationController {
             List<ApplicationStatusHistory> statusHistory = 
                     jobApplicationService.getApplicationStatusHistory(applicationId);
             
-            System.out.println("Status history size: " + (statusHistory != null ? statusHistory.size() : 0));
+            // Get the candidate details
+            Candidate candidate = candidateService.getCandidateById(application.getCandidate().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Candidate not found with id: " + application.getCandidate().getId()));
+            
+            // Ensure application has all required fields, fallback to candidate data if needed
+            if ((application.getFullName() == null || application.getFullName().isEmpty()) && candidate.getFullName() != null) {
+                application.setFullName(candidate.getFullName());
+            }
+            if ((application.getEmail() == null || application.getEmail().isEmpty()) && candidate.getEmail() != null) {
+                application.setEmail(candidate.getEmail());
+            }
+            if ((application.getPhone() == null || application.getPhone().isEmpty()) && candidate.getPhoneNumber() != null) {
+                application.setPhone(candidate.getPhoneNumber());
+            }
+            if ((application.getCurrentCompany() == null || application.getCurrentCompany().isEmpty()) && candidate.getCurrentCompany() != null) {
+                application.setCurrentCompany(candidate.getCurrentCompany());
+            }
+            if ((application.getResumePath() == null || application.getResumePath().isEmpty()) && candidate.getResumeUrl() != null) {
+                application.setResumePath(candidate.getResumeUrl());
+            }
             
             // Add attributes to the model
             model.addAttribute("application", application);
             model.addAttribute("job", job);
+            model.addAttribute("candidate", candidate);
             model.addAttribute("statusHistory", statusHistory != null ? statusHistory : new ArrayList<ApplicationStatusHistory>());
             model.addAttribute("currentPath", "/candidate/applications/" + applicationId);
             
-            System.out.println("Rendering application details page");
             return "candidate/application-details";
-            
         } catch (ResourceNotFoundException e) {
-            System.err.println("Resource not found: " + e.getMessage());
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/candidate/dashboard?error=not_found";
         } catch (Exception e) {
-            System.err.println("Error in viewApplicationDetails: " + e.getMessage());
-            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "An error occurred while loading the application details.");
             return "redirect:/candidate/dashboard?error=server_error";
         }

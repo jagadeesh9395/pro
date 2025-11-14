@@ -140,12 +140,12 @@
                         </ul>
                     </div>
                 </div>
-                </div>
             </div>
         </div>
     </nav>
 
     <div class="container my-5">
+        
         <div class="row mb-4">
             <div class="col-12">
                 <a href="/candidate/dashboard" class="text-decoration-none d-inline-flex align-items-center mb-3">
@@ -160,95 +160,253 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div>
-                                <h3 th:text="${application.job?.jobTitle ?: 'Job Title'}">Job Title</h3>
-                                <p class="text-muted mb-1" th:if="${application.job?.companyName}" 
-                                   th:text="${application.job.companyName} + 
-                                   (application.job?.location ? ' • ' + application.job.location : '')">
-                                    Company • Location
-                                </p>
-                                <p class="text-muted" th:if="${job.jobType}" th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}">Job Type</p>
-                                <p class="text-muted" th:if="${job.experience}" th:text="'Experience: ' + ${job.experience}">Experience</p>
+                            <div class="flex-grow-1 me-4">
+                                <h3 class="mb-2" th:text="${job?.jobTitle ?: 'Job Title'}">Job Title</h3>
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="d-flex flex-column">
+                                        <p class="text-muted mb-1" th:if="${job?.companyName}">
+                                            <i class="bi bi-building me-1"></i>
+                                            <span th:text="${job.companyName}"></span>
+                                            <span th:if="${job?.location}" th:text="' • ' + ${job.location}" class="ms-1"></span>
+                                        </p>
+                                        <p class="text-muted mb-1" th:if="${job?.jobType}">
+                                            <i class="bi bi-briefcase me-1"></i>
+                                            <span th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}"></span>
+                                        </p>
+                                        <p class="text-muted mb-0" th:if="${job?.experience}">
+                                            <i class="bi bi-graph-up me-1"></i>
+                                            <span th:text="'Experience: ' + ${job.experience}"></span>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <th:block th:with="status=${application?.status != null ? application.status : T(com.tal.pro.model.JobApplication.ApplicationStatus).APPLIED}">
-                                    <span th:class="'status-badge ' + ${'status-' + status.name().toLowerCase().replace('_', '-')}"
-                                          th:text="${status.displayName}">
-                                        Status
-                                    </span>
-                                </th:block>
+                            <div class="d-flex flex-column align-items-end" style="min-width: 180px;">
+                                <div class="mb-2 p-2 bg-light rounded text-end">
+                                    <p class="mb-1">
+                                        <strong>Applied On:</strong> 
+                                        <span class="text-primary fw-medium" th:text="${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
+                                            Date
+                                        </span>
+                                    </p>
+                                    <th:block th:with="status=${application?.status != null ? application.status : T(com.tal.pro.model.JobApplication.ApplicationStatus).APPLIED}">
+                                        <span class="badge p-2" 
+                                              th:classappend="'status-' + ${status.name().toLowerCase().replace('_', '-')}"
+                                              th:text="${status.displayName}">
+                                            Status
+                                        </span>
+                                    </th:block>
+                                </div>
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <h5>Application Information</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p class="mb-1" th:with="appliedAt=${application.appliedAt ?: #temporals.createNow()}">
-                                        <strong>Applied On:</strong> 
-                                        <span th:text="${#temporals.format(appliedAt, 'MMM d, yyyy')}">Date</span>
-                                    </p>
-                                    <p class="mb-1" th:if="${application.updatedAt}"><strong>Last Updated:</strong> 
-                                        <span th:text="${#temporals.format(application.updatedAt, 'MMM d, yyyy')}">Date</span>
-                                    </p>
-                                    <p class="mb-1" th:if="${application.updatedBy}"><strong>Updated By:</strong> 
-                                        <span th:text="${application.updatedBy}">User</span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Application ID:</strong> 
-                                        <span th:text="${application.id}">ID</span>
-                                    </p>
-                                    <p class="mb-1"><strong>Job ID:</strong> 
-                                        <a th:href="@{/candidate/jobs/{id}(id=${job.id})}" th:text="${job.id}">Job ID</a>
-                                    </p>
-                                    <p class="mb-1" th:if="${application.currentCompany != null and !#strings.isEmpty(application.currentCompany)}">
-                                        <strong>Current Company:</strong> 
-                                        <span th:text="${application.currentCompany}">Company</span>
-                                    </p>
-                                    <p class="mb-1" th:if="${application.noticePeriod != null}"><strong>Notice Period:</strong> 
-                                        <span th:text="${application.noticePeriod} + ' days'">Notice Period</span>
-                                    </p>
-                                    <p class="mb-1" th:if="${application.expectedSalary != null}"><strong>Expected Salary:</strong> 
-                                        <span th:text="'$' + ${#numbers.formatDecimal(application.expectedSalary, 1, 2)}">Salary</span>
-                                    </p>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Application ID:</strong> 
+                                                <span class="text-muted" th:text="${application.id}">ID</span>
+                                            </p>
+                                            <p class="mb-2"><strong>Job ID:</strong> 
+                                                <a th:href="@{/candidate/jobs/{id}(id=${job.id})}" th:text="${job.id}">Job ID</a>
+                                            </p>
+                                            <p class="mb-2" th:if="${application.updatedAt}">
+                                                <strong>Last Updated:</strong> 
+                                                <span class="text-muted" th:text="${#temporals.format(application.updatedAt, 'MMM d, yyyy hh:mm a')}">Date</span>
+                                            </p>
+                                            <p class="mb-2" th:if="${application.updatedBy}">
+                                                <strong>Updated By:</strong> 
+                                                <span class="text-muted" th:text="${application.updatedBy}">System</span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Job Type:</strong>
+                                                <span class="text-muted" th:if="${job?.jobType}" 
+                                                      th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}">
+                                                    Job Type
+                                                </span>
+                                                <span class="text-muted" th:unless="${job?.jobType}">Not specified</span>
+                                            </p>
+                                            <p class="mb-2" th:if="${job?.experience}">
+                                                <strong>Experience Required:</strong>
+                                                <span class="text-muted" th:text="${job.experience}">Experience</span>
+                                            </p>
+                                            <p class="mb-2" th:if="${job?.location}">
+                                                <strong>Location:</strong>
+                                                <span class="text-muted" th:text="${job.location}">Location</span>
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
                         </div>
 
                         <div class="mb-4">
                             <h5>Your Application</h5>
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <h6>Resume</h6>
-                                        <th:block th:with="hasResume=${application.resumePath != null and !#strings.isEmpty(application.resumePath)}">
-                                            <a th:if="${hasResume}" 
-                                               th:href="@{/api/resumes/} + ${application.resumeId ?: #strings.substringAfterLast(application.resumePath, '/')} + '/download'"
-                                               class="btn btn-outline-primary btn-sm"
-                                               target="_blank"
-                                               download>
-                                                <i class="bi bi-download me-1"></i> Download Resume
-                                            </a>
-                                            <p th:unless="${hasResume}" class="text-muted mb-0">
-                                                No resume attached to this application.
-                                            </p>
-                                        </th:block>
-                                        <p th:if="${candidate != null and candidate.resumeUrl != null}" class="small mt-2 mb-0">
-                                            <i class="bi bi-info-circle me-1"></i> You can update your resume in your <a th:href="@{/candidate/profile}">profile settings</a>.
-                                        </p>
-                                    </div>
-                                    
-                                    <div class="mt-4">
-                                        <h6>Cover Letter</h6>
-                                        <div th:if="${application.coverLetter != null and !#strings.isEmpty(application.coverLetter)}" class="border rounded p-3 bg-white">
-                                            <div th:utext="${application.coverLetter}">
-                                                Your cover letter content goes here...
+                                    <!-- Personal Information -->
+                                    <div class="mb-4">
+                                        <h6>Personal Information</h6>
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2">
+                                                            <strong>Full Name:</strong>
+                                                            <span class="text-muted" th:with="fullName=${application.fullName != null && !application.fullName.isEmpty() ? application.fullName : (candidate.fullName != null ? candidate.fullName : 'Not provided')}"
+                                                                  th:text="${fullName}">Full Name</span>
+                                                        </p>
+                                                        <p class="mb-2">
+                                                            <strong>Email:</strong>
+                                                            <span class="text-muted" th:with="email=${application.email != null && !application.email.isEmpty() ? application.email : (candidate.email != null ? candidate.email : 'Not provided')}"
+                                                                  th:text="${email}">email@example.com</span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2">
+                                                            <strong>Phone:</strong>
+                                                            <span class="text-muted" th:with="phone=${application.phone != null && !application.phone.isEmpty() ? application.phone : (candidate.phoneNumber != null ? candidate.phoneNumber : 'Not provided')}"
+                                                                  th:text="${phone}">Phone</span>
+                                                        </p>
+                                                        <p class="mb-2">
+                                                            <strong>Current Company:</strong>
+                                                            <span class="text-muted" th:with="company=${application.currentCompany != null && !#strings.isEmpty(application.currentCompany) ? application.currentCompany : (candidate.currentCompany != null ? candidate.currentCompany : 'Not specified')}"
+                                                                  th:text="${company}">Company</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <p th:if="${application.coverLetter == null or #strings.isEmpty(application.coverLetter)}" class="text-muted fst-italic mb-0">
-                                            No cover letter was submitted with this application.
-                                        </p>
+                                    </div>
+
+                                    <!-- Application Details -->
+                                    <div class="mb-4">
+                                        <h6>Application Details</h6>
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <!-- Debug Info (remove in production) -->
+                                                        <div class="alert alert-info d-none">
+                                                            <p>Application ID: <span th:text="${application.id}"></span></p>
+                                                            <p>Status: <span th:text="${application.status}"></span></p>
+                                                            <p>Notice Period: <span th:text="${application.noticePeriod}"></span></p>
+                                                            <p>Expected Salary: <span th:text="${application.expectedSalary}"></span></p>
+                                                        </div>
+                                                        
+                                                        <!-- Application Status -->
+                                                        <p class="mb-2">
+                                                            <strong>Current Status:</strong>
+                                                            <span class="badge" 
+                                                                  th:classappend="${application.status != null ? 'status-' + #strings.toLowerCase(application.status.name()) : 'status-unknown'}"
+                                                                  th:text="${application.status?.displayName ?: 'Unknown'}">
+                                                                Status
+                                                            </span>
+                                                        </p>
+                                                        
+                                                        <!-- Application ID -->
+                                                        <p class="mb-2">
+                                                            <strong>Application ID:</strong>
+                                                            <span class="text-muted" th:text="${application.id}">ID</span>
+                                                        </p>
+                                                        
+                                                        <!-- Applied On -->
+                                                        <p class="mb-2">
+                                                            <strong>Applied On:</strong>
+                                                            <span class="text-muted">
+                                                                <span th:if="${application.appliedAt != null}" 
+                                                                      th:text="${#temporals.format(application.appliedAt, 'MMM d, yyyy hh:mm a')}">
+                                                                </span>
+                                                                <span th:if="${application.appliedAt == null}">
+                                                                    Not available
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                        
+                                                        <!-- Notice Period -->
+                                                        <p class="mb-2">
+                                                            <strong>Notice Period:</strong>
+                                                            <span class="text-muted" th:text="${application.noticePeriod != null ? application.noticePeriod + ' days' : 'Not specified'}">
+                                                                Not specified
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <!-- Last Updated -->
+                                                        <p class="mb-2">
+                                                            <strong>Last Updated:</strong>
+                                                            <span class="text-muted">
+                                                                <span th:if="${application.updatedAt != null}" 
+                                                                      th:text="${#temporals.format(application.updatedAt, 'MMM d, yyyy hh:mm a')}">
+                                                                </span>
+                                                                <span th:if="${application.updatedAt == null}">
+                                                                    Not available
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                        
+                                                        <!-- Updated By -->
+                                                        <p class="mb-2" th:if="${application.updatedBy != null}">
+                                                            <strong>Updated By:</strong>
+                                                            <span class="text-muted" th:text="${application.updatedBy}">
+                                                                System
+                                                            </span>
+                                                        </p>
+                                                        
+                                                        <!-- Expected Salary -->
+                                                        <p class="mb-2">
+                                                            <strong>Expected Salary:</strong>
+                                                            <span class="text-muted">
+                                                                <span th:if="${application.expectedSalary != null}" th:remove="tag">
+                                                                    $<span th:text="${#numbers.formatDecimal(application.expectedSalary, 1, 'COMMA', 2, 'POINT')}"></span>
+                                                                    <span th:if="${application.expectedSalaryType != null}" 
+                                                                          th:text="' ' + ${application.expectedSalaryType}">
+                                                                    </span>
+                                                                </span>
+                                                                <span th:if="${application.expectedSalary == null}" th:remove="tag">
+                                                                    Not specified
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Resume Section - Temporarily Hidden -->
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Resume management is currently unavailable. Please check back later.
+                                    </div>
+
+                                    <!-- Cover Letter Section -->
+                                    <div class="mb-4">
+                                        <h6>Cover Letter</h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div th:if="${application.coverLetter != null && !application.coverLetter.isEmpty()}">
+                                                    <div style="white-space: pre-line;" th:utext="${#strings.escapeXml(application.coverLetter)}"></div>
+                                                </div>
+                                                <div th:if="${application.coverLetter == null || application.coverLetter.isEmpty()}" 
+                                                     class="text-muted">
+                                                    No cover letter provided with this application.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Additional Information -->
+                                    <div th:if="${application.additionalInfo != null && !application.additionalInfo.isEmpty()}" class="mb-4">
+                                        <h6>Additional Information</h6>
+                                        <div class="border rounded p-3 bg-white">
+                                            <p class="mb-0" style="white-space: pre-line;" th:text="${application.additionalInfo}"></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
