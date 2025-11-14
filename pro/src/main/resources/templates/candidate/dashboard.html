@@ -409,10 +409,10 @@
                                         class="align-middle">
                                         <td>
                                             <a th:if="${job != null}" 
-                                               th:href="@{/jobs/} + ${job.id}" 
-                                               class="text-decoration-none" 
+                                               th:href="@{/jobs/view/} + ${job.id}" 
+                                               class="text-decoration-none fw-medium text-primary"
                                                th:text="${jobTitle}">Software Engineer</a>
-                                            <span th:unless="${job != null}" th:text="${jobTitle}"></span>
+                                            <span th:unless="${job != null}" class="fw-medium" th:text="${jobTitle}"></span>
                                         </td>
                                         <td th:text="${companyName}">Tech Corp</td>
                                         <td th:text="${location}">Remote</td>
@@ -450,7 +450,7 @@
                                                 
                                                 <!-- View Job Details -->
                                                 <a th:if="${job != null}" 
-                                                   th:href="@{/jobs/} + ${job.id}" 
+                                                   th:href="@{/jobs/view/} + ${job.id}" 
                                                    class="btn btn-sm btn-outline-secondary"
                                                    title="View Job Details"
                                                    data-bs-toggle="tooltip"
@@ -476,6 +476,28 @@
                                                 </span>
                                             </div>
                                         </td>
+                                        <!-- Withdraw Application Modal -->
+                                        <div class="modal fade" th:id="'withdrawModal' + ${app.id}" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-warning text-white">
+                                                        <h5 class="modal-title" id="withdrawModalLabel">Withdraw Application</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to withdraw this application? This action cannot be undone.</p>
+                                                        <form th:id="'withdrawForm' + ${app.id}" th:action="@{/candidate/applications/__${app.id}__/withdraw}" method="post">
+                                                            <input type="hidden" name="_method" value="PUT">
+                                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                        </form>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="button" class="btn btn-danger" th:onclick="document.getElementById('withdrawForm' + '${app.id}').submit();">Yes, Withdraw</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </tr>
                                     
                                     <!-- Fallback dummy data when no applications exist -->
@@ -633,27 +655,9 @@
     </div>
 </div>
 
-<!-- Withdraw Application Modal -->
-<div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-white">
-                <h5 class="modal-title" id="withdrawModalLabel">Withdraw Application</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to withdraw this application? This action cannot be undone.</p>
-                <form id="withdrawForm" th:action="@{/candidate/applications/__${app.id}__/withdraw}" method="post">
-                    <input type="hidden" name="_method" value="PUT">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmWithdraw">Yes, Withdraw</button>
-            </div>
-        </div>
-    </div>
+<!-- Withdraw Application Modal (dummy for JavaScript reference) -->
+<div class="modal fade" id="withdrawModalTemplate" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true" style="display: none;">
+    <!-- This is a template that will be cloned by JavaScript -->
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -674,14 +678,10 @@
             withdrawModal.addEventListener('show.bs.modal', function (event) {
                 var button = event.relatedTarget;
                 var applicationId = button.getAttribute('data-application-id');
-                var formAction = withdrawForm.getAttribute('action').replace('__${app.id}__', applicationId);
-                withdrawForm.setAttribute('action', formAction);
+                var formAction = withdrawModal.querySelector('form').getAttribute('action').replace('__${app.id}__', applicationId);
+                withdrawModal.querySelector('form').setAttribute('action', formAction);
             });
-
-            confirmWithdrawBtn.addEventListener('click', function() {
-                withdrawForm.submit();
-            });
-        }
+        });
 
         // Show success/error messages
         var urlParams = new URLSearchParams(window.location.search);
