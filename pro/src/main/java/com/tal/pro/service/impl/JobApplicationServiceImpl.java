@@ -1,5 +1,6 @@
 package com.tal.pro.service.impl;
 
+import com.tal.pro.exception.ResourceNotFoundException;
 import com.tal.pro.model.ApplicationStatusHistory;
 import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
@@ -8,6 +9,8 @@ import com.tal.pro.repository.JobApplicationRepository;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,14 +58,30 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Override
     public List<JobApplication> getApplicationsByCandidateId(String candidateId) {
+        System.out.println("DEBUG: Fetching applications for candidate ID: " + candidateId);
+        
         // Fetch applications with job details
         List<JobApplication> applications = jobApplicationRepository.findByCandidateIdOrderByAppliedAtDesc(candidateId);
         
+        System.out.println("DEBUG: Found " + applications.size() + " applications for candidate: " + candidateId);
+        
         // Eagerly load job details for each application
         applications.forEach(application -> {
+            System.out.println("DEBUG: Processing application ID: " + application.getId() + 
+                             ", Job ID: " + (application.getJob() != null ? application.getJob().getId() : "null"));
+            
             if (application.getJob() != null && application.getJob().getId() != null) {
+                System.out.println("DEBUG: Looking up job with ID: " + application.getJob().getId());
                 jobService.getJobById(application.getJob().getId())
-                    .ifPresent(application::setJob);
+                    .ifPresentOrElse(
+                        job -> {
+                            System.out.println("DEBUG: Found job: " + job.getJobTitle());
+                            application.setJob(job);
+                        },
+                        () -> System.out.println("DEBUG: Job not found for ID: " + application.getJob().getId())
+                    );
+            } else {
+                System.out.println("DEBUG: Application has no job reference or job ID is null");
             }
         });
         
@@ -161,13 +180,21 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
-    public List<JobApplication> getApplicationsByRecruiterId(String recruiterId) {
-        return jobApplicationRepository.findByJob_PostedById(recruiterId);
+    public Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, Pageable pageable) {
+        return jobApplicationRepository.findByJob_PostedById(recruiterId, pageable);
     }
 
     @Override
-    public List<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status) {
-        return jobApplicationRepository.findByStatus(status);
+    public Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, String jobId, 
+                                                          JobApplication.ApplicationStatus status, 
+                                                          Pageable pageable) {
+        return jobApplicationRepository.findByRecruiterIdAndJobIdAndStatus(
+            recruiterId, jobId, status, pageable);
+    }
+
+    @Override
+    public Page<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status, Pageable pageable) {
+        return jobApplicationRepository.findByStatus(status, pageable);
     }
 
     @Override
@@ -184,9 +211,32 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     
     @Override
     public List<ApplicationStatusHistory> getApplicationStatusHistory(String applicationId) {
-        return jobApplicationRepository.findById(applicationId)
+        return jobApplicationRepository.findStatusHistoryById(applicationId)
                 .map(JobApplication::getStatusHistory)
-                .orElseThrow(() -> new RuntimeException("Job application not found with id: " + applicationId));
+                .orElseGet(ArrayList::new);
+    }
+    
+    @Override
+    @Transactional
+    public JobApplication withdrawApplication(String applicationId, String username) {
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with id: " + applicationId));
+        
+        // Verify the candidate owns this application
+        if (!application.getCandidateId().equals(username)) {
+            throw new IllegalStateException("You are not authorized to withdraw this application");
+        }
+        
+        // Check if the application can be withdrawn
+        if (!application.canWithdraw()) {
+            throw new IllegalStateException("This application cannot be withdrawn as it is already " + 
+                                         application.getStatus().getDisplayName().toLowerCase());
+        }
+        
+        // Update the application status
+        return updateApplicationStatus(applicationId, 
+                                    JobApplication.ApplicationStatus.WITHDRAWN, 
+                                    "Application withdrawn by candidate", 
+                                    username);
     }
 }
-

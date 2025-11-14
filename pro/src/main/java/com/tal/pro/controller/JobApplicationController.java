@@ -41,6 +41,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import com.tal.pro.model.Recruiter;
+import com.tal.pro.model.JobApplication.ApplicationStatus;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/jobs")
@@ -60,6 +65,54 @@ public class JobApplicationController {
         this.jobService = jobService;
         this.jobApplicationService = jobApplicationService;
         this.candidateService = candidateService;
+    }
+    
+    @PostMapping("/applications/{id}/status")
+    public String updateApplicationStatus(
+            @PathVariable String id,
+            @RequestParam ApplicationStatus status,
+            @RequestParam(required = false) String notes,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            String updatedBy = authentication.getName();
+            JobApplication application = jobApplicationService.updateApplicationStatus(id, status, notes, updatedBy);
+            redirectAttributes.addFlashAttribute("success", "Application status updated successfully!");
+            return "redirect:/recruiter/applications/" + application.getId();
+        } catch (ResourceNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", "Application not found");
+            return "redirect:/recruiter/dashboard";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error updating application status: " + e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
+    }
+    
+    @PostMapping("/applications/{id}/notes")
+    public String addApplicationNote(
+            @PathVariable String id,
+            @RequestParam String notes,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            String updatedBy = authentication.getName();
+            JobApplication application = jobApplicationService.addNoteToApplication(id, notes, updatedBy);
+            redirectAttributes.addFlashAttribute("success", "Note added successfully!");
+            return "redirect:/recruiter/applications/" + application.getId();
+        } catch (ResourceNotFoundException e) {
+            redirectAttributes.addFlashAttribute("error", "Application not found");
+            return "redirect:/recruiter/dashboard";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error adding note: " + e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        }
+    }
+    
+    @ModelAttribute("statusList")
+    public JobApplication.ApplicationStatus[] getApplicationStatuses() {
+        return JobApplication.ApplicationStatus.values();
     }
 
     @GetMapping("/view/{id}")

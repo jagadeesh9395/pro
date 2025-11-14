@@ -4,6 +4,8 @@ import com.tal.pro.model.ApplicationStatusHistory;
 import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +38,33 @@ public interface JobApplicationService {
 
     JobApplication updateApplication(JobApplication application, String updatedBy);
 
-    List<JobApplication> getApplicationsByRecruiterId(String recruiterId);
+    /**
+     * Get paginated applications for jobs posted by a specific recruiter
+     * @param recruiterId ID of the recruiter
+     * @param pageable Pagination information
+     * @return Page of job applications
+     */
+    Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, Pageable pageable);
+    
+    /**
+     * Get filtered applications for jobs posted by a specific recruiter
+     * @param recruiterId ID of the recruiter
+     * @param jobId Optional job ID to filter by
+     * @param status Optional status to filter by
+     * @param pageable Pagination information
+     * @return Page of job applications
+     */
+    Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, String jobId,
+                                                      JobApplication.ApplicationStatus status,
+                                                      Pageable pageable);
 
-    List<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status);
+    /**
+     * Get applications by status
+     * @param status Status to filter by
+     * @param pageable Pagination information
+     * @return Page of job applications with the specified status
+     */
+    Page<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status, Pageable pageable);
 
     /**
      * Adds a note to an application and updates the last modified timestamp
@@ -55,5 +81,15 @@ public interface JobApplicationService {
      * @return List of status history entries, ordered by most recent first
      */
     List<ApplicationStatusHistory> getApplicationStatusHistory(String applicationId);
+    
+    /**
+     * Withdraw a job application
+     * @param applicationId The ID of the application to withdraw
+     * @param username The username of the candidate withdrawing the application
+     * @return The updated application
+     * @throws ResourceNotFoundException if the application is not found
+     * @throws IllegalStateException if the application cannot be withdrawn
+     */
+    JobApplication withdrawApplication(String applicationId, String username);
 
 }

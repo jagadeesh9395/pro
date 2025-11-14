@@ -594,10 +594,6 @@
                                 <div class="timeline-item" th:if="${statusName == 'WITHDRAWN'}">
                                     <h6>Application Withdrawn</h6>
                                     <p class="small">
-                                        You have withdrawn your application from consideration.
-                                    </p>
-                                </div>
-                            </div>
                             
                             <!-- Status History -->
                             <div th:if="${not #lists.isEmpty(application.statusHistory)}" class="mt-4">
@@ -607,14 +603,14 @@
                                         <div class="d-flex justify-content-between">
                                             <div>
                                                 <strong th:text="${history.status?.displayName}">Status</strong>
-                                                <p class="mb-0 small" th:if="${history.notes}" th:text="${history.notes}">Status update notes</p>
+                                                <p class="mb-0 small" th:if="${history.notes != null and !history.notes.isEmpty()}" th:text="${history.notes}">Status update notes</p>
                                             </div>
                                             <small class="text-muted" 
                                                    th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
                                                 Oct 15, 2023
                                             </small>
                                         </div>
-                                        <small class="text-muted" th:if="${history.changedBy}" 
+                                        <small class="text-muted" th:if="${history.changedBy != null}" 
                                                th:text="'Updated by: ' + ${history.changedBy}">
                                             Updated by: System
                                         </small>

@@ -84,7 +84,7 @@ public class CandidateController {
                 jobsPage = jobService.getAllActiveJobs(pageable);
             }
 
-            // Get candidate's applications with job details
+            // Get candidate's applications with job details and status history
             List<JobApplication> applications = jobApplicationService.getApplicationsByCandidateId(candidate.getId());
             
             // Log the number of applications found for debugging
@@ -93,26 +93,53 @@ public class CandidateController {
                 System.out.println("Application ID: " + app.getId() + 
                                  ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") + 
                                  ", Status: " + (app.getStatus() != null ? app.getStatus().name() : "No Status"));
+                
+                // Sort status history by change date (newest first)
+                if (app.getStatusHistory() != null) {
+                    app.getStatusHistory().sort((h1, h2) -> h2.getChangedAt().compareTo(h1.getChangedAt()));
+                }
             });
             
+            // Get recent applications (last 5)
+            List<JobApplication> recentApplications = applications.stream()
+                .filter(app -> app.getAppliedAt() != null) // Filter out null appliedAt
+                .sorted((a1, a2) -> a2.getAppliedAt().compareTo(a1.getAppliedAt()))
+                .limit(5)
+                .toList();
+                
+            // Log if any applications were filtered out
+            if (recentApplications.size() < Math.min(5, applications.size())) {
+                System.out.println("Filtered out " + (applications.size() - recentApplications.size()) + " applications with null appliedAt");
+            }
+            
+            // Add candidate and user info to model
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
             model.addAttribute("username", username);
             model.addAttribute("fullName", candidate.getFullName());
             model.addAttribute("email", candidate.getEmail());
             model.addAttribute("isCandidate", true);
-
-            // Add jobs and applications to the model
+            
+            // Add applications data
+            model.addAttribute("recentApplications", recentApplications);
+            model.addAttribute("totalApplications", applications.size());
+            
+            // Add job search results with pagination
             model.addAttribute("jobs", jobsPage.getContent());
-            model.addAttribute("recentApplications", applications);
             model.addAttribute("currentPage", jobsPage.getNumber());
-            model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("totalPages", jobsPage.getTotalPages());
+            model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("pageSize", size);
-
-            // Add search parameters to model for form population and pagination
-            if (query != null) model.addAttribute("queryParam", query);
-            if (location != null) model.addAttribute("locationParam", location);
+            
+            // Add search parameters for pagination and form population
+            if (query != null && !query.isEmpty()) {
+                model.addAttribute("query", query);
+                model.addAttribute("queryParam", query);
+            }
+            if (location != null && !location.isEmpty()) {
+                model.addAttribute("location", location);
+                model.addAttribute("locationParam", location);
+            }
 
             return "candidate/dashboard";
         } catch (Exception e) {

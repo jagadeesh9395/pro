@@ -23,8 +23,10 @@ public class JobApplication {
     @DBRef
     private Job job;
 
-    @DBRef
+    @DBRef(lazy = true)
     private Candidate candidate;
+    
+    private String candidateId; // Store candidate ID separately for easier access
 
     private String fullName;
     private String email;
@@ -42,6 +44,18 @@ public class JobApplication {
     private String notes; // For internal recruiter notes
     
     private List<ApplicationStatusHistory> statusHistory = new ArrayList<>();
+    
+    // Helper method to safely get candidate ID
+    public String getCandidateId() {
+        return candidate != null ? candidate.getId() : candidateId;
+    }
+    
+    // Helper method to check if application can be withdrawn
+    public boolean canWithdraw() {
+        return status != ApplicationStatus.WITHDRAWN && 
+               status != ApplicationStatus.REJECTED &&
+               status != ApplicationStatus.HIRED;
+    }
 
     // Enums with display names
     public enum ApplicationStatus {
