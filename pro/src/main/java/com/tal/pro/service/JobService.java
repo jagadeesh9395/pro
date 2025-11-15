@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,15 +52,18 @@ public class JobService {
                 .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + jobId));
     }
 
+    @Transactional
     public void deleteJob(String jobId, Recruiter recruiter) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + jobId));
         
-        if (!job.getPostedBy().equals(recruiter)) {
+        if (!job.getPostedBy().getId().equals(recruiter.getId())) {
             throw new SecurityException("You are not authorized to delete this job");
         }
         
-        jobRepository.delete(job);
+        // Soft delete by setting active to false
+        job.setActive(false);
+        jobRepository.save(job);
     }
 
     public Page<Job> getAllActiveJobs(Pageable pageable) {
