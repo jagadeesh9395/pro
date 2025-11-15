@@ -158,7 +158,7 @@ public class JobApplicationController {
                 "isAuthenticated", isAuthenticated,
                 "isCandidate", isCandidate,
                 "isRecruiter", isRecruiter,
-                "hasApplied", hasApplied,
+                "hasApplied", hasApplied[0],  // Get the boolean value from the array
                 "dashboardType", dashboardType,
                 "job", job
             ));
