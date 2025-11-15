@@ -11,13 +11,13 @@ import com.tal.pro.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class JobApplicationServiceImpl implements JobApplicationService {
@@ -191,6 +191,88 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return jobApplicationRepository.findByRecruiterIdAndJobIdAndStatus(
             recruiterId, jobId, status, pageable);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Page<JobApplication> getApplicationsByRecruiterIdWithFilters(
+            String recruiterId, String status, String search, Pageable pageable) {
+        
+        // Convert status string to enum if provided
+        JobApplication.ApplicationStatus statusEnum = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                statusEnum = JobApplication.ApplicationStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // If invalid status is provided, return empty page
+                return Page.empty(pageable);
+            }
+        }
+        
+        Page<JobApplication> applicationsPage;
+        
+        // If search term is provided, search in candidate name, email, or job title
+        if (search != null && !search.trim().isEmpty()) {
+            String searchTerm = search.trim().toLowerCase();
+            if (statusEnum != null) {
+                applicationsPage = jobApplicationRepository.findByRecruiterIdWithStatusAndSearch(
+                    recruiterId, statusEnum, searchTerm, pageable);
+            } else {
+                applicationsPage = jobApplicationRepository.findByRecruiterIdWithSearch(
+                    recruiterId, searchTerm, pageable);
+            }
+        } else if (statusEnum != null) {
+            // Only status filter
+            applicationsPage = jobApplicationRepository.findByJob_PostedByIdAndStatus(recruiterId, statusEnum, pageable);
+        } else {
+            // No filters, return all applications for recruiter
+            applicationsPage = jobApplicationRepository.findByJob_PostedById(recruiterId, pageable);
+        }
+        
+        // Ensure related entities are loaded
+        List<JobApplication> applications = applicationsPage.getContent();
+        for (JobApplication application : applications) {
+            // This will trigger lazy loading of the job if not already loaded
+            if (application.getJob() != null) {
+                // If you need to access job details, they will be loaded here
+                Job job = application.getJob();
+                // Accessing job properties to ensure they're loaded
+                job.getId();
+                job.getJobTitle();
+                job.getCompanyName();
+            }
+            
+            // This will trigger lazy loading of the candidate if not already loaded
+            if (application.getCandidate() != null) {
+                // If you need to access candidate details, they will be loaded here
+                Candidate candidate = application.getCandidate();
+                // Accessing candidate properties to ensure they're loaded
+                candidate.getId();
+                candidate.getFullName();
+                candidate.getEmail();
+            }
+        }
+        
+        return applicationsPage;
+    }
+    
+    @Override
+    public Map<JobApplication.ApplicationStatus, Long> getApplicationStatusCounts(String recruiterId) {
+        // Initialize map with all possible statuses set to 0
+        Map<JobApplication.ApplicationStatus, Long> statusCounts = new EnumMap<>(JobApplication.ApplicationStatus.class);
+        for (JobApplication.ApplicationStatus status : JobApplication.ApplicationStatus.values()) {
+            statusCounts.put(status, 0L);
+        }
+        
+        // Get counts from repository and update the map
+        List<Map<String, Object>> counts = jobApplicationRepository.countApplicationsByStatusForRecruiter(recruiterId);
+        for (Map<String, Object> count : counts) {
+            JobApplication.ApplicationStatus status = JobApplication.ApplicationStatus.valueOf(count.get("status").toString());
+            Long countValue = ((Number) count.get("count")).longValue();
+            statusCounts.put(status, countValue);
+        }
+        
+        return statusCounts;
+    }
 
     @Override
     public Page<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status, Pageable pageable) {
@@ -238,5 +320,14 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                                     JobApplication.ApplicationStatus.WITHDRAWN, 
                                     "Application withdrawn by candidate", 
                                     username);
+    }
+
+    @Override
+    public List<JobApplication> findRecentApplications() {
+        // Add your implementation here, for example:
+        return jobApplicationRepository.findAll(Sort.by(Sort.Direction.DESC, "appliedAt"))
+                .stream()
+                .limit(10) // or whatever limit you need
+                .collect(Collectors.toList());
     }
 }

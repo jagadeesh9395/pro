@@ -41,7 +41,8 @@ public class RecruiterController {
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
                           @RequestParam(defaultValue = "0") int page,
-                          @RequestParam(defaultValue = "10") int size) {
+                          @RequestParam(defaultValue = "10") int size,
+                          @RequestParam(required = false) String search) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -51,20 +52,19 @@ public class RecruiterController {
             Recruiter recruiter = recruiterRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Recruiter not found"));
             
-            // Get paginated applications for recruiter's jobs
+            // Create pageable with sorting
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "appliedAt"));
+            
+            // Get all applications for the recruiter
             Page<JobApplication> applicationsPage = jobApplicationService.getApplicationsByRecruiterId(
                 recruiter.getId(), pageable);
             
             // Get recent applications (first page, sorted by most recent)
-            List<JobApplication> recentApplications = applicationsPage.getContent();
-            
-            // Add pagination attributes to the model
-            model.addAttribute("applications", applicationsPage.getContent());
-            model.addAttribute("currentPage", applicationsPage.getNumber());
-            model.addAttribute("totalItems", applicationsPage.getTotalElements());
-            model.addAttribute("totalPages", applicationsPage.getTotalPages());
-            model.addAttribute("pageSize", size);
+//            List<JobApplication> recentApplications = applicationsPage.getContent();
+            List<JobApplication> recentApplications = jobApplicationService.findRecentApplications();
+            // Get all status counts for the dashboard stats
+            Map<JobApplication.ApplicationStatus, Long> allStatusCounts = 
+                jobApplicationService.getApplicationStatusCounts(recruiter.getId());
             
             // Add all necessary attributes to the model
             model.addAttribute("recruiter", recruiter);
@@ -74,27 +74,33 @@ public class RecruiterController {
             model.addAttribute("email", recruiter.getEmail());
             model.addAttribute("companyName", recruiter.getCompany());
             model.addAttribute("isRecruiter", true);
-            model.addAttribute("recentApplications", recentApplications);
             
-            // Add applications data
+            // Applications data
             model.addAttribute("recentApplications", recentApplications);
             model.addAttribute("totalApplications", applicationsPage.getTotalElements());
             model.addAttribute("currentPage", applicationsPage.getNumber());
             model.addAttribute("totalPages", applicationsPage.getTotalPages());
             model.addAttribute("totalItems", applicationsPage.getTotalElements());
+            model.addAttribute("pageSize", size);
             
-            // Add status counts for dashboard stats
-            Map<JobApplication.ApplicationStatus, Long> statusCounts = applicationsPage.getContent().stream()
-                .collect(Collectors.groupingBy(
-                    JobApplication::getStatus,
-                    Collectors.counting()
-                ));
-            model.addAttribute("statusCounts", statusCounts);
+            // Status data for stats
+            model.addAttribute("statusCounts", allStatusCounts);
+            
+            // Search data
+            model.addAttribute("searchQuery", search != null && !search.isEmpty() ? search : "");
+            
+            // Stats for the dashboard cards
+            model.addAttribute("totalCandidates", allStatusCounts.values().stream().mapToLong(Long::longValue).sum());
+            model.addAttribute("newCandidates", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.APPLIED, 0L) +
+                                             allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.UNDER_REVIEW, 0L));
+            model.addAttribute("interviewScheduled", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED, 0L));
+            model.addAttribute("hiredCount", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.HIRED, 0L));
             
             return "recruiter/dashboard";
         } catch (Exception e) {
             e.printStackTrace();
-            return "redirect:/auth/login?error=access_denied";
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "error";
         }
     }
     

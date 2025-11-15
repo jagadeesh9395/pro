@@ -8,9 +8,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface JobApplicationService {
+
     JobApplication submitApplication(String jobId, Candidate candidate, JobApplication application);
 
     boolean hasApplied(Candidate candidate, Job job);
@@ -47,6 +49,17 @@ public interface JobApplicationService {
     Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, Pageable pageable);
     
     /**
+     * Get filtered applications for jobs posted by a specific recruiter with search and status filters
+     * @param recruiterId ID of the recruiter
+     * @param status Optional status to filter by (as string)
+     * @param search Optional search term to filter by candidate name, email, or job title
+     * @param pageable Pagination information
+     * @return Page of job applications matching the criteria
+     */
+    Page<JobApplication> getApplicationsByRecruiterIdWithFilters(
+            String recruiterId, String status, String search, Pageable pageable);
+    
+    /**
      * Get filtered applications for jobs posted by a specific recruiter
      * @param recruiterId ID of the recruiter
      * @param jobId Optional job ID to filter by
@@ -65,6 +78,13 @@ public interface JobApplicationService {
      * @return Page of job applications with the specified status
      */
     Page<JobApplication> getApplicationsByStatus(JobApplication.ApplicationStatus status, Pageable pageable);
+
+    /**
+     * Get counts of applications grouped by status for a specific recruiter
+     * @param recruiterId ID of the recruiter
+     * @return Map of status to count of applications
+     */
+    Map<JobApplication.ApplicationStatus, Long> getApplicationStatusCounts(String recruiterId);
 
     /**
      * Adds a note to an application and updates the last modified timestamp
@@ -91,5 +111,7 @@ public interface JobApplicationService {
      * @throws IllegalStateException if the application cannot be withdrawn
      */
     JobApplication withdrawApplication(String applicationId, String username);
+
+    List<JobApplication> findRecentApplications();
 
 }

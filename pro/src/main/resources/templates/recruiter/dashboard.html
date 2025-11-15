@@ -340,118 +340,21 @@
                             <a th:href="@{/recruiter/applications}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         <div class="card-body p-0">
+                            <!-- Simplified candidate data display -->
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
+                                <table class="table table-hover">
+                                    <thead>
                                     <tr>
                                         <th>Candidate</th>
                                         <th>Position</th>
-                                        <th>Applied On</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
+                                        <th>Applied Date</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr th:each="app : ${recentApplications}"
-                                        th:with="candidateName=${app.candidate?.fullName} ?: app.fullName ?: 'N/A',
-                                                        position=${app.job?.jobTitle} ?: 'N/A',
-                                                        appliedDate=${#temporals.format(app.appliedAt, 'MMM d, yyyy')} ?: 'N/A',
-                                                        updatedDate=${#temporals.format(app.updatedAt, 'MMM d, yyyy')} ?: 'N/A',
-                                                        status=${app.status?.displayName} ?: 'N/A'"
-                                        class="align-middle">
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm me-2">
-                                                    <div class="avatar-title bg-soft-primary rounded-circle text-primary">
-                                                        <span th:text="${candidateName?.substring(0, 1).toUpperCase()}">U</span>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0" th:text="${candidateName}">John Doe</h6>
-                                                    <small class="text-muted" th:text="${app.email}">john@example.com</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <a th:if="${app.job?.id}"
-                                               th:href="@{/jobs/} + ${app.job?.id}"
-                                               class="text-decoration-none"
-                                               th:text="${position}">
-                                                Software Engineer
-                                            </a>
-                                            <span th:unless="${app.job?.id}" th:text="${position}"></span>
-                                        </td>
-                                        <td th:text="${appliedDate}" title="Last updated: ${updatedDate}" data-bs-toggle="tooltip">Jun 15, 2023</td>
-                                        <td>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm dropdown-toggle"
-                                                        th:class="'btn-' +
-                                                                    (app.status?.name() == 'HIRED' ? 'success' : 
-                                                                     app.status?.name() == 'REJECTED' ? 'danger' : 
-                                                                     app.status?.name() == 'SHORTLISTED' || app.status?.name() == 'INTERVIEW_SCHEDULED' || app.status?.name() == 'OFFER_EXTENDED' ? 'success' : 
-                                                                     app.status?.name() == 'UNDER_REVIEW' ? 'info' : 'secondary')"
-                                                        type="button"
-                                                        id="statusDropdown"
-                                                        th:attr="data-bs-toggle='dropdown'"
-                                                        aria-expanded="false"
-                                                        th:text="${status}">
-                                                    Applied
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="statusDropdown">
-                                                    <li th:each="status : ${T(com.tal.pro.model.JobApplication.ApplicationStatus).values()}">
-                                                        <a class="dropdown-item"
-                                                           href="#"
-                                                           th:text="${status.displayName}"
-                                                           th:class="${app.status == status} ? 'active' : ''"
-                                                           th:onclick="'updateApplicationStatus(\'' + ${app.id} + '\', \'' + ${status.name()} + '\');'">
-                                                            Status
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                <a th:href="@{/recruiter/applications/} + ${app.id}"
-                                                   class="btn btn-sm btn-outline-primary"
-                                                   title="View Application"
-                                                   data-bs-toggle="tooltip">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <a th:if="${app.candidate?.id}"
-                                                   th:href="@{/recruiter/candidates/} + ${app.candidate.id}"
-                                                   class="btn btn-sm btn-outline-info"
-                                                   title="View Candidate Profile"
-                                                   data-bs-toggle="tooltip">
-                                                    <i class="bi bi-person"></i>
-                                                </a>
-                                                <a th:if="${app.resumePath}"
-                                                   th:href="@{/api/resumes/} + ${app.resumePath}"
-                                                   class="btn btn-sm btn-outline-secondary"
-                                                   target="_blank"
-                                                   title="View Resume"
-                                                   data-bs-toggle="tooltip">
-                                                    <i class="bi bi-file-earmark-pdf"></i>
-                                                </a>
-                                                <button class="btn btn-sm btn-outline-success"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#addNoteModal"
-                                                        th:attr="data-application-id=${app.id}"
-                                                        title="Add Note"
-                                                        data-bs-placement="top">
-                                                    <i class="bi bi-chat-left-text"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr th:if="${#lists.isEmpty(recentApplications)}">
-                                        <td colspan="5" class="text-center py-4">
-                                            <div class="text-muted">
-                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                                <h5>No applications found</h5>
-                                                <p class="mb-0">When candidates apply to your jobs, they'll appear here.</p>
-                                            </div>
-                                        </td>
+                                    <tr th:each="app : ${recentApplications}">
+                                        <td><strong th:text="${app.candidate?.fullName ?: 'N/A'}">Candidate Name</strong></td>
+                                        <td th:text="${app.job?.jobTitle ?: 'N/A'}">Job Title</td>
+                                        <td th:text="${app.appliedAt != null ? #temporals.format(app.appliedAt, 'MMM d, yyyy') : 'N/A'}">Date</td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -569,6 +472,40 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Status class mapping
+        var statusClassMap = {
+            'HIRED': 'success',
+            'REJECTED': 'danger',
+            'SHORTLISTED': 'success',
+            'INTERVIEW_SCHEDULED': 'success',
+            'OFFER_EXTENDED': 'success',
+            'UNDER_REVIEW': 'info',
+            'DEFAULT': 'secondary'
+        };
+
+        // Initialize status dropdowns
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for status dropdown items
+            document.querySelectorAll('.dropdown-item[data-app-id]').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var appId = this.getAttribute('data-app-id');
+                    var status = this.getAttribute('data-status');
+                    updateApplicationStatus(appId, status);
+                });
+            });
+        });
+
+        // Update application status
+        function updateApplicationStatus(applicationId, status) {
+            // Your existing update logic here
+            console.log('Updating application', applicationId, 'to status', status);
+            // Add your AJAX call to update the status
+        }
+        /*]]>*/
+    </script>
     <script>
         // Toggle sidebar on mobile
         function toggleSidebar() {
