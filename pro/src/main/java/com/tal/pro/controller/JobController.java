@@ -7,15 +7,19 @@ import com.tal.pro.model.Recruiter;
 import com.tal.pro.service.JobService;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
 import org.springframework.security.access.AccessDeniedException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/recruiter/jobs")
@@ -23,6 +27,7 @@ public class JobController {
 
     private final JobService jobService;
     private final JobApplicationService jobApplicationService;
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(JobController.class);
 
     @Autowired
     public JobController(JobService jobService, JobApplicationService jobApplicationService) {
@@ -52,12 +57,13 @@ public class JobController {
     public String showJobForm(Model model) {
         model.addAttribute("job", new JobDto());
         model.addAttribute("jobTypes", Job.JobType.values());
+        model.addAttribute("isEditMode", false);
         return "recruiter/post-job";
     }
 
     @PostMapping("/post")
     public String postJob(
-            @ModelAttribute("job") @Valid JobDto jobDto,
+            @Valid @ModelAttribute("job") JobDto jobDto,
             BindingResult result,
             @AuthenticationPrincipal Recruiter recruiter,
             RedirectAttributes redirectAttributes) {
@@ -67,63 +73,91 @@ public class JobController {
         }
 
         try {
-            jobService.postNewJob(jobDto, recruiter);
-            redirectAttributes.addFlashAttribute("success", "Job posted successfully!");
-            return "redirect:/recruiter/dashboard";
+            Job createdJob = jobService.postNewJob(jobDto, recruiter);
+            redirectAttributes.addFlashAttribute("successMessage", "Job posted successfully!");
+            redirectAttributes.addFlashAttribute("job", createdJob);
+            redirectAttributes.addFlashAttribute("isEditMode", false);
+            return "redirect:/recruiter/jobs/success";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error posting job: " + e.getMessage());
             return "redirect:/recruiter/jobs/new";
         }
     }
 
+    @GetMapping("/success")
+    public String showSuccessPage(@ModelAttribute("job") Job job, Model model) {
+        if (!model.containsAttribute("job")) {
+            return "redirect:/recruiter/dashboard";
+        }
+        return "recruiter/job-success";
+    }
+    
     @GetMapping("/{id}/edit")
     public String editJobForm(@PathVariable String id, Model model, @AuthenticationPrincipal Recruiter recruiter) {
         return jobService.getJobById(id)
                 .map(job -> {
-                    if (!job.getPostedBy().equals(recruiter)) {
+                    // If job doesn't have a postedBy, assign it to the current recruiter
+                    if (job.getPostedBy() == null) {
+                        job.setPostedBy(recruiter);
+                        jobService.saveJob(job);
+                    } 
+                    // Check if the current user is the owner of the job
+                    else if (!job.getPostedBy().getId().equals(recruiter.getId())) {
                         return "redirect:/access-denied";
                     }
-                    model.addAttribute("jobDto", JobDto.fromJob(job));
-                    return "recruiter/edit-job";
+                    
+                    model.addAttribute("job", JobDto.fromJob(job));
+                    model.addAttribute("jobTypes", Job.JobType.values());
+                    model.addAttribute("isEditMode", true);
+                    return "recruiter/post-job";
                 })
                 .orElse("redirect:/recruiter/dashboard");
     }
 
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     public String updateJob(
             @PathVariable String id,
-            @ModelAttribute("jobDto") @Valid JobDto jobDto,
+            @Valid @ModelAttribute("job") JobDto jobDto,
             BindingResult result,
             @AuthenticationPrincipal Recruiter recruiter,
-            RedirectAttributes redirectAttributes,
-            Model model) {
+            RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
-            model.addAttribute("jobTypes", Job.JobType.values());
-            return "recruiter/edit-job";
+            return "recruiter/post-job";
         }
 
-        return jobService.getJobById(id)
-                .map(existingJob -> {
-                    // Check if the recruiter owns this job
-                    if (!existingJob.getPostedBy().equals(recruiter)) {
-                        redirectAttributes.addFlashAttribute("error", "You are not authorized to update this job.");
-                        return "redirect:/access-denied";
-                    }
-
-                    try {
-                        jobService.updateJob(id, jobDto, recruiter);
-                        redirectAttributes.addFlashAttribute("success", "Job updated successfully!");
-                        return "redirect:/recruiter/dashboard";
-                    } catch (Exception e) {
-                        redirectAttributes.addFlashAttribute("error", "Error updating job: " + e.getMessage());
-                        return "redirect:/recruiter/jobs/" + id + "/edit";
-                    }
-                })
-                .orElseGet(() -> {
-                    redirectAttributes.addFlashAttribute("error", "Job not found.");
-                    return "redirect:/recruiter/dashboard";
-                });
+        try {
+            // First, check if the job exists and the recruiter has permission
+            Job existingJob = jobService.getJobById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + id));
+                
+            // If the job doesn't have a postedBy, assign it to the current recruiter
+            if (existingJob.getPostedBy() == null) {
+                existingJob.setPostedBy(recruiter);
+                jobService.saveJob(existingJob);
+            } 
+            // Check if the current user is the owner of the job
+            else if (!existingJob.getPostedBy().getId().equals(recruiter.getId())) {
+                throw new SecurityException("You are not authorized to update this job");
+            }
+            
+            // Proceed with the update
+            Job updatedJob = jobService.updateJob(id, jobDto, recruiter);
+            redirectAttributes.addFlashAttribute("successMessage", "Job updated successfully!");
+            redirectAttributes.addFlashAttribute("job", updatedJob);
+            redirectAttributes.addFlashAttribute("isEditMode", true);
+            return "redirect:/recruiter/jobs/success";
+            
+        } catch (SecurityException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/access-denied";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/recruiter/dashboard";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error updating job: " + e.getMessage());
+            return "redirect:/recruiter/jobs/" + id + "/edit";
+        }
     }
 
     @GetMapping("/view/{id}")

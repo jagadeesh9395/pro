@@ -40,16 +40,41 @@ public class JobService {
     public Job updateJob(String jobId, JobDto jobDto, Recruiter recruiter) {
         return jobRepository.findById(jobId)
                 .map(existingJob -> {
-                    if (!existingJob.getPostedBy().equals(recruiter)) {
+                    // If job doesn't have a postedBy, assign it to the current recruiter
+                    if (existingJob.getPostedBy() == null) {
+                        existingJob.setPostedBy(recruiter);
+                        return jobRepository.save(existingJob);
+                    }
+                    
+                    // Check if the current user is the owner of the job
+                    if (!existingJob.getPostedBy().getId().equals(recruiter.getId())) {
                         throw new SecurityException("You are not authorized to update this job");
                     }
-                    Job updatedJob = jobDto.toJob();
-                    updatedJob.setId(existingJob.getId());
-                    updatedJob.setPostedBy(recruiter);
-                    updatedJob.setPostedAt(existingJob.getPostedAt());
-                    return jobRepository.save(updatedJob);
+                    
+                    // Update job details from DTO
+                    existingJob.setJobTitle(jobDto.getJobTitle());
+                    existingJob.setCompanyName(jobDto.getCompanyName());
+                    existingJob.setJobType(jobDto.getJobType());
+                    existingJob.setLocation(jobDto.getLocation());
+                    existingJob.setMinSalary(jobDto.getMinSalary());
+                    existingJob.setMaxSalary(jobDto.getMaxSalary());
+                    existingJob.setDescription(jobDto.getDescription());
+                    existingJob.setRequirements(jobDto.getRequirements());
+                    existingJob.setExperience(jobDto.getExperience());
+                    existingJob.setSkills(jobDto.getSkills());
+                    
+                    return jobRepository.save(existingJob);
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + jobId));
+    }
+    
+    /**
+     * Saves a job entity to the database.
+     * @param job the job to save
+     * @return the saved job
+     */
+    public Job saveJob(Job job) {
+        return jobRepository.save(job);
     }
 
     @Transactional

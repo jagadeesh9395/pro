@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success - TalentTrove</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --success-color: #28a745;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .success-container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-dashboard {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-dashboard:hover {
+            background: #3a5a80;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .job-details {
+            text-align: left;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .detail-item {
+            margin-bottom: 0.75rem;
+            display: flex;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            min-width: 150px;
+            color: #495057;
+        }
+        
+        .detail-value {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-container">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h2 th:text="${successMessage}">Job Posted Successfully!</h2>
+            <p class="lead">Your job posting has been successfully submitted and is now live.</p>
+            
+            <div class="job-details">
+                <h5 class="mb-3">Job Details</h5>
+                <div class="detail-item">
+                    <div class="detail-label">Job Title:</div>
+                    <div class="detail-value" th:text="${job.jobTitle}">Job Title</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Company:</div>
+                    <div class="detail-value" th:text="${job.companyName}">Company Name</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Job Type:</div>
+                    <div class="detail-value" th:text="${#strings.capitalize(#strings.toLowerCase(#strings.replace(job.jobType, '_', ' ')))}">Job Type</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Location:</div>
+                    <div class="detail-value" th:text="${job.location}">Location</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Salary Range:</div>
+                    <div class="detail-value">
+                        <span th:if="${job.minSalary > 0 || job.maxSalary > 0}">
+                            <span th:if="${job.minSalary > 0}" th:text="'₹' + ${#numbers.formatDecimal(job.minSalary, 1, 2)}+' LPA'"></span>
+                            <span th:if="${job.minSalary > 0 and job.maxSalary > 0}"> - </span>
+                            <span th:if="${job.maxSalary > 0}" th:text="'₹' + ${#numbers.formatDecimal(job.maxSalary, 1, 2)}+' LPA'"></span>
+                        </span>
+                        <span th:unless="${job.minSalary > 0 or job.maxSalary > 0}">
+                            Not specified
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a th:href="@{/recruiter/dashboard}" class="btn btn-primary btn-dashboard">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                </a>
+                <a th:href="@{/recruiter/jobs/} + ${job.id} + '/edit'" class="btn btn-outline-secondary ms-2" th:if="${isEditMode}">
+                    <i class="fas fa-edit me-2"></i> Edit Job
+                </a>
+                <a th:href="@{/recruiter/jobs/} + ${job.id} + '/applications'" class="btn btn-outline-primary ms-2">
+                    <i class="fas fa-users me-2"></i> View Applications
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

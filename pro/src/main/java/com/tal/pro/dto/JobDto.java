@@ -72,6 +72,7 @@ public class JobDto {
         job.setJobType(this.jobType);
         job.setLocation(this.location);
         job.setMinSalary(this.minSalary);
+        job.setMaxSalary(this.maxSalary);
         job.setDescription(this.description);
         job.setRequirements(this.requirements);
         job.setExperience(this.experience);

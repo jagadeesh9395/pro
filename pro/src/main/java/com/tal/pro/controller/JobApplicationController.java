@@ -175,10 +175,34 @@ public class JobApplicationController {
     @GetMapping("/{jobId}")
     public String viewJobDetails(
             @PathVariable String jobId,
-            @AuthenticationPrincipal Candidate candidate,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             Model model) {
-        model.addAttribute("job", jobService.getJobById(jobId));
-        model.addAttribute("hasApplied", jobApplicationService.hasCandidateApplied(jobId, candidate.getId()));
+        
+        // Initialize candidate as null
+        Candidate candidate = null;
+        
+        // If user is authenticated and has candidate role, get the candidate
+        if (userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CANDIDATE"))) {
+            candidate = candidateRepository.findByUsername(userDetails.getUsername())
+                .orElse(null);
+        }
+        // Get the job or return 404 if not found
+        Optional<Job> jobOpt = jobService.getJobById(jobId);
+        if (jobOpt.isEmpty()) {
+            return "redirect:/jobs?error=not_found";
+        }
+        
+        // Check if the current user has applied for this job
+        boolean hasApplied = false;
+        if (candidate != null && candidate.getId() != null) {
+            hasApplied = jobApplicationService.hasCandidateApplied(jobId, candidate.getId());
+        }
+        
+        model.addAttribute("job", jobOpt.get());
+        model.addAttribute("hasApplied", hasApplied);
+        model.addAttribute("isAuthenticated", candidate != null);
+        
         return "candidate/job-details";
     }
 
