@@ -241,9 +241,9 @@
                                      firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
                                      lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
                                      initials=${#strings.toUpperCase(
-                                         #strings.length(firstName) > 0 ? 
-                                             (#strings.length(lastName) > 0 ? 
-                                                 #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) : 
+                                         #strings.length(firstName) > 0 ?
+                                             (#strings.length(lastName) > 0 ?
+                                                 #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) :
                                                  #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
                                              ) : 'US'
                                      )}"
@@ -348,13 +348,45 @@
                                         <th>Candidate</th>
                                         <th>Position</th>
                                         <th>Applied Date</th>
+                                        <th>Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr th:each="app : ${recentApplications}">
-                                        <td><strong th:text="${app.candidate?.fullName ?: 'N/A'}">Candidate Name</strong></td>
-                                        <td th:text="${app.job?.jobTitle ?: 'N/A'}">Job Title</td>
+                                    <tr th:each="app : ${recentApplications}" th:with="job=${app.job}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="applicant-avatar me-2" 
+                                                     th:with="fullName=${app.candidate?.fullName ?: ''}"
+                                                     th:if="${fullName != null and fullName != ''}">
+                                                    <span th:with="nameParts=${#strings.arraySplit(fullName, ' ')}">
+                                                        <span th:if="${nameParts.length > 1}" 
+                                                              th:text="${#strings.toUpperCase(#strings.substring(nameParts[0], 0, 1) + #strings.substring(nameParts[1], 0, 1))}">
+                                                        </span>
+                                                        <span th:unless="${nameParts.length > 1}" 
+                                                              th:text="${#strings.toUpperCase(#strings.substring(nameParts[0], 0, #math.min(2, nameParts[0].length())))}">
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                <div class="applicant-avatar me-2" 
+                                                     th:unless="${fullName != null and fullName != ''}">NA</div>
+                                                <strong th:text="${app.candidate?.fullName ?: 'N/A'}">Candidate Name</strong>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a th:if="${job != null}" 
+                                               th:href="@{/jobs/view/} + ${job.id}" 
+                                               class="text-decoration-none fw-medium text-primary"
+                                               th:text="${job.jobTitle ?: 'N/A'}">Job Title</a>
+                                            <span th:unless="${job != null}" th:text="'N/A'"></span>
+                                        </td>
                                         <td th:text="${app.appliedAt != null ? #temporals.format(app.appliedAt, 'MMM d, yyyy') : 'N/A'}">Date</td>
+                                        <td>
+                                            <a th:href="@{/recruiter/applications/} + ${app.id}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View Application">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -382,7 +414,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>Senior Java Developer</td>
+                                        <td><a href="/jobs/1" class="text-decoration-none fw-medium text-primary">Senior Java Developer</a></td>
                                         <td>Nov 1, 2023</td>
                                         <td><span class="status-badge status-review">Review</span></td>
                                         <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
@@ -397,7 +429,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>Frontend Developer</td>
+                                        <td><a href="/jobs/2" class="text-decoration-none fw-medium text-primary">Frontend Developer</a></td>
                                         <td>Oct 30, 2023</td>
                                         <td><span class="status-badge status-interview">Interview</span></td>
                                         <td><a href="#" class="btn btn-sm btn-outline-primary">View</a></td>
@@ -470,60 +502,47 @@
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        // Status class mapping
-        var statusClassMap = {
-            'HIRED': 'success',
-            'REJECTED': 'danger',
-            'SHORTLISTED': 'success',
-            'INTERVIEW_SCHEDULED': 'success',
-            'OFFER_EXTENDED': 'success',
-            'UNDER_REVIEW': 'info',
-            'DEFAULT': 'secondary'
-        };
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Status class mapping
+    var statusClassMap = {
+        'HIRED': 'success',
+        'REJECTED': 'danger',
+        'SHORTLISTED': 'success',
+        'INTERVIEW_SCHEDULED': 'success',
+        'OFFER_EXTENDED': 'success',
+        'UNDER_REVIEW': 'info',
+        'DEFAULT': 'secondary'
+    };
+</script>
 
-        // Initialize status dropdowns
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add click handlers for status dropdown items
-            document.querySelectorAll('.dropdown-item[data-app-id]').forEach(function(item) {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var appId = this.getAttribute('data-app-id');
-                    var status = this.getAttribute('data-status');
-                    updateApplicationStatus(appId, status);
-                });
-            });
-        });
+<script>
+    // Toggle sidebar on mobile
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('d-none');
+    }
 
-        // Update application status
-        function updateApplicationStatus(applicationId, status) {
-            // Your existing update logic here
-            console.log('Updating application', applicationId, 'to status', status);
-            // Add your AJAX call to update the status
-        }
-        /*]]>*/
-    </script>
-    <script>
-        // Toggle sidebar on mobile
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('sidebar-visible');
-        }
-
+    // Initialize tooltips and other DOM elements
+    document.addEventListener('DOMContentLoaded', function() {
         // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
 
-            // Focus search input when search icon is clicked on mobile
-            document.querySelector('.search-icon').addEventListener('click', function() {
-                document.querySelector('.search-input').focus();
+        // Initialize status dropdowns if they exist
+        document.querySelectorAll('.dropdown-item[data-app-id]').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                var appId = this.getAttribute('data-app-id');
+                var status = this.getAttribute('data-status');
+                // Add your status update logic here
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>
