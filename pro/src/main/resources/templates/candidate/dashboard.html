@@ -476,25 +476,25 @@
                                         </td>
                                         <td>
                                             <div class="d-flex gap-2">
-                                                <!-- View Application Details -->
-                                                <a th:href="@{/candidate/applications/} + ${app.id}" 
+                                                <!-- View Application Details (Non-functional) -->
+                                                <a href="#" 
                                                    class="btn btn-sm btn-outline-primary"
                                                    title="View Application Details"
                                                    data-bs-toggle="tooltip"
-                                                   data-bs-placement="top">
+                                                   data-bs-placement="top"
+                                                   onclick="return false;">
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
                                                 
-                                                <!-- Withdraw Button -->
-                                                <button th:if="${app.canWithdraw()}"
-                                                        class="btn btn-sm btn-outline-danger withdraw-btn"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#withdrawModal"
-                                                        th:attr="data-application-id=${app.id}"
-                                                        title="Withdraw Application"
-                                                        data-bs-placement="top">
+                                                <!-- Withdraw Button (Non-functional) -->
+                                                <a href="#" 
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   title="Withdraw Application"
+                                                   data-bs-toggle="tooltip"
+                                                   data-bs-placement="top"
+                                                   onclick="return false;">
                                                     <i class="bi bi-x-circle"></i> Withdraw
-                                                </button>
+                                                </a>
                                                 
                                                 <!-- Status Indicator for non-withdrawable applications -->
                                                 <span th:if="${!app.canWithdraw() and (app.status?.name() == 'WITHDRAWN' or app.status?.name() == 'REJECTED' or app.status?.name() == 'HIRED')}" 
