@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -203,571 +203,596 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="/">TalentTrove</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#how-it-works">How It Works</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
-                    <li class="nav-item ms-lg-3 mt-2 mt-lg-0" id="loginNavItem">
-                        <a href="/auth/login" class="btn btn-outline-light">Login</a>
-                    </li>
-                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
-                        <a href="/auth/register" class="btn btn-primary">Register</a>
-                    </li>
-                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="dashboardNavItem" style="display: none;">
-                        <a href="/dashboard" class="btn btn-primary">Dashboard</a>
-                    </li>
-                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="logoutNavItem" style="display: none;">
-                        <form action="/auth/logout" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-outline-light">Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                    <h1 class="display-4 fw-bold mb-4">Find Your Dream Job or Top Talent</h1>
-                    <p class="lead mb-5">Connect with the best companies and candidates in one platform. Your next career opportunity or perfect hire is just a click away.</p>
-                    <div class="d-flex flex-column flex-md-row justify-content-center">
-                        <a th:href="@{/auth/register}" class="btn btn-primary btn-lg me-md-3 mb-3 mb-md-0">Get Started</a>
-                        <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-5">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">Why Choose TalentTrove?</h2>
-                <p class="lead text-muted">We provide the best platform for job seekers and employers to connect</p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-box text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-bullseye"></i>
-                        </div>
-                        <h4>Smart Matching</h4>
-                        <p>Our advanced algorithm matches your skills and preferences with the perfect job opportunities or candidates.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-box text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <h4>Diverse Opportunities</h4>
-                        <p>Access thousands of job listings across various industries and locations, all in one place.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-box text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h4>Secure Platform</h4>
-                        <p>Your data security is our top priority. We use advanced encryption to protect your information.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="row text-center">
-                <div class="col-md-3 col-6 mb-4 mb-md-0">
-                    <div class="stat-number">10,000+</div>
-                    <div class="stat-label">Active Jobs</div>
-                </div>
-                <div class="col-md-3 col-6 mb-4 mb-md-0">
-                    <div class="stat-number">5,000+</div>
-                    <div class="stat-label">Companies</div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="stat-number">1M+</div>
-                    <div class="stat-label">Candidates</div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="stat-number">95%</div>
-                    <div class="stat-label">Success Rate</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section id="how-it-works" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">How It Works</h2>
-                <p class="lead text-muted">Get started in just a few simple steps</p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
-                             style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
-                            1
-                        </div>
-                        <h4>Create Your Profile</h4>
-                        <p>Sign up and create a detailed profile highlighting your skills, experience, and preferences.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
-                             style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
-                            2
-                        </div>
-                        <h4>Search & Apply</h4>
-                        <p>Browse through thousands of job listings or candidates and apply with just one click.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="text-center p-4">
-                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
-                             style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
-                            3
-                        </div>
-                        <h4>Get Hired or Hire</h4>
-                        <p>Connect with potential employers or candidates and land your dream job or perfect hire.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center mt-5">
-                <a th:href="@{/auth/register}" class="btn btn-primary btn-lg">Get Started Now</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-5 mb-lg-0">
-                    <h2 class="fw-bold mb-4">About TalentTrove</h2>
-                    <p class="lead mb-4">Connecting talent with opportunity, one click at a time.</p>
-                    <p>TalentTrove is a leading job portal that brings together job seekers and employers in a seamless, efficient, and user-friendly platform. Our mission is to empower individuals to find meaningful work and help companies discover top talent.</p>
-                    <p>With our advanced matching algorithm and comprehensive database, we make the job search and hiring process faster, easier, and more effective for everyone involved.</p>
-                    <a href="#" class="btn btn-outline-primary">Learn More About Us</a>
-                </div>
-                <div class="col-lg-6">
-                    <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" 
-                         alt="Team working together" class="img-fluid rounded shadow">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">What Our Users Say</h2>
-                <p class="lead text-muted">Success stories from our community</p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="d-flex mb-3">
-                                <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
-                                <div>
-                                    <h5 class="mb-1">Sarah Johnson</h5>
-                                    <p class="text-muted mb-0">Software Developer</p>
-                                </div>
-                            </div>
-                            <p class="card-text">"TalentTrove helped me find my dream job in just two weeks! The application process was seamless, and I received multiple interview requests."</p>
-                            <div class="text-warning">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="d-flex mb-3">
-                                <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
-                                <div>
-                                    <h5 class="mb-1">Michael Chen</h5>
-                                    <p class="text-muted mb-0">HR Manager</p>
-                                </div>
-                            </div>
-                            <p class="card-text">"As an HR professional, I've used many job platforms, but TalentTrove stands out. The quality of candidates we've found here is exceptional."</p>
-                            <div class="text-warning">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="d-flex mb-3">
-                                <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
-                                <div>
-                                    <h5 class="mb-1">Emily Rodriguez</h5>
-                                    <p class="text-muted mb-0">Marketing Specialist</p>
-                                </div>
-                            </div>
-                            <p class="card-text">"The user interface is intuitive, and I love the job matching algorithm. It truly understands my skills and preferences. Highly recommended!"</p>
-                            <div class="text-warning">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-5 bg-primary text-white">
-        <div class="container text-center py-5">
-            <h2 class="fw-bold mb-4">Ready to Get Started?</h2>
-            <p class="lead mb-5">Join thousands of job seekers and employers who have found success with TalentTrove</p>
-            <div class="d-flex flex-column flex-md-row justify-content-center">
-                <a th:href="@{/auth/register}" class="btn btn-light btn-lg me-md-3 mb-3 mb-md-0">Create Free Account</a>
-                <a href="#contact" class="btn btn-outline-light btn-lg">Contact Us</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="py-5">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">Contact Us</h2>
-                <p class="lead text-muted">Have questions? We'd love to hear from you</p>
-            </div>
-            
-            <div class="row">
-                <div class="col-lg-6 mb-5 mb-lg-0">
-                    <form>
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Your Name</label>
-                            <input type="text" class="form-control form-control-lg" id="name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control form-control-lg" id="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-                            <input type="text" class="form-control form-control-lg" id="subject" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Your Message</label>
-                            <textarea class="form-control form-control-lg" id="message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">TalentTrove</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#how-it-works">How It Works</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact</a>
+                </li>
+                <li class="nav-item ms-lg-3 mt-2 mt-lg-0" id="loginNavItem">
+                    <a href="/auth/login" class="btn btn-outline-light">Login</a>
+                </li>
+                <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
+                    <a href="/auth/register" class="btn btn-primary">Register</a>
+                </li>
+                <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="dashboardNavItem" style="display: none;">
+                    <a href="/dashboard" class="btn btn-primary">Dashboard</a>
+                </li>
+                <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="logoutNavItem" style="display: none;">
+                    <form action="/auth/logout" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-light">Logout</button>
                     </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 fw-bold mb-4">Find Your Dream Job or Top Talent</h1>
+                <p class="lead mb-5">Connect with the best companies and candidates in one platform. Your next career opportunity or perfect hire is just a click away.</p>
+                <div class="d-flex flex-column flex-md-row justify-content-center">
+                    <a th:href="@{/auth/register}" class="btn btn-primary btn-lg me-md-3 mb-3 mb-md-0">Get Started</a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
                 </div>
-                
-                <div class="col-lg-5 offset-lg-1">
-                    <div class="mb-4">
-                        <h4 class="mb-3">Get in Touch</h4>
-                        <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Why Choose TalentTrove?</h2>
+            <p class="lead text-muted">We provide the best platform for job seekers and employers to connect</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
                     </div>
-                    
-                    <div class="d-flex mb-4">
-                        <div class="me-4">
-                            <i class="fas fa-map-marker-alt text-primary" style="font-size: 1.5rem;"></i>
+                    <h4>Smart Matching</h4>
+                    <p>Our advanced algorithm matches your skills and preferences with the perfect job opportunities or candidates.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h4>Diverse Opportunities</h4>
+                    <p>Access thousands of job listings across various industries and locations, all in one place.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-box text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4>Secure Platform</h4>
+                    <p>Your data security is our top priority. We use advanced encryption to protect your information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
+                <div class="stat-number">10,000+</div>
+                <div class="stat-label">Active Jobs</div>
+            </div>
+            <div class="col-md-3 col-6 mb-4 mb-md-0">
+                <div class="stat-number">5,000+</div>
+                <div class="stat-label">Companies</div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-number">1M+</div>
+                <div class="stat-label">Candidates</div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section id="how-it-works" class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="lead text-muted">Get started in just a few simple steps</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
+                        1
+                    </div>
+                    <h4>Create Your Profile</h4>
+                    <p>Sign up and create a detailed profile highlighting your skills, experience, and preferences.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
+                        2
+                    </div>
+                    <h4>Search & Apply</h4>
+                    <p>Browse through thousands of job listings or candidates and apply with just one click.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 1.5rem;">
+                        3
+                    </div>
+                    <h4>Get Hired or Hire</h4>
+                    <p>Connect with potential employers or candidates and land your dream job or perfect hire.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a th:href="@{/auth/register}" class="btn btn-primary btn-lg">Get Started Now</a>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <h2 class="fw-bold mb-4">About TalentTrove</h2>
+                <p class="lead mb-4">Connecting talent with opportunity, one click at a time.</p>
+                <p>TalentTrove is a leading job portal that brings together job seekers and employers in a seamless, efficient, and user-friendly platform. Our mission is to
+                    empower individuals to find meaningful work and help companies discover top talent.</p>
+                <p>With our advanced matching algorithm and comprehensive database, we make the job search and hiring process faster, easier, and more effective for everyone
+                    involved.</p>
+                <a href="#" class="btn btn-outline-primary">Learn More About Us</a>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                     alt="Team working together" class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">What Our Users Say</h2>
+            <p class="lead text-muted">Success stories from our community</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
+                            <div>
+                                <h5 class="mb-1">Sarah Johnson</h5>
+                                <p class="text-muted mb-0">Software Developer</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5>Our Location</h5>
-                            <p class="mb-0">123 Talent Street, Tech City, TC 12345</p>
+                        <p class="card-text">"TalentTrove helped me find my dream job in just two weeks! The application process was seamless, and I received multiple interview
+                            requests."</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
                         </div>
                     </div>
-                    
-                    <div class="d-flex mb-4">
-                        <div class="me-4">
-                            <i class="fas fa-phone-alt text-primary" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
+                            <div>
+                                <h5 class="mb-1">Michael Chen</h5>
+                                <p class="text-muted mb-0">HR Manager</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5>Call Us</h5>
-                            <p class="mb-0">+1 (555) 123-4567</p>
+                        <p class="card-text">"As an HR professional, I've used many job platforms, but TalentTrove stands out. The quality of candidates we've found here is
+                            exceptional."</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
                         </div>
                     </div>
-                    
-                    <div class="d-flex mb-4">
-                        <div class="me-4">
-                            <i class="fas fa-envelope text-primary" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary me-3" style="font-size: 2rem; opacity: 0.2;"></i>
+                            <div>
+                                <h5 class="mb-1">Emily Rodriguez</h5>
+                                <p class="text-muted mb-0">Marketing Specialist</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5>Email Us</h5>
-                            <p class="mb-0">info@talenttrove.com</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-5">
-                        <h5>Follow Us</h5>
-                        <div class="social-icons">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        <p class="card-text">"The user interface is intuitive, and I love the job matching algorithm. It truly understands my skills and preferences. Highly
+                            recommended!"</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <h5 class="text-white mb-4">TalentTrove</h5>
-                    <p>Connecting talented professionals with top companies worldwide. Your next career opportunity starts here.</p>
-                    <div class="social-icons mt-4">
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center py-5">
+        <h2 class="fw-bold mb-4">Ready to Get Started?</h2>
+        <p class="lead mb-5">Join thousands of job seekers and employers who have found success with TalentTrove</p>
+        <div class="d-flex flex-column flex-md-row justify-content-center">
+            <a th:href="@{/auth/register}" class="btn btn-light btn-lg me-md-3 mb-3 mb-md-0">Create Free Account</a>
+            <a href="#contact" class="btn btn-outline-light btn-lg">Contact Us</a>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Contact Us</h2>
+            <p class="lead text-muted">Have questions? We'd love to hear from you</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control form-control-lg" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control form-control-lg" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control form-control-lg" id="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Your Message</label>
+                        <textarea class="form-control form-control-lg" id="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+                </form>
+            </div>
+
+            <div class="col-lg-5 offset-lg-1">
+                <div class="mb-4">
+                    <h4 class="mb-3">Get in Touch</h4>
+                    <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="me-4">
+                        <i class="fas fa-map-marker-alt text-primary" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h5>Our Location</h5>
+                        <p class="mb-0">123 Talent Street, Tech City, TC 12345</p>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="me-4">
+                        <i class="fas fa-phone-alt text-primary" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h5>Call Us</h5>
+                        <p class="mb-0">+1 (555) 123-4567</p>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="me-4">
+                        <i class="fas fa-envelope text-primary" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <div>
+                        <h5>Email Us</h5>
+                        <p class="mb-0">info@talenttrove.com</p>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h5>Follow Us</h5>
+                    <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-linkedin-in"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-white mb-4">For Candidates</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">Browse Jobs</a></li>
-                        <li class="mb-2"><a href="#">Job Alerts</a></li>
-                        <li class="mb-2"><a href="#">Career Advice</a></li>
-                        <li class="mb-2"><a href="#">Salary Calculator</a></li>
-                        <li><a href="#">Resume Builder</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-white mb-4">For Employers</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">Post a Job</a></li>
-                        <li class="mb-2"><a href="#">Browse Candidates</a></li>
-                        <li class="mb-2"><a href="#">Recruitment Solutions</a></li>
-                        <li class="mb-2"><a href="#">Pricing Plans</a></li>
-                        <li><a href="#">Hiring Resources</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-white mb-4">Company</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">About Us</a></li>
-                        <li class="mb-2"><a href="#">Our Team</a></li>
-                        <li class="mb-2"><a href="#">Careers</a></li>
-                        <li class="mb-2"><a href="#">Blog</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-2">
-                    <h5 class="text-white mb-4">Resources</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#">Help Center</a></li>
-                        <li class="mb-2"><a href="#">Terms of Service</a></li>
-                        <li class="mb-2"><a href="#">Privacy Policy</a></li>
-                        <li class="mb-2"><a href="#">Cookie Policy</a></li>
-                        <li><a href="#">Sitemap</a></li>
-                    </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <h5 class="text-white mb-4">TalentTrove</h5>
+                <p>Connecting talented professionals with top companies worldwide. Your next career opportunity starts here.</p>
+                <div class="social-icons mt-4">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
-            
-            <div class="copyright">
-                <div class="row">
-                    <div class="col-md-6 text-center text-md-start">
-                        <p class="mb-0">&copy; 2023 TalentTrove. All rights reserved.</p>
-                    </div>
-                    <div class="col-md-6 text-center text-md-end">
-                        <p class="mb-0">Designed with <i class="fas fa-heart text-danger"></i> by TalentTrove Team</p>
-                    </div>
+
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5 class="text-white mb-4">For Candidates</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#">Browse Jobs</a></li>
+                    <li class="mb-2"><a href="#">Job Alerts</a></li>
+                    <li class="mb-2"><a href="#">Career Advice</a></li>
+                    <li class="mb-2"><a href="#">Salary Calculator</a></li>
+                    <li><a href="#">Resume Builder</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5 class="text-white mb-4">For Employers</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#">Post a Job</a></li>
+                    <li class="mb-2"><a href="#">Browse Candidates</a></li>
+                    <li class="mb-2"><a href="#">Recruitment Solutions</a></li>
+                    <li class="mb-2"><a href="#">Pricing Plans</a></li>
+                    <li><a href="#">Hiring Resources</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5 class="text-white mb-4">Company</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#">About Us</a></li>
+                    <li class="mb-2"><a href="#">Our Team</a></li>
+                    <li class="mb-2"><a href="#">Careers</a></li>
+                    <li class="mb-2"><a href="#">Blog</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2">
+                <h5 class="text-white mb-4">Resources</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#">Help Center</a></li>
+                    <li class="mb-2"><a href="#">Terms of Service</a></li>
+                    <li class="mb-2"><a href="#">Privacy Policy</a></li>
+                    <li class="mb-2"><a href="#">Cookie Policy</a></li>
+                    <li><a href="#">Sitemap</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="copyright">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; 2023 TalentTrove. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0">Designed with <i class="fas fa-heart text-danger"></i> by TalentTrove Team</p>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <!-- Back to Top Button -->
-    <a href="#" class="btn btn-primary btn-lg back-to-top" style="position: fixed; bottom: 20px; right: 20px; display: none; border-radius: 50%; width: 50px; height: 50px; padding: 0; line-height: 50px; text-align: center;">
-        <i class="fas fa-arrow-up"></i>
-    </a>
+<!-- Back to Top Button -->
+<a href="#" class="btn btn-primary btn-lg back-to-top"
+   style="position: fixed; bottom: 20px; right: 20px; display: none; border-radius: 50%; width: 50px; height: 50px; padding: 0; line-height: 50px; text-align: center;">
+    <i class="fas fa-arrow-up"></i>
+</a>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
-    <script>
-        // Check if user is logged in and update navigation
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show login/register buttons by default
-            document.getElementById('loginNavItem').style.display = 'block';
-            document.getElementById('registerNavItem').style.display = 'block';
-            document.getElementById('dashboardNavItem').style.display = 'none';
-            document.getElementById('logoutNavItem').style.display = 'none';
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script>
+    // Check if user is logged in and update navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show login/register buttons by default
+        document.getElementById('loginNavItem').style.display = 'block';
+        document.getElementById('registerNavItem').style.display = 'block';
+        document.getElementById('dashboardNavItem').style.display = 'none';
+        document.getElementById('logoutNavItem').style.display = 'none';
 
-            // Function to update navigation based on login status
-            function updateNavigation(isLoggedIn, username) {
-                if (isLoggedIn) {
-                    document.getElementById('loginNavItem').style.display = 'none';
-                    document.getElementById('registerNavItem').style.display = 'none';
-                    document.getElementById('dashboardNavItem').style.display = 'block';
-                    document.getElementById('logoutNavItem').style.display = 'block';
-                    
-                    // Update UI with username if needed
-                    if (username) {
-                        const usernameElement = document.getElementById('usernameDisplay');
-                        if (usernameElement) {
-                            usernameElement.textContent = username;
-                        }
+        // Function to update navigation based on login status
+        function updateNavigation(isLoggedIn, username) {
+            if (isLoggedIn) {
+                document.getElementById('loginNavItem').style.display = 'none';
+                document.getElementById('registerNavItem').style.display = 'none';
+                document.getElementById('dashboardNavItem').style.display = 'block';
+                document.getElementById('logoutNavItem').style.display = 'block';
+
+                // Update UI with username if needed
+                if (username) {
+                    const usernameElement = document.getElementById('usernameDisplay');
+                    if (usernameElement) {
+                        usernameElement.textContent = username;
                     }
-                } else {
-                    document.getElementById('loginNavItem').style.display = 'block';
-                    document.getElementById('registerNavItem').style.display = 'block';
-                    document.getElementById('dashboardNavItem').style.display = 'none';
-                    document.getElementById('logoutNavItem').style.display = 'none';
                 }
+            } else {
+                document.getElementById('loginNavItem').style.display = 'block';
+                document.getElementById('registerNavItem').style.display = 'block';
+                document.getElementById('dashboardNavItem').style.display = 'none';
+                document.getElementById('logoutNavItem').style.display = 'none';
             }
+        }
 
-            // Check if we're on the login/register pages
-            if (window.location.pathname === '/login' || 
-                window.location.pathname === '/auth/login' ||
-                window.location.pathname === '/register' ||
-                window.location.pathname === '/auth/register') {
-                updateNavigation(false);
-                return;
+        // Check if we're on the login/register pages
+        if (window.location.pathname === '/login' ||
+            window.location.pathname === '/auth/login' ||
+            window.location.pathname === '/register' ||
+            window.location.pathname === '/auth/register') {
+            updateNavigation(false);
+            return;
+        }
+
+        // Try to get current user info
+        fetch('/api/auth/current-username', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'  // Helps identify AJAX requests on server
+            },
+            credentials: 'include'  // Important for sending cookies
+        })
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            const responseText = await response.text();
+            
+            // Log the raw response for debugging
+            console.log('Auth check response:', {
+                status: response.status,
+                statusText: response.statusText,
+                contentType,
+                responseText: responseText.substring(0, 200) // Log first 200 chars to avoid huge logs
+            });
+            
+            if (!response.ok) {
+                return Promise.reject(`Server responded with ${response.status}: ${response.statusText}`);
             }
-
-            // Try to get current user info
-            fetch('/api/auth/current-username', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'  // Important for sending cookies
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json().then(data => {
-                        if (data.id) {  // If we have a valid user
-                            updateNavigation(true, data.username);
-                        } else {
-                            updateNavigation(false);
-                        }
-                    }).catch(() => updateNavigation(false));
-                }
-                return Promise.reject('Not authenticated');
-            })
-            })
-            .then(data => {
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                return Promise.reject(`Expected JSON but got ${contentType || 'unknown content type'}`);
+            }
+            
+            try {
+                return JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse JSON response:', e);
+                return Promise.reject('Invalid JSON response');
+            }
+        })
+        .then(data => {
+            if (data && data.id) {  // If we have a valid user
                 updateNavigation(true, data.username || '');
-            })
-            .catch(error => {
-                console.log('User not authenticated:', error);
+            } else {
                 updateNavigation(false);
-            });
-        });
-        
-        // Back to top button
-        window.addEventListener('scroll', function() {
-            var backToTop = document.querySelector('.back-to-top');
-            if (window.pageYOffset > 300) {
-                backToTop.style.display = 'block';
-            } else {
-                backToTop.style.display = 'none';
             }
+        })
+        .catch(error => {
+            console.log('Authentication check failed:', error);
+            updateNavigation(false);
         });
-        
-        document.querySelector('.back-to-top').addEventListener('click', function(e) {
+    });
+
+    // Back to top button
+    window.addEventListener('scroll', function() {
+        var backToTop = document.querySelector('.back-to-top');
+        if (window.pageYOffset > 300) {
+            backToTop.style.display = 'block';
+        } else {
+            backToTop.style.display = 'none';
+        }
+    });
+
+    document.querySelector('.back-to-top').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-        
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                
-                const targetId = this.getAttribute('href');
-                if (targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80, // Adjust for fixed navbar
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-        
-        // Navbar background change on scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
-                navbar.style.padding = '0.5rem 0';
-            } else {
-                navbar.style.background = 'rgba(0, 0, 0, 0.8)';
-                navbar.style.padding = '1rem 0';
+
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80, // Adjust for fixed navbar
+                    behavior: 'smooth'
+                });
             }
         });
-        
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    </script>
+    });
+
+    // Navbar background change on scroll
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar');
+        if (window.scrollY > 50) {
+            navbar.style.background = 'rgba(0, 0, 0, 0.95)';
+            navbar.style.padding = '0.5rem 0';
+        } else {
+            navbar.style.background = 'rgba(0, 0, 0, 0.8)';
+            navbar.style.padding = '1rem 0';
+        }
+    });
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
 </body>
 </html>

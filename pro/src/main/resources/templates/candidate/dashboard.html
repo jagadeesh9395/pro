@@ -110,9 +110,50 @@
             border-bottom: 1px solid var(--border-color);
         }
         
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+            border-radius: 0.25rem;
+        }
+        
+        /* Status Badge Styles */
+        .status-applied {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+        
+        .status-under_review {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+        
+        .status-shortlisted {
+            background-color: #e6f7ee;
+            color: #198754;
+        }
+        
+        .status-interview_scheduled {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        
+        .status-offer_extended {
+            background-color: #e6f7ee;
+            color: #198754;
+            border: 1px solid #198754;
+        }
+        
+        .status-hired {
+            background-color: #d1e7dd;
+            color: #0a3622;
+        }
+        
+        .status-rejected, .status-withdrawn {
+            background-color: #f8d7da;
+            color: #58151c;
+        }
+        
         .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 500;
             text-transform: capitalize;
@@ -405,7 +446,7 @@
                                                 location=${job?.location} ?: 'N/A',
                                                 appliedDate=${app.appliedAt != null ? #temporals.format(app.appliedAt, 'MMM d, yyyy') : 'N/A'},
                                                 updatedDate=${app.updatedAt != null ? #temporals.format(app.updatedAt, 'MMM d, yyyy') : 'N/A'},
-                                                statusText=${app.status != null ? app.status.displayName : 'N/A'}"
+                                                statusText=${app.status != null ? #strings.capitalizeWords(#strings.toLowerCase(#strings.replace(app.status.name(), '_', ' '))) : 'N/A'}"
                                         class="align-middle">
                                         <td>
                                             <a th:if="${job != null}" 
@@ -425,13 +466,9 @@
                                             data-bs-toggle="tooltip" 
                                             data-bs-placement="top">Jun 16, 2023</td>
                                         <td>
-                                            <span th:with="statusName=${app.status?.name()}"
-                                                  th:class="${'badge bg-' + 
-                                                      (statusName == 'HIRED' ? 'success' : 
-                                                       statusName == 'REJECTED' ? 'danger' : 
-                                                       statusName == 'SHORTLISTED' || statusName == 'INTERVIEW_SCHEDULED' || statusName == 'OFFER_EXTENDED' ? 'success' : 
-                                                       statusName == 'UNDER_REVIEW' ? 'info' : 'secondary')}"
-                                                  th:text="${status}" 
+                                            <span class="badge" 
+                                                  th:classappend="${app.status != null ? 'status-' + #strings.toLowerCase(app.status.name()) : 'status-unknown'}"
+                                                  th:text="${app.status?.displayName ?: 'Applied'}"
                                                   data-bs-toggle="tooltip" 
                                                   th:attr="data-bs-title=${app.notes != null ? 'Notes: ' + app.notes : 'No additional notes'}">
                                                 Applied
@@ -446,16 +483,6 @@
                                                    data-bs-toggle="tooltip"
                                                    data-bs-placement="top">
                                                     <i class="bi bi-eye"></i> View
-                                                </a>
-                                                
-                                                <!-- View Job Details -->
-                                                <a th:if="${job != null}" 
-                                                   th:href="@{/jobs/view/} + ${job.id}" 
-                                                   class="btn btn-sm btn-outline-secondary"
-                                                   title="View Job Details"
-                                                   data-bs-toggle="tooltip"
-                                                   data-bs-placement="top">
-                                                    <i class="bi bi-briefcase"></i>
                                                 </a>
                                                 
                                                 <!-- Withdraw Button -->
@@ -680,8 +707,8 @@
                 var applicationId = button.getAttribute('data-application-id');
                 var formAction = withdrawModal.querySelector('form').getAttribute('action').replace('__${app.id}__', applicationId);
                 withdrawModal.querySelector('form').setAttribute('action', formAction);
-            });
-        });
+            })
+        };
 
         // Show success/error messages
         var urlParams = new URLSearchParams(window.location.search);
