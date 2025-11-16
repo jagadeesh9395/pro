@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title th:text="${isEditMode ? 'Edit Job' : 'Post New Job'} + ' - TalentTrove'">Post New Job - TalentTrove</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -262,22 +265,24 @@
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-4">
-                                        <label for="minSalary" class="form-label">Minimum Salary (₹ LPA)</label>
+                                        <label for="minSalary" class="form-label">Minimum Salary (₹)</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
-                                            <input type="number" class="form-control" id="minSalary" th:field="*{minSalary}" step="0.1" min="0" onchange="formatLPA(this)" placeholder="0.0">
-                                            <span class="input-group-text">LPA</span>
+                                            <input type="text" inputmode="decimal" class="form-control" id="minSalary" th:field="*{minSalary}" 
+                                                   placeholder="e.g. 5.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'minSalaryWords')">
+                                            <div id="minSalaryWords" class="form-text text-muted small mt-1 w-100"></div>
                                         </div>
-                                        <div class="form-text">In Lakhs Per Annum (e.g., 8.5 for ₹8.5 LPA)</div>
+                                        <div class="form-text">Enter amount in Lakhs (e.g., 8.5 for ₹8,50,000 per year)</div>
                                     </div>
                                     <div class="col-md-6 mb-4">
-                                        <label for="maxSalary" class="form-label">Maximum Salary (₹ LPA)</label>
+                                        <label for="maxSalary" class="form-label">Maximum Salary (₹)</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
-                                            <input type="number" class="form-control" id="maxSalary" th:field="*{maxSalary}" step="0.1" min="0" onchange="formatLPA(this)" placeholder="0.0">
-                                            <span class="input-group-text">LPA</span>
+                                            <input type="text" inputmode="decimal" class="form-control" id="maxSalary" th:field="*{maxSalary}" 
+                                                   placeholder="e.g. 10.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'maxSalaryWords')">
+                                            <div id="maxSalaryWords" class="form-text text-muted small mt-1 w-100"></div>
                                         </div>
-                                        <div class="form-text">Maximum annual salary in LPA (e.g., 20 for ₹20 LPA, 0 for 'Not Disclosed')</div>
+                                        <div class="form-text">Enter amount in Lakhs (e.g., 20 for ₹20,00,000 per year, 0 for 'Not Disclosed')</div>
                                         <div id="salaryWarning" class="text-danger small mt-1 d-none"></div>
                                     </div>
                                 </div>
@@ -419,41 +424,112 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // Function to validate salary range
-        function validateSalaryRange() {
-            const minSalaryInput = document.getElementById('minSalary');
-            const maxSalaryInput = document.getElementById('maxSalary');
-            const warningDiv = document.getElementById('salaryWarning');
+        // Function to format number with commas
+        function formatNumber(num) {
+            if (!num) return '';
+            const [whole, decimal] = String(num).split('.');
+            const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return decimal ? `${formatted}.${decimal}` : formatted;
+        }
+
+        // Function to convert number to Indian currency words
+        function numberToWords(num) {
+            if (isNaN(num) || !num) return '';
             
-            if (!minSalaryInput || !maxSalaryInput || !warningDiv) return true;
+            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
             
-            const minSalary = parseFloat(minSalaryInput.value) || 0;
-            const maxSalary = parseFloat(maxSalaryInput.value) || 0;
-            
-            // Only validate if both fields have values
-            if (minSalary > 0 && maxSalary > 0) {
-                if (minSalary > maxSalary) {
-                    // Show error message
-                    warningDiv.textContent = 'Maximum salary should not be less than minimum salary';
-                    warningDiv.classList.remove('d-none');
-                    return false;
+            function convertLessThanThousand(n) {
+                if (n === 0) return '';
+                
+                let word = '';
+                const hundreds = Math.floor(n / 100);
+                const remainder = n % 100;
+                
+                if (hundreds > 0) {
+                    word += single[hundreds] + ' Hundred';
                 }
+                
+                if (remainder > 0) {
+                    if (hundreds > 0) word += ' ';
+                    
+                    if (remainder < 10) {
+                        word += single[remainder];
+                    } else if (remainder < 20) {
+                        word += double[remainder - 10];
+                    } else {
+                        const ten = Math.floor(remainder / 10);
+                        const unit = remainder % 10;
+                        word += tens[ten];
+                        if (unit > 0) {
+                            word += ' ' + single[unit];
+                        }
+                    }
+                }
+                return word;
             }
             
-            // Clear any previous error messages
-            warningDiv.textContent = '';
-            warningDiv.classList.add('d-none');
+            if (num === 0) return 'Zero Rupees';
+            
+            let result = '';
+            const crore = Math.floor(num / 10000000);
+            const lakh = Math.floor((num % 10000000) / 100000);
+            const thousand = Math.floor((num % 100000) / 1000);
+            const remainder = num % 1000;
+            
+            if (crore > 0) result += convertLessThanThousand(crore) + ' Crore';
+            if (lakh > 0) result += (result ? ' ' : '') + convertLessThanThousand(lakh) + ' Lakh';
+            if (thousand > 0) result += (result ? ' ' : '') + convertLessThanThousand(thousand) + ' Thousand';
+            if (remainder > 0) result += (result ? ' ' : '') + convertLessThanThousand(remainder);
+            
+            return result + (result.endsWith('s') ? ' Rupees' : ' Rupees');
+        }
+
+        // Function to validate salary range
+        function validateSalaryRange() {
+            const minSalary = document.getElementById('minSalary');
+            const maxSalary = document.getElementById('maxSalary');
+            const salaryWarning = document.getElementById('salaryWarning');
+            
+            if (!minSalary || !maxSalary || !salaryWarning) return true;
+            
+            const minValue = parseFloat(minSalary.getAttribute('data-raw-value') || minSalary.value.replace(/[^\d.]/g, ''));
+            const maxValue = parseFloat(maxSalary.getAttribute('data-raw-value') || maxSalary.value.replace(/[^\d.]/g, ''));
+            
+            if (isNaN(minValue) || isNaN(maxValue)) {
+                salaryWarning.classList.add('d-none');
+                return true;
+            }
+            
+            if (maxValue > 0 && minValue > maxValue) {
+                salaryWarning.textContent = 'Maximum salary should be greater than or equal to minimum salary';
+                salaryWarning.classList.remove('d-none');
+                return false;
+            }
+            
+            salaryWarning.classList.add('d-none');
             return true;
         }
-        
-        // Function to format salary input as LPA
-        function formatLPA(input) {
-            if (!input.value) return;
+
+        // Function to format salary input and update amount in words
+        function formatAndUpdate(input, wordsId) {
+            if (!input) return;
             
-            // Remove any non-numeric characters except decimal point
-            let value = input.value.replace(/[^0-9.]/g, '');
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
             
-            // If there's a decimal, limit to 2 decimal places
+            // Get and clean the input value
+            let value = input.value.replace(/[^\d.]/g, '');
+            
+            // Handle multiple decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // Limit to 2 decimal places
             const decimalIndex = value.indexOf('.');
             if (decimalIndex !== -1) {
                 const decimalPart = value.substring(decimalIndex + 1);
@@ -462,312 +538,205 @@
                 }
             }
             
-            // Update the input value
-            input.value = value;
+            // Store raw value and format display
+            input.setAttribute('data-raw-value', value);
             
-            // Trigger validation
+            let displayValue = '';
+            if (value) {
+                const [whole, decimal] = value.split('.');
+                displayValue = formatNumber(whole) + (decimal !== undefined ? '.' + decimal.padEnd(2, '0').substring(0, 2) : '.00');
+            }
+            
+            // Update input value if changed
+            if (input.value !== displayValue) {
+                input.value = displayValue;
+            }
+            
+            // Update amount in words
+            const displayElement = document.getElementById(wordsId);
+            if (displayElement) {
+                if (value) {
+                    const amountInRupees = Math.floor(parseFloat(value) * 100000);
+                    const formattedNumber = new Intl.NumberFormat('en-IN').format(amountInRupees);
+                    const words = numberToWords(amountInRupees);
+                    displayElement.textContent = `${words} (₹${formattedNumber})`;
+                    displayElement.style.fontWeight = '500';
+                    displayElement.style.color = '#495057';
+                } else {
+                    displayElement.textContent = '';
+                }
+            }
+            
+            // Store current values for next time
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+            
+            // Update cursor position
+            const prevValue = input.getAttribute('data-prev-value') || '';
+            const lengthDiff = displayValue.length - prevValue.length;
+            const newCursorPos = isDeleting ? cursorPos : cursorPos + lengthDiff;
+            
+            setTimeout(() => {
+                try {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                } catch (e) {
+                    // Ignore cursor position errors
+                }
+            }, 0);
+            
             validateSalaryRange();
-        }
-        
-        // Add event listeners when the document is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            const minSalaryInput = document.getElementById('minSalary');
-            const maxSalaryInput = document.getElementById('maxSalary');
-            
-            if (minSalaryInput && maxSalaryInput) {
-                minSalaryInput.addEventListener('input', function() {
-                    formatLPA(this);
-                    validateSalaryRange();
-                });
-                
-                maxSalaryInput.addEventListener('input', function() {
-                    formatLPA(this);
-                    validateSalaryRange();
-                });
-                
-                // Also validate on form submission
-                const form = document.querySelector('form');
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        if (!validateSalaryRangeOnSubmit()) {
-                            e.preventDefault();
-                            return false;
-                        }
-                    });
-                }
-            }
-        });
-        
-        // Function to validate salary range on form submission
-        function validateSalaryRangeOnSubmit() {
-            const minSalaryInput = document.getElementById('minSalary');
-            const maxSalaryInput = document.getElementById('maxSalary');
-            const warningDiv = document.getElementById('salaryWarning');
-            
-            if (!minSalaryInput || !maxSalaryInput || !warningDiv) return true;
-            
-            const minSalary = parseFloat(minSalaryInput.value) || 0;
-            const maxSalary = parseFloat(maxSalaryInput.value) || 0;
-            
-            // Only validate if both fields have values
-            if (minSalary > 0 && maxSalary > 0) {
-                if (minSalary > maxSalary) {
-                    // Show error message
-                    warningDiv.textContent = 'Maximum salary should not be less than minimum salary';
-                    warningDiv.classList.remove('d-none');
-                    maxSalaryInput.focus();
-                    return false;
-                }
-            }
-            
-            // Clear any error messages if validation passes
-            warningDiv.textContent = '';
-            warningDiv.classList.add('d-none');
-            return true;
-        }
-    </script>
-    <script th:inline="javascript">
-        // Initialize form validation
-        (function () {
-            'use strict'
-            
-            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-            var forms = document.querySelectorAll('.needs-validation')
-            
-            // Loop over them and prevent submission
-            Array.prototype.slice.call(forms)
-                .forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
-        
-        // Function to add skill to skills input
-        function addSkill(skill) {
-            const skillsInput = document.getElementById('skills');
-            const currentSkills = skillsInput.value.trim();
-            
-            if (currentSkills === '') {
-                skillsInput.value = skill;
-            } else if (!currentSkills.includes(skill)) {
-                skillsInput.value = `${currentSkills}, ${skill}`;
-            }
-            // If skill already exists, do nothing
-        }
-
-        // Function to handle form submission
-        function handleFormSubmit(event) {
-            event.preventDefault();
-            
-            const form = document.getElementById('jobPostForm');
-            const isEditMode = form.action.includes('/edit');
-            const formData = new FormData(form);
-            
-            // Convert salary to actual values (LPA to actual amount)
-            const minSalary = document.getElementById('minSalary');
-            const maxSalary = document.getElementById('maxSalary');
-            
-            if (minSalary.value) {
-                formData.set('minSalary', (parseFloat(minSalary.value) * 100000).toString());
-            }
-            if (maxSalary.value) {
-                formData.set('maxSalary', (parseFloat(maxSalary.value) * 100000).toString());
-            }
-            
-            // Submit form data
-            fetch(form.action, {
-                method: 'POST',
-                body: new URLSearchParams(formData),
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url; // Redirect to success page
-                } else {
-                    return response.json().then(data => {
-                        if (data.success) {
-                            window.location.href = isEditMode ? 
-                                `/recruiter/jobs/${data.jobId}/success?action=updated` : 
-                                `/recruiter/jobs/${data.jobId}/success?action=created`;
-                        } else {
-                            throw new Error(data.message || 'An error occurred');
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('There was an error ' + (isEditMode ? 'updating' : 'posting') + ' the job. Please try again.');
-            });
-            
-            return false;
-        }
-    </script>
-    <script th:inline="javascript">
-        // Initialize form validation
-        (function () {
-            'use strict'
-            
-            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-            var forms = document.querySelectorAll('.needs-validation')
-            
-            // Loop over them and prevent submission
-            Array.prototype.slice.call(forms)
-                .forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
-        
-        // Function to add skill to skills input
-        function addSkill(skill) {
-            const skillsInput = document.getElementById('skills');
-            const currentSkills = skillsInput.value.trim();
-            
-            if (currentSkills === '') {
-                skillsInput.value = skill;
-            } else if (!currentSkills.includes(skill)) {
-                skillsInput.value = `${currentSkills}, ${skill}`;
-            }
-            // If skill already exists, do nothing
-        }
-
-        // Function to handle form submission
-        function handleFormSubmit(event) {
-            event.preventDefault();
-            
-            const form = document.getElementById('jobPostForm');
-            const isEditMode = form.action.includes('/edit');
-            const formData = new FormData(form);
-            
-            // Convert salary to actual values (LPA to actual amount)
-            const minSalary = document.getElementById('minSalary');
-            const maxSalary = document.getElementById('maxSalary');
-            
-            if (minSalary.value) {
-                formData.set('minSalary', (parseFloat(minSalary.value) * 100000).toString());
-            }
-            if (maxSalary.value) {
-                formData.set('maxSalary', (parseFloat(maxSalary.value) * 100000).toString());
-            }
-            
-            // Submit form data
-            fetch(form.action, {
-                method: 'POST',
-                body: new URLSearchParams(formData),
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url; // Redirect to success page
-                } else {
-                    return response.json().then(data => {
-                        if (data.success) {
-                            window.location.href = isEditMode ? 
-                                `/recruiter/jobs/${data.jobId}/success?action=updated` : 
-                                `/recruiter/jobs/${data.jobId}/success?action=created`;
-                        } else {
-                            throw new Error(data.message || 'An error occurred');
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('There was an error ' + (isEditMode ? 'updating' : 'posting') + ' the job. Please try again.');
-            });
-            
-            return false;
-        }
-        
-        // Function to validate salary range
-        function validateSalaryRange() {
-            const minSalary = document.getElementById('minSalary');
-            const maxSalary = document.getElementById('maxSalary');
-            if (!minSalary || !maxSalary) return true;
-            
-            const minVal = parseFloat(minSalary.value) || 0;
-            const maxVal = parseFloat(maxSalary.value) || 0;
-            
-            // Reset any previous error states
-            minSalary.classList.remove('is-invalid');
-            maxSalary.classList.remove('is-invalid');
-            
-            // Remove any existing error messages
-            let existingError = document.getElementById('salaryError');
-            if (existingError) {
-                existingError.remove();
-            }
-            
-            // If both fields have values, validate the range
-            if (minSalary.value && maxSalary.value) {
-                if (minVal > maxVal) {
-                    // Show error message
-                    const errorDiv = document.createElement('div');
-                    errorDiv.id = 'salaryError';
-                    errorDiv.className = 'invalid-feedback d-block';
-                    errorDiv.textContent = 'Maximum salary must be greater than or equal to minimum salary';
-                    
-                    // Insert error message after the max salary field
-                    maxSalary.parentNode.parentNode.after(errorDiv);
-                    
-                    // Add invalid class to highlight the fields
-                    minSalary.classList.add('is-invalid');
-                    maxSalary.classList.add('is-invalid');
-                    
-                    return false;
-                }
-                
-                // Validate minimum difference
-                if ((maxVal - minVal) < 2 && minVal !== 0 && maxVal !== 0) {
-                    // Show warning for small range
-                    const warningDiv = document.createElement('div');
-                    warningDiv.id = 'salaryError';
-                    warningDiv.className = 'text-warning small mt-1';
-                    warningDiv.textContent = 'Consider a wider salary range to attract more candidates';
-                    
-                    // Insert warning message after the max salary field
-                    maxSalary.parentNode.parentNode.after(warningDiv);
-                }
-            }
-            
             return true;
         }
         
-        // Function to format salary input as LPA
+        // Format salary input (LPA - Lakhs Per Annum)
         function formatLPA(input) {
-            // Ensure the value is a valid number
-            let value = parseFloat(input.value);
-            if (isNaN(value)) {
-                input.value = '';
-                validateSalaryRange();
-                return;
+            if (!input) return;
+            
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
+            
+            // Get and clean the input value
+            let value = input.value.replace(/[^\d.]/g, '');
+            
+            // Handle multiple decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
             }
             
-            // Round to 1 decimal place if needed
-            value = Math.round(value * 10) / 10;
-            input.value = value;
+            // Limit to 2 decimal places
+            const decimalIndex = value.indexOf('.');
+            if (decimalIndex !== -1) {
+                const decimalPart = value.substring(decimalIndex + 1);
+                if (decimalPart.length > 2) {
+                    value = value.substring(0, decimalIndex + 3);
+                }
+            }
             
-            // Validate the salary range
+            // Store raw value
+            input.setAttribute('data-raw-value', value);
+            
+            // Format display value with 2 decimal places
+            let displayValue = value;
+            if (value.includes('.')) {
+                const [whole, decimal] = value.split('.');
+                displayValue = whole + '.' + (decimal || '00').padEnd(2, '0').substring(0, 2);
+            } else if (value) {
+                displayValue = value + '.00';
+            }
+            
+            // Only update if changed
+            if (input.value !== displayValue) {
+                input.value = displayValue;
+            }
+            
+            // Update cursor position
+            const prevValue = input.getAttribute('data-prev-value') || '';
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+            
+            const lengthDiff = displayValue.length - prevValue.length;
+            const newCursorPos = isDeleting ? cursorPos : cursorPos + lengthDiff;
+            
+            setTimeout(() => {
+                try {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                } catch (e) {
+                    // Ignore cursor position errors
+                }
+            }, 0);
+            
             validateSalaryRange();
+            return true;
+        }
+        
+        // Handle form submission
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const jobData = {};
+            
+            // Convert FormData to object
+            formData.forEach((value, key) => {
+                // Handle salary fields - convert from LPA to paise
+                if ((key === 'minSalary' || key === 'maxSalary') && value) {
+                    jobData[key] = Math.round(parseFloat(value) * 100000); // Convert LPA to paise
+                } else {
+                    jobData[key] = value;
+                }
+            });
+            
+            // Get the form's action URL and method
+            const url = form.getAttribute('action');
+            const method = form.getAttribute('method') || 'POST';
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            
+            // Add CSRF token if available
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
+            // Submit the form data
+            fetch(url, {
+                method: method,
+                headers: headers,
+                body: JSON.stringify(jobData),
+                credentials: 'same-origin'  // Important for including cookies/session
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'An error occurred');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.success) {
+                    // Show success message
+                    const successMessage = document.getElementById('successMessage');
+                    const jobForm = document.getElementById('jobPostForm');
+                    
+                    if (successMessage && jobForm) {
+                        jobForm.classList.add('d-none');
+                        successMessage.classList.remove('d-none');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        window.location.href = '/recruiter/dashboard';
+                    }
+                } else {
+                    throw new Error(data.message || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'An error occurred while saving the job. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
         }
         
         // Initialize form with data if in edit mode
@@ -821,6 +790,31 @@
                         return false;
                     }
                     
+                    // Get the raw values from data attributes if they exist
+                    const minSalary = document.getElementById('minSalary');
+                    const maxSalary = document.getElementById('maxSalary');
+                    
+                    // Convert formatted values back to raw numbers for submission
+                    if (minSalary) {
+                        const rawValue = minSalary.getAttribute('data-raw-value');
+                        if (rawValue) {
+                            minSalary.value = rawValue;
+                        } else {
+                            // Fallback to removing non-numeric characters
+                            minSalary.value = minSalary.value.replace(/[^\d.]/g, '');
+                        }
+                    }
+                    
+                    if (maxSalary) {
+                        const rawValue = maxSalary.getAttribute('data-raw-value');
+                        if (rawValue) {
+                            maxSalary.value = rawValue;
+                        } else {
+                            // Fallback to removing non-numeric characters
+                            maxSalary.value = maxSalary.value.replace(/[^\d.]/g, '');
+                        }
+                    }
+                    
                     // If we get here, form is valid - handle submission
                     handleFormSubmit(event);
                     return false;
@@ -829,18 +823,14 @@
             
             // Add real-time validation for salary fields
             if (minSalary && maxSalary) {
-                minSalary.addEventListener('input', validateSalaryRange);
-                maxSalary.addEventListener('input', validateSalaryRange);
-            }
-                    // Final validation before form submission
-                    if (!validateSalaryRange()) {
-                        event.preventDefault();
-                        return false;
-                    }
-                    
-                    // Convert LPA to actual values if needed (for backend processing)
-                    // This is now handled in the handleFormSubmit function
-                    return true;
+                minSalary.addEventListener('input', function() {
+                    formatLPA(this);
+                    validateSalaryRange();
+                });
+                
+                maxSalary.addEventListener('input', function() {
+                    formatLPA(this);
+                    validateSalaryRange();
                 });
             }
         });

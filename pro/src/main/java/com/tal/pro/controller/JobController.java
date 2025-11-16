@@ -17,9 +17,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/recruiter/jobs")
@@ -62,25 +64,38 @@ public class JobController {
     }
 
     @PostMapping("/post")
-    public String postJob(
-            @Valid @ModelAttribute("job") JobDto jobDto,
+    @ResponseBody
+    public ResponseEntity<?> postJob(
+            @Valid @RequestBody JobDto jobDto,
             BindingResult result,
-            @AuthenticationPrincipal Recruiter recruiter,
-            RedirectAttributes redirectAttributes) {
+            @AuthenticationPrincipal Recruiter recruiter) {
 
         if (result.hasErrors()) {
-            return "recruiter/post-job";
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Validation error",
+                "errors", result.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        (existing, replacement) -> existing + ", " + replacement
+                    ))
+            ));
         }
 
         try {
             Job createdJob = jobService.postNewJob(jobDto, recruiter);
-            redirectAttributes.addFlashAttribute("successMessage", "Job posted successfully!");
-            redirectAttributes.addFlashAttribute("job", createdJob);
-            redirectAttributes.addFlashAttribute("isEditMode", false);
-            return "redirect:/recruiter/jobs/success";
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Job posted successfully!",
+                "redirectUrl", "/recruiter/jobs/success"
+            ));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error posting job: " + e.getMessage());
-            return "redirect:/recruiter/jobs/new";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Error posting job: " + e.getMessage()
+                ));
         }
     }
 
