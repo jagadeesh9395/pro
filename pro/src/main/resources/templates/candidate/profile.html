@@ -190,41 +190,57 @@
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" th:field="*{fullName}" readonly>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control" th:field="*{fullName}" readonly>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" th:field="*{email}" readonly>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control" th:field="*{email}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        <input type="tel" class="form-control" th:field="*{phoneNumber}" placeholder="Enter phone number" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Location</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                        <input type="text" class="form-control" th:field="*{location}" placeholder="Enter your location" readonly>
+                                    </div>
                                 </div>
                             </div>
                             
                             <div class="mb-3">
                                 <label class="form-label">Skills</label>
-                                <div id="skillsContainer" class="mb-2">
-                                    <input type="text" class="form-control" id="skillsInput" placeholder="Add skills separated by commas" th:value="${skills}">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
+                                    <input type="text" class="form-control" id="skills" name="skills" th:field="*{skills}"
+                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
                                 </div>
-                                <div id="skillsTags" class="d-flex flex-wrap">
-                                    <!-- Skill tags will be added here -->
-                                </div>
+                                <div class="form-text">List your technical and soft skills, separated by commas.</div>
+                                <div class="invalid-feedback">Please add your skills.</div>
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Experience (Years)</label>
-                                        <input type="number" class="form-control" th:field="*{experience}" min="0" max="50" readonly>
+                                        <input type="number" class="form-control" th:field="*{experience}" name="experience" min="0" max="50" step="0.5" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Resume</label>
-                                        <div class="input-group">
-                                            <input type="file" class="form-control" id="resumeUpload" disabled>
-                                            <button class="btn btn-outline-secondary" type="button" id="uploadBtn" disabled>
-                                                <i class="bi bi-upload"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <!-- Experience field takes full width on mobile -->
                                 </div>
                             </div>
                             
@@ -288,74 +304,185 @@
             const skillsInput = document.getElementById('skillsInput');
             const skillsTags = document.getElementById('skillsTags');
             
-            // Initialize skills tags
-            updateSkillsTags();
-            
-            // Toggle edit mode
-            editBtn.addEventListener('click', function() {
-                inputs.forEach(input => {
-                    input.readOnly = false;
-                    input.classList.add('editable');
-                });
-                uploadBtn.disabled = false;
-                resumeUpload.disabled = false;
-                formButtons.classList.remove('d-none');
-                editBtn.classList.add('d-none');
-            });
-            
-            // Cancel edit
-            cancelBtn.addEventListener('click', function() {
-                inputs.forEach(input => {
-                    input.readOnly = true;
-                    input.classList.remove('editable');
-                    // Reset to original values if needed
-                    // input.value = originalValues[input.name];
-                });
-                uploadBtn.disabled = true;
-                resumeUpload.disabled = true;
-                formButtons.classList.add('d-none');
-                editBtn.classList.remove('d-none');
-            });
-            
-            // Handle skills input
-            skillsInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ',') {
-                    e.preventDefault();
-                    updateSkillsTags();
-                }
-            });
-            
-            // Update skills tags
-            function updateSkillsTags() {
-                const skills = skillsInput.value.split(',')
-                    .map(skill => skill.trim())
-                    .filter(skill => skill.length > 0);
+            // Global function to remove a skill
+            window.removeSkill = function(element) {
+                const skillToRemove = element.previousElementSibling.textContent.trim();
+                const skillInputs = document.querySelectorAll('#skillsContainer input[type="hidden"][name="skills"]');
                 
-                skillsTags.innerHTML = '';
-                
-                skills.forEach(skill => {
-                    if (skill) {
-                        const tag = document.createElement('span');
-                        tag.className = 'skill-tag';
-                        tag.textContent = skill;
-                        skillsTags.appendChild(tag);
+                // Remove the skill input that matches the skill to remove
+                skillInputs.forEach(input => {
+                    if (input.value.trim() === skillToRemove) {
+                        input.remove();
                     }
                 });
                 
-                // Update hidden input for form submission
-                document.getElementById('skills').value = skills.join(',');
+                // Update the display
+                updateSkillsDisplay();
+                
+                // Remove the visual tag
+                element.parentElement.remove();
+            };
+
+            // Initialize skills tags if elements exist
+            if (skillsInput && skillsTags) {
+                // Initialize skills display
+                updateSkillsDisplay();
+                
+                // Handle skills input
+                skillsInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        addNewSkill();
+                    }
+                });
+
+                // Handle blur event to add skill when input loses focus
+                skillsInput.addEventListener('blur', function() {
+                    if (this.value.trim() !== '') {
+                        addNewSkill();
+                    }
+                });
+                
+                function addNewSkill() {
+                    const skill = skillsInput.value.trim();
+                    if (skill === '') return;
+                    
+                    const skillsContainer = document.getElementById('skillsContainer');
+                    const skillsHiddenInput = document.getElementById('skills');
+                    
+                    if (skillsContainer && skillsHiddenInput) {
+                        let currentSkills = [];
+                        
+                        // Get existing skills from hidden inputs
+                        const skillInputs = skillsContainer.querySelectorAll('input[type="hidden"][name="skills"]');
+                        skillInputs.forEach(input => {
+                            if (input.value.trim() !== '') {
+                                currentSkills.push(input.value.trim());
+                            }
+                        });
+                        
+                        // Add new skill if not already present
+                        if (!currentSkills.includes(skill)) {
+                            // Create a new hidden input for the skill
+                            const newSkillInput = document.createElement('input');
+                            newSkillInput.type = 'hidden';
+                            newSkillInput.name = 'skills';
+                            newSkillInput.value = skill;
+                            skillsContainer.appendChild(newSkillInput);
+                            
+                            // Update the display
+                            updateSkillsDisplay();
+                        }
+                    }
+                    
+                    // Clear the input
+                    skillsInput.value = '';
+                }
+                
+                // Update skills display
+                function updateSkillsDisplay() {
+                    if (!skillsTags) return;
+                    
+                    // Clear existing tags
+                    skillsTags.innerHTML = '';
+                    
+                    // Get all skill inputs
+                    const skillInputs = document.querySelectorAll('#skillsContainer input[type="hidden"][name="skills"]');
+                    const skills = [];
+                    
+                    // Collect all non-empty skills
+                    skillInputs.forEach(input => {
+                        if (input.value.trim() !== '') {
+                            skills.push(input.value.trim());
+                        }
+                    });
+                    
+                    // Update the hidden input with comma-separated values (for backward compatibility)
+                    const skillsHiddenInput = document.getElementById('skills');
+                    if (skillsHiddenInput) {
+                        skillsHiddenInput.value = skills.join(',');
+                    }
+                    
+                    // Add skill tags
+                    skills.forEach(skill => {
+                        if (skill) {
+                            const tag = document.createElement('span');
+                            tag.className = 'badge bg-primary me-1 mb-1';
+                            tag.innerHTML = `
+                                ${skill}
+                                <i class="bi bi-x ms-1" style="cursor: pointer;" onclick="removeSkill(this)"></i>
+                            `;
+                            skillsTags.appendChild(tag);
+                        }
+                    });
+                }
+                
+                // Update the hidden input before form submission
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        const skillsHiddenInput = document.getElementById('skills');
+                        if (skillsHiddenInput) {
+                            // Make sure the form field has the latest value
+                            document.querySelector('input[name="skills"]').value = skillsHiddenInput.value;
+                        }
+                    });
+                }
             }
             
-            // Handle file upload button
-            uploadBtn.addEventListener('click', function() {
-                resumeUpload.click();
-            });
+            // Toggle edit mode if elements exist
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    if (inputs) {
+                        inputs.forEach(input => {
+                            if (input) {
+                                input.readOnly = false;
+                                input.classList.add('editable');
+                            }
+                        });
+                    }
+                    
+                    if (uploadBtn) uploadBtn.disabled = false;
+                    if (resumeUpload) resumeUpload.disabled = false;
+                    if (formButtons) formButtons.classList.remove('d-none');
+                    editBtn.classList.add('d-none');
+                });
+            }
             
-            // Show file name when selected
-            resumeUpload.addEventListener('change', function() {
-                const fileName = this.files[0]?.name || 'No file chosen';
-                this.previousElementSibling.value = fileName;
-            });
+            // Cancel edit if elements exist
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    if (inputs) {
+                        inputs.forEach(input => {
+                            if (input) {
+                                input.readOnly = true;
+                                input.classList.remove('editable');
+                            }
+                        });
+                    }
+                    
+                    if (uploadBtn) uploadBtn.disabled = true;
+                    if (resumeUpload) resumeUpload.disabled = true;
+                    if (formButtons) formButtons.classList.add('d-none');
+                    if (editBtn) editBtn.classList.remove('d-none');
+                });
+            }
+            
+            // Handle file upload button if elements exist
+            if (uploadBtn && resumeUpload) {
+                uploadBtn.addEventListener('click', function() {
+                    resumeUpload.click();
+                });
+                
+                // Show file name when selected
+                resumeUpload.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const fileName = this.files[0].name;
+                        if (this.previousElementSibling) {
+                            this.previousElementSibling.value = fileName;
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/candidate")
@@ -27,7 +30,7 @@ public class CandidateController {
 
     @Autowired
     private JobService jobService;
-    
+
     @Autowired
     private JobApplicationService jobApplicationService;
 
@@ -53,10 +56,10 @@ public class CandidateController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
-                          @RequestParam(defaultValue = "0") int page,
-                          @RequestParam(defaultValue = "10") int size,
-                          @RequestParam(required = false) String query,
-                          @RequestParam(required = false) String location) {
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "10") int size,
+                            @RequestParam(required = false) String query,
+                            @RequestParam(required = false) String location) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -74,10 +77,10 @@ public class CandidateController {
             if ((query != null && !query.isEmpty()) || (location != null && !location.isEmpty())) {
                 // Use search with filters
                 jobsPage = jobService.searchJobsWithFilters(
-                    query != null ? query : "",
-                    location != null ? location : "",
-                    null, // jobType is null for now, can be added later
-                    pageable
+                        query != null ? query : "",
+                        location != null ? location : "",
+                        null, // jobType is null for now, can be added later
+                        pageable
                 );
             } else {
                 // Get all active jobs if no search criteria
@@ -86,32 +89,32 @@ public class CandidateController {
 
             // Get candidate's applications with job details and status history
             List<JobApplication> applications = jobApplicationService.getApplicationsByCandidateId(candidate.getId());
-            
+
             // Log the number of applications found for debugging
             System.out.println("Found " + applications.size() + " applications for candidate: " + candidate.getId());
             applications.forEach(app -> {
-                System.out.println("Application ID: " + app.getId() + 
-                                 ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") + 
-                                 ", Status: " + (app.getStatus() != null ? app.getStatus().name() : "No Status"));
-                
+                System.out.println("Application ID: " + app.getId() +
+                        ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") +
+                        ", Status: " + (app.getStatus() != null ? app.getStatus().name() : "No Status"));
+
                 // Sort status history by change date (newest first)
                 if (app.getStatusHistory() != null) {
                     app.getStatusHistory().sort((h1, h2) -> h2.getChangedAt().compareTo(h1.getChangedAt()));
                 }
             });
-            
+
             // Get recent applications (last 5)
             List<JobApplication> recentApplications = applications.stream()
-                .filter(app -> app.getAppliedAt() != null) // Filter out null appliedAt
-                .sorted((a1, a2) -> a2.getAppliedAt().compareTo(a1.getAppliedAt()))
-                .limit(5)
-                .toList();
-                
+                    .filter(app -> app.getAppliedAt() != null) // Filter out null appliedAt
+                    .sorted((a1, a2) -> a2.getAppliedAt().compareTo(a1.getAppliedAt()))
+                    .limit(5)
+                    .toList();
+
             // Log if any applications were filtered out
             if (recentApplications.size() < Math.min(5, applications.size())) {
                 System.out.println("Filtered out " + (applications.size() - recentApplications.size()) + " applications with null appliedAt");
             }
-            
+
             // Add candidate and user info to model
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
@@ -119,18 +122,18 @@ public class CandidateController {
             model.addAttribute("fullName", candidate.getFullName());
             model.addAttribute("email", candidate.getEmail());
             model.addAttribute("isCandidate", true);
-            
+
             // Add applications data
             model.addAttribute("recentApplications", recentApplications);
             model.addAttribute("totalApplications", applications.size());
-            
+
             // Add job search results with pagination
             model.addAttribute("jobs", jobsPage.getContent());
             model.addAttribute("currentPage", jobsPage.getNumber());
             model.addAttribute("totalPages", jobsPage.getTotalPages());
             model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("pageSize", size);
-            
+
             // Add search parameters for pagination and form population
             if (query != null && !query.isEmpty()) {
                 model.addAttribute("query", query);
@@ -178,8 +181,8 @@ public class CandidateController {
 
     @PostMapping("/profile/update")
     public String updateProfile(@ModelAttribute("candidate") Candidate updatedCandidate,
-                              Principal principal,
-                              RedirectAttributes redirectAttributes) {
+                                Principal principal,
+                                RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
@@ -188,8 +191,22 @@ public class CandidateController {
             // Update candidate details
             candidate.setFullName(updatedCandidate.getFullName());
             candidate.setEmail(updatedCandidate.getEmail());
-            candidate.setSkills(updatedCandidate.getSkills());
+            candidate.setPhoneNumber(updatedCandidate.getPhoneNumber());
+
+            // Handle skills - store as comma-separated string
+            if (updatedCandidate.getSkills() != null && !updatedCandidate.getSkills().trim().isEmpty()) {
+                // Clean up the skills string by removing extra spaces and empty entries
+                String cleanedSkills = Arrays.stream(updatedCandidate.getSkills().split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(", "));
+                candidate.setSkills(cleanedSkills);
+            } else {
+                candidate.setSkills("");
+            }
+
             candidate.setExperience(updatedCandidate.getExperience());
+            candidate.setLocation(updatedCandidate.getLocation());
 
             candidateRepository.save(candidate);
 
@@ -204,10 +221,10 @@ public class CandidateController {
 
     @PostMapping("/profile/change-password")
     public String changePassword(@RequestParam("currentPassword") String currentPassword,
-                               @RequestParam("newPassword") String newPassword,
-                               @RequestParam("confirmPassword") String confirmPassword,
-                               Principal principal,
-                               RedirectAttributes redirectAttributes) {
+                                 @RequestParam("newPassword") String newPassword,
+                                 @RequestParam("confirmPassword") String confirmPassword,
+                                 Principal principal,
+                                 RedirectAttributes redirectAttributes) {
         try {
             // TODO: Implement password change logic
             // 1. Verify current password

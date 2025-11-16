@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class SignupRequest {
     @NotBlank
@@ -30,7 +32,7 @@ public class SignupRequest {
     private String company; // For recruiters
     private String position; // For recruiters
     private String resumeUrl; // For candidates
-    private String skills; // For candidates
+    private String skills; // For candidates (comma-separated)
     private String experience; // For candidates
 
     @NotBlank

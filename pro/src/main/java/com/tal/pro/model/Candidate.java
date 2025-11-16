@@ -3,6 +3,10 @@ package com.tal.pro.model;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.DBRef;
+import java.util.Arrays;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "candidates")
 public class Candidate extends User {
@@ -14,7 +18,7 @@ public class Candidate extends User {
     private String resumeUrl;
     
     @Field("skills")
-    private String skills;
+    private String skills; // Comma-separated skills
     
     @Field("experience")
     private String experience;
@@ -66,6 +70,25 @@ public class Candidate extends User {
 
     public void setSkills(String skills) {
         this.skills = skills;
+    }
+    
+    // Helper method to add a single skill
+    public void addSkill(String skill) {
+        if (skill != null && !skill.trim().isEmpty()) {
+            if (this.skills == null || this.skills.isEmpty()) {
+                this.skills = skill.trim();
+            } else if (!Arrays.asList(this.skills.split("\\s*,\\s*")).contains(skill.trim())) {
+                this.skills += ", " + skill.trim();
+            }
+        }
+    }
+    
+    // Get skills as list
+    public List<String> getSkillsList() {
+        if (this.skills == null || this.skills.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(this.skills.split("\\s*,\\s*"));
     }
 
     public String getExperience() {
