@@ -220,18 +220,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create experience item HTML with field labels and key-value format
     function createExperienceItem(exp) {
-        const startDate = exp.startDate ? new Date(exp.startDate).toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short' 
-        }) : 'N/A';
-        
-        let endDate = 'Present';
-        if (exp.endDate) {
-            endDate = new Date(exp.endDate).toLocaleDateString('en-US', { 
+        const formatDate = (dateString) => {
+            if (!dateString) return 'Not specified';
+            return new Date(dateString).toLocaleDateString('en-US', { 
                 year: 'numeric', 
-                month: 'short' 
+                month: 'long'
             });
-        }
+        };
+        
+        const startDate = formatDate(exp.startDate);
+        const endDate = exp.currentlyWorking ? 'Present' : formatDate(exp.endDate);
+        const duration = `${startDate} - ${endDate}`;
         
         const employmentTypeMap = {
             'FULL_TIME': 'Full-time',
@@ -244,76 +243,130 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const employmentType = employmentTypeMap[exp.employmentType] || exp.employmentType || 'Not specified';
         
+        // Calculate duration in years and months
+        const getDuration = (start, end) => {
+            if (!start) return '';
+            const startDate = new Date(start);
+            const endDate = end === 'Present' ? new Date() : new Date(end);
+            
+            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+            months -= startDate.getMonth();
+            months += endDate.getMonth();
+            
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            
+            let duration = [];
+            if (years > 0) duration.push(`${years} ${years === 1 ? 'yr' : 'yrs'}`);
+            if (remainingMonths > 0) duration.push(`${remainingMonths} ${remainingMonths === 1 ? 'mo' : 'mos'}`);
+            
+            return duration.length > 0 ? `• ${duration.join(' ')}` : '';
+        };
+        
+        const durationText = getDuration(exp.startDate, exp.currentlyWorking ? 'Present' : exp.endDate);
+        
         return `
-            <div class="card mb-3" id="exp-${exp.id}">
-                <div class="card-body">
+            <div class="card experience-card mb-4 border-0 shadow-sm" data-id="${exp.id}">
+                <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div class="flex-grow-1 me-3">
-                            <h5 class="mb-3">${exp.position || 'Position not specified'}</h5>
-                            
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-6">
-                                    <div class="d-flex">
-                                        <span class="text-muted me-2 fw-medium">Company:</span>
-                                        <span>${exp.company || 'Not specified'}</span>
+                        <div class="w-100">
+                            <!-- Header with Position and Company -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 class="mb-1 fw-bold">${exp.position || 'No Position Specified'}</h4>
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <span class="text-primary fw-medium me-3">
+                                            <i class="bi bi-building me-1"></i>${exp.company || 'Not specified'}
+                                        </span>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-calendar3 me-1"></i>${duration} ${durationText}
+                                        </span>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex">
-                                        <span class="text-muted me-2 fw-medium">Employment Type:</span>
-                                        <span>${employmentType}</span>
-                                    </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-exp" 
+                                        data-id="${exp.id}" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-exp" 
+                                        data-id="${exp.id}" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                             
-                            <div class="row g-2 mb-2">
+                            <!-- Employment Details -->
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <div class="d-flex">
-                                        <span class="text-muted me-2 fw-medium">Duration:</span>
-                                        <span>${startDate} - ${endDate}</span>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <span class="bg-light rounded-circle p-2 me-2">
+                                            <i class="bi bi-briefcase text-primary"></i>
+                                        </span>
+                                        <div>
+                                            <div class="small text-muted">Employment Type</div>
+                                            <div class="fw-medium">${employmentType}</div>
+                                        </div>
                                     </div>
                                 </div>
                                 ${exp.location ? `
                                 <div class="col-md-6">
-                                    <div class="d-flex">
-                                        <span class="text-muted me-2 fw-medium">Location:</span>
-                                        <span><i class="bi bi-geo-alt"></i> ${exp.location}</span>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <span class="bg-light rounded-circle p-2 me-2">
+                                            <i class="bi bi-geo-alt text-primary"></i>
+                                        </span>
+                                        <div>
+                                            <div class="small text-muted">Location</div>
+                                            <div class="fw-medium">${exp.location}</div>
+                                        </div>
                                     </div>
                                 </div>` : ''}
                             </div>
                             
+                            <!-- Description -->
                             ${exp.description ? `
-                            <div class="mt-3">
-                                <div class="d-flex">
-                                    <span class="text-muted me-2 fw-medium">Description:</span>
-                                </div>
-                                <div class="ms-4">
+                            <div class="bg-light p-3 rounded-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-card-text text-primary me-2"></i>Role & Responsibilities
+                                </h6>
+                                <div class="ms-3">
                                     <p class="mb-0">${exp.description.replace(/\n/g, '<br>')}</p>
                                 </div>
                             </div>` : ''}
-                        </div>
-                        
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                    id="expDropdown${exp.id}" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="expDropdown${exp.id}">
-                                <li>
-                                    <a class="dropdown-item edit-exp" href="#" data-id="${exp.id}">
-                                        <i class="bi bi-pencil me-2"></i>Edit
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item text-danger delete-exp" href="#" data-id="${exp.id}">
-                                        <i class="bi bi-trash me-2"></i>Delete
-                                    </a>
-                                </li>
-                            </ul>
+                            
+                            <!-- Skills/Tech Stack (if available) -->
+                            ${exp.skills ? `
+                            <div class="mt-3">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-tools text-primary me-2"></i>Technologies Used
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${exp.skills.split(',').map(skill => 
+                                        `<span class="badge bg-light text-dark border">${skill.trim()}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <style>
+                .experience-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    border-left: 4px solid #0d6efd !important;
+                }
+                .experience-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+                }
+                .experience-card .btn-group .btn {
+                    opacity: 0.7;
+                    transition: opacity 0.2s ease;
+                }
+                .experience-card:hover .btn-group .btn {
+                    opacity: 1;
+                }
+            </style>
         `;
     }
     
@@ -321,26 +374,38 @@ document.addEventListener('DOMContentLoaded', function() {
     function addExperienceEventListeners() {
         // Edit buttons
         document.querySelectorAll('.edit-exp').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const expId = this.getAttribute('data-id');
-                if (expId) {
-                    editExperience(expId);
-                }
-            });
+            // Remove any existing event listeners to prevent duplicates
+            btn.removeEventListener('click', handleEditClick);
+            btn.addEventListener('click', handleEditClick);
         });
         
         // Delete buttons
         document.querySelectorAll('.delete-exp').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const expId = this.getAttribute('data-id');
-                if (expId) {
-                    document.getElementById('deleteExperienceId').value = expId;
-                    showModal(deleteModal, deleteModalElement);
-                }
-            });
+            // Remove any existing event listeners to prevent duplicates
+            btn.removeEventListener('click', handleDeleteClick);
+            btn.addEventListener('click', handleDeleteClick);
         });
+        
+        // Handle edit click
+        function handleEditClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const expId = this.getAttribute('data-id');
+            if (expId) {
+                editExperience(expId);
+            }
+        }
+        
+        // Handle delete click
+        function handleDeleteClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const expId = this.getAttribute('data-id');
+            if (expId) {
+                document.getElementById('deleteExperienceId').value = expId;
+                showModal(deleteModal, deleteModalElement);
+            }
+        }
     }
     
     // Edit experience
@@ -365,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('company').value = exp.company || '';
                 document.getElementById('position').value = exp.position || '';
                 document.getElementById('employmentType').value = exp.employmentType || 'FULL_TIME';
-                document.getElementById('location').value = exp.location || '';
+                document.getElementById('expLocation').value = exp.location || '';
                 
                 // Format dates for input[type="month"]
                 if (exp.startDate) {
@@ -411,14 +476,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return date.toISOString().split('T')[0]; // YYYY-MM-DD
             }
             
+            const currentlyWorking = document.getElementById('currentlyWorking').checked;
             const experienceData = {
                 company: document.getElementById('company').value.trim(),
                 position: document.getElementById('position').value.trim(),
                 employmentType: document.getElementById('employmentType').value,
                 location: document.getElementById('location').value.trim(),
                 startDate: formatDateForApi(document.getElementById('startDateExp').value),
-                endDate: document.getElementById('currentlyWorking').checked ? 
-                    null : formatDateForApi(document.getElementById('endDateExp').value),
+                endDate: currentlyWorking ? null : formatDateForApi(document.getElementById('endDateExp').value),
+                currentlyWorking: currentlyWorking,
                 description: document.getElementById('descriptionExp').value.trim()
             };
             
