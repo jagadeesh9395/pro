@@ -276,30 +276,30 @@
 
                 <!-- Add/Edit Education Modal -->
                 <div class="modal fade" id="educationModal" tabindex="-1" aria-labelledby="educationModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
-                            <div class="modal-header">
+                            <div class="modal-header bg-primary text-white">
                                 <h5 class="modal-title" id="educationModalLabel">Add Education</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body p-4">
                                 <form id="educationForm">
                                     <input type="hidden" id="educationId">
-                                    <div class="mb-3">
-                                        <label for="institution" class="form-label">Institution</label>
-                                        <input type="text" class="form-control" id="institution" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="degree" class="form-label">Degree</label>
-                                        <input type="text" class="form-control" id="degree" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="fieldOfStudy" class="form-label">Field of Study</label>
-                                        <input type="text" class="form-control" id="fieldOfStudy" required>
-                                    </div>
-                                    <div class="row mb-3">
+                                    <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="startDate" class="form-label">Start Date</label>
+                                            <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="institution" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="degree" class="form-label">Degree <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="degree" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="fieldOfStudy" class="form-label">Field of Study <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="fieldOfStudy" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
                                             <input type="month" class="form-control" id="startDate" required>
                                         </div>
                                         <div class="col-md-6">
@@ -307,25 +307,29 @@
                                             <div class="input-group">
                                                 <input type="month" class="form-control" id="endDate">
                                                 <div class="input-group-text">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="currentlyStudying">
-                                                        <label class="form-check-label" for="currentlyStudying">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="currentlyStudying">
+                                                        <label class="form-check-label ms-2" for="currentlyStudying">
                                                             Currently Studying
                                                         </label>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="description" class="form-label">Description</label>
-                                        <textarea class="form-control" id="description" rows="3"></textarea>
+                                        <div class="col-12">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control" id="description" rows="4" placeholder="Add details about your education, achievements, or relevant coursework"></textarea>
+                                        </div>
                                     </div>
                                 </form>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="saveEducationBtn">Save</button>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-lg me-1"></i> Cancel
+                                </button>
+                                <button type="button" class="btn btn-primary" id="saveEducationBtn">
+                                    <i class="bi bi-save me-1"></i> Save Education
+                                </button>
                             </div>
                         </div>
                     </div>

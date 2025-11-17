@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (idInput) idInput.value = '';
                 if (form) form.reset();
                 
-                // Enable end date input when adding new education
+                // Initialize the currently studying state
                 const endDateInput = document.getElementById('endDate');
                 const currentlyStudyingCheckbox = document.getElementById('currentlyStudying');
                 if (endDateInput && currentlyStudyingCheckbox) {
@@ -136,21 +136,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('Add Education button not found');
         }
         
-        // Setup currently studying checkbox
-        const currentlyStudyingCheckbox = document.getElementById('currentlyStudying');
-        const endDateInput = document.getElementById('endDate');
-        
-        if (currentlyStudyingCheckbox && endDateInput) {
-            currentlyStudyingCheckbox.addEventListener('change', function() {
-                endDateInput.disabled = this.checked;
-                if (this.checked) {
-                    endDateInput.value = '';
+        // Setup currently studying checkbox - using event delegation for dynamic elements
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'currentlyStudying') {
+                const endDateInput = document.getElementById('endDate');
+                if (endDateInput) {
+                    endDateInput.disabled = e.target.checked;
+                    if (e.target.checked) {
+                        endDateInput.value = '';
+                    }
                 }
-            });
-            
-            // Initialize end date state
-            endDateInput.disabled = currentlyStudyingCheckbox.checked;
-        }
+            }
+        });
     }
     
     // Initialize end date state
@@ -199,8 +196,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const noEducationMessage = document.getElementById('noEducationMessage');
             
             if (educationList && educationList.length > 0) {
-                noEducationMessage.classList.add('d-none');
-                educationListContainer.innerHTML = '';
+                if (noEducationMessage) noEducationMessage.classList.add('d-none');
+                if (educationListContainer) educationListContainer.innerHTML = '';
                 
                 educationList.forEach(edu => {
                     const educationItem = createEducationItem(edu);
@@ -219,14 +216,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Create education item HTML
+    // Create education item HTML with field labels
     function createEducationItem(education) {
-        const startDate = education.startDate ? new Date(education.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '';
-        let endDate = 'Present';
+        const formatDate = (dateString) => {
+            if (!dateString) return 'Not specified';
+            return new Date(dateString).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long',
+                day: 'numeric'
+            });
+        };
         
-        if (education.endDate && !education.currentlyStudying) {
-            endDate = new Date(education.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-        }
+        const startDate = formatDate(education.startDate);
+        const endDate = education.currentlyStudying ? 'Present' : formatDate(education.endDate);
         
         const educationItem = document.createElement('div');
         educationItem.className = 'card mb-3';
@@ -235,24 +237,69 @@ document.addEventListener('DOMContentLoaded', function() {
         educationItem.innerHTML = `
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h5 class="card-title mb-1">${education.degree || 'No Degree Specified'}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">${education.institution || ''}</h6>
-                        <p class="card-text mb-1">${education.fieldOfStudy || ''}</p>
-                        <p class="card-text">
-                            <small class="text-muted">
-                                ${startDate} - ${endDate}
-                            </small>
-                        </p>
-                        ${education.description ? `<p class="card-text">${education.description}</p>` : ''}
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-primary edit-education" data-id="${education.id}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger delete-education" data-id="${education.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                    <div class="w-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">${education.degree || 'No Degree Specified'}</h5>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-education" 
+                                    data-id="${education.id}" title="Edit">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-education" 
+                                    data-id="${education.id}" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted me-2">
+                                        <i class="bi bi-building"></i> Institution:
+                                    </span>
+                                    <span>${education.institution || 'Not specified'}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted me-2">
+                                        <i class="bi bi-book"></i> Field of Study:
+                                    </span>
+                                    <span>${education.fieldOfStudy || 'Not specified'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted me-2">
+                                        <i class="bi bi-calendar-event"></i> Start Date:
+                                    </span>
+                                    <span>${startDate}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted me-2">
+                                        <i class="bi ${education.currentlyStudying ? 'bi-check-circle' : 'bi-calendar-check'}"></i>
+                                        ${education.currentlyStudying ? 'Currently Studying' : 'End Date'}:
+                                    </span>
+                                    <span>${endDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${education.description ? `
+                        <div class="mt-2">
+                            <div class="text-muted small mb-1">
+                                <i class="bi bi-card-text"></i> Description:
+                            </div>
+                            <div class="card-text bg-light p-2 rounded">
+                                ${education.description}
+                            </div>
+                        </div>` : ''}
                     </div>
                 </div>
             </div>
@@ -305,8 +352,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update modal title
                     document.getElementById('educationModalLabel').textContent = 'Edit Education';
                     
-                    // Show the edit modal
-                    showModal(educationModal);
+                    // Get the modal element and show it
+                    const educationModalElement = document.getElementById('educationModal');
+                    if (educationModalElement) {
+                        // Initialize modal if not already done
+                        if (!educationModal) {
+                            educationModal = new bootstrap.Modal(educationModalElement, {
+                                backdrop: true,
+                                keyboard: true,
+                                focus: true
+                            });
+                        }
+                        educationModal.show();
+                    } else {
+                        console.error('Education modal element not found');
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching education:', error);
@@ -380,16 +440,24 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 // Close the modal
                 const educationModalElement = document.getElementById('educationModal');
-                hideModal(educationModal, educationModalElement);
+                const modalInstance = bootstrap.Modal.getInstance(educationModalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
                 
-                // Reload education data
-                loadEducationData();
+                // Remove modal backdrop if it exists
+                const modalBackdrop = document.querySelector('.modal-backdrop');
+                if (modalBackdrop) {
+                    modalBackdrop.remove();
+                }
                 
-                // Show success message
-                showAlert(
-                    isEdit ? 'Education updated successfully!' : 'Education added successfully!',
-                    'success'
-                );
+                // Remove modal-open class from body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                
+                // Force a hard refresh of the page to ensure all data is up to date
+                window.location.reload(true);
             })
             .catch(error => {
                 console.error('Error saving education:', error);
@@ -429,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show no education message if no items left
                 const educationList = document.getElementById('educationList');
                 const noEducationMessage = document.getElementById('noEducationMessage');
-                if (educationList.children.length === 0) {
+                if (educationList && educationList.children.length === 0 && noEducationMessage) {
                     noEducationMessage.classList.remove('d-none');
                 }
             })
