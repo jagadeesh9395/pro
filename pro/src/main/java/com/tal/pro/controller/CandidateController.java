@@ -179,43 +179,64 @@ public class CandidateController {
         }
     }
 
-    @PostMapping("/profile/update")
-    public String updateProfile(@ModelAttribute("candidate") Candidate updatedCandidate,
-                                Principal principal,
-                                RedirectAttributes redirectAttributes) {
+    @PostMapping("/profile/update-personal")
+    public String updatePersonalInfo(@RequestParam("fullName") String fullName,
+                                   @RequestParam("email") String email,
+                                   @RequestParam("phoneNumber") String phoneNumber,
+                                   @RequestParam("location") String location,
+                                   @RequestParam("experience") String experience,
+                                   Principal principal,
+                                   RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
 
-            // Update candidate details
-            candidate.setFullName(updatedCandidate.getFullName());
-            candidate.setEmail(updatedCandidate.getEmail());
-            candidate.setPhoneNumber(updatedCandidate.getPhoneNumber());
-
-            // Handle skills - store as comma-separated string
-            if (updatedCandidate.getSkills() != null && !updatedCandidate.getSkills().trim().isEmpty()) {
-                // Clean up the skills string by removing extra spaces and empty entries
-                String cleanedSkills = Arrays.stream(updatedCandidate.getSkills().split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining(", "));
-                candidate.setSkills(cleanedSkills);
-            } else {
-                candidate.setSkills("");
-            }
-
-            candidate.setExperience(updatedCandidate.getExperience());
-            candidate.setLocation(updatedCandidate.getLocation());
+            // Update personal information
+            candidate.setFullName(fullName);
+            candidate.setEmail(email);
+            candidate.setPhoneNumber(phoneNumber);
+            candidate.setLocation(location);
+            candidate.setExperience(experience);
 
             candidateRepository.save(candidate);
 
-            redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+            redirectAttributes.addFlashAttribute("success", "Personal information updated successfully!");
             return "redirect:/candidate/profile";
         } catch (Exception e) {
             e.printStackTrace();
-            redirectAttributes.addAttribute("error", "Failed to update profile");
-            return "redirect:/candidate/profile";
+            redirectAttributes.addFlashAttribute("error", "Failed to update personal information: " + e.getMessage());
+            return "redirect:/candidate/profile#personal-info";
+        }
+    }
+
+    @PostMapping("/profile/update-skills")
+    public String updateSkills(@RequestParam("skills") String skills,
+                              Principal principal,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            String username = principal.getName();
+            Candidate candidate = candidateRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+            // Clean up the skills string by removing extra spaces and empty entries
+            String cleanedSkills = "";
+            if (skills != null && !skills.trim().isEmpty()) {
+                cleanedSkills = Arrays.stream(skills.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(", "));
+            }
+            
+            candidate.setSkills(cleanedSkills);
+            candidateRepository.save(candidate);
+
+            redirectAttributes.addFlashAttribute("success", "Skills updated successfully!");
+            return "redirect:/candidate/profile#skills";
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Failed to update skills: " + e.getMessage());
+            return "redirect:/candidate/profile#skills";
         }
     }
 

@@ -193,26 +193,28 @@
             <div class="col-lg-9">
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Profile Information</h5>
+                        <h5 class="mb-0">Personal Information</h5>
                         <button class="btn btn-sm btn-link text-primary" id="editProfileBtn">
                             <i class="bi bi-pencil"></i> Edit
                         </button>
                     </div>
                     <div class="card-body">
-                        <form id="profileForm" th:action="@{/candidate/profile/update}" method="post" th:object="${candidate}">
+                        <form id="profileForm" th:action="@{/candidate/profile/update-personal}" method="post">
+                            <input type="hidden" name="_method" value="put" th:if="${_csrf}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}" />
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Full Name</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input type="text" class="form-control" th:field="*{fullName}" readonly>
+                                        <input type="text" class="form-control" name="fullName" th:value="${candidate.fullName}" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Email</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                        <input type="email" class="form-control" th:field="*{email}" readonly>
+                                        <input type="email" class="form-control" name="email" th:value="${candidate.email}" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -222,44 +224,61 @@
                                     <label class="form-label">Phone Number</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                        <input type="tel" class="form-control" th:field="*{phoneNumber}" placeholder="Enter phone number" readonly>
+                                        <input type="tel" class="form-control" name="phoneNumber" th:value="${candidate.phoneNumber}" placeholder="Enter phone number" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Location</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                        <input type="text" class="form-control" th:field="*{location}" placeholder="Enter your location" readonly>
+                                        <input type="text" class="form-control" name="location" th:value="${candidate.location}" placeholder="Enter your location" readonly>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Skills</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
-                                    <input type="text" class="form-control" id="skills" name="skills" th:field="*{skills}"
-                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
-                                </div>
-                                <div class="form-text">List your technical and soft skills, separated by commas.</div>
-                                <div class="invalid-feedback">Please add your skills.</div>
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Experience (Years)</label>
-                                        <input type="number" class="form-control" th:field="*{experience}" name="experience" min="0" max="50" step="0.5" readonly>
+                                        <input type="number" class="form-control" name="experience" th:value="${candidate.experience}" min="0" max="50" step="0.5" readonly>
                                     </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <!-- Experience field takes full width on mobile -->
                                 </div>
                             </div>
                             
                             <div class="d-flex justify-content-end mt-4 d-none" id="formButtons">
                                 <button type="button" class="btn btn-outline-secondary me-2" id="cancelEdit">Cancel</button>
                                 <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Skills Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Skills</h5>
+                        <button type="button" class="btn btn-sm btn-link text-primary" id="editSkillsBtn">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="skillsForm" th:action="@{/candidate/profile/update-skills}" method="post">
+                            <input type="hidden" name="_method" value="put" th:if="${_csrf}" />
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}" />
+                            <input type="hidden" name="id" th:value="${candidate.id}" />
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
+                                    <input type="text" class="form-control" id="skills" name="skills" 
+                                           th:value="${candidate.skills}" 
+                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" 
+                                           required readonly>
+                                <div class="form-text">List your technical and soft skills, separated by commas.</div>
+                                <div class="invalid-feedback">Please add your skills.</div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-3 d-none" id="skillsFormButtons">
+                                <button type="button" class="btn btn-outline-secondary me-2" id="cancelSkillsEdit">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Skills</button>
                             </div>
                         </form>
                     </div>
@@ -518,142 +537,36 @@
     <script>
         // Enable/disable form fields for editing
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form elements
             const editBtn = document.getElementById('editProfileBtn');
             const cancelBtn = document.getElementById('cancelEdit');
             const form = document.getElementById('profileForm');
-            const inputs = form.querySelectorAll('input[readonly]');
+            let inputs = [];
+            if (form) {
+                // Get all input, select, and textarea elements that are read-only
+                inputs = Array.from(form.querySelectorAll('input:not([type="hidden"]), select, textarea'))
+                    .filter(input => input.readOnly);
+            }
             const formButtons = document.getElementById('formButtons');
             const uploadBtn = document.getElementById('uploadBtn');
             const resumeUpload = document.getElementById('resumeUpload');
-            const skillsInput = document.getElementById('skillsInput');
-            const skillsTags = document.getElementById('skillsTags');
             
-            // Global function to remove a skill
-            window.removeSkill = function(element) {
-                const skillToRemove = element.previousElementSibling.textContent.trim();
-                const skillInputs = document.querySelectorAll('#skillsContainer input[type="hidden"][name="skills"]');
-                
-                // Remove the skill input that matches the skill to remove
-                skillInputs.forEach(input => {
-                    if (input.value.trim() === skillToRemove) {
-                        input.remove();
-                    }
+            // Initialize skills elements
+            const editSkillsBtn = document.getElementById('editSkillsBtn');
+            const cancelSkillsEdit = document.getElementById('cancelSkillsEdit');
+            const skillsForm = document.getElementById('skillsForm');
+            const skillsInput = document.getElementById('skills');
+            const skillsFormButtons = document.getElementById('skillsFormButtons');
+            
+            // Store original form data for cancel functionality
+            let originalFormData = {};
+            if (form) {
+                form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
+                    originalFormData[input.name] = input.value;
                 });
-                
-                // Update the display
-                updateSkillsDisplay();
-                
-                // Remove the visual tag
-                element.parentElement.remove();
-            };
-
-            // Initialize skills tags if elements exist
-            if (skillsInput && skillsTags) {
-                // Initialize skills display
-                updateSkillsDisplay();
-                
-                // Handle skills input
-                skillsInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ',') {
-                        e.preventDefault();
-                        addNewSkill();
-                    }
-                });
-
-                // Handle blur event to add skill when input loses focus
-                skillsInput.addEventListener('blur', function() {
-                    if (this.value.trim() !== '') {
-                        addNewSkill();
-                    }
-                });
-                
-                function addNewSkill() {
-                    const skill = skillsInput.value.trim();
-                    if (skill === '') return;
-                    
-                    const skillsContainer = document.getElementById('skillsContainer');
-                    const skillsHiddenInput = document.getElementById('skills');
-                    
-                    if (skillsContainer && skillsHiddenInput) {
-                        let currentSkills = [];
-                        
-                        // Get existing skills from hidden inputs
-                        const skillInputs = skillsContainer.querySelectorAll('input[type="hidden"][name="skills"]');
-                        skillInputs.forEach(input => {
-                            if (input.value.trim() !== '') {
-                                currentSkills.push(input.value.trim());
-                            }
-                        });
-                        
-                        // Add new skill if not already present
-                        if (!currentSkills.includes(skill)) {
-                            // Create a new hidden input for the skill
-                            const newSkillInput = document.createElement('input');
-                            newSkillInput.type = 'hidden';
-                            newSkillInput.name = 'skills';
-                            newSkillInput.value = skill;
-                            skillsContainer.appendChild(newSkillInput);
-                            
-                            // Update the display
-                            updateSkillsDisplay();
-                        }
-                    }
-                    
-                    // Clear the input
-                    skillsInput.value = '';
-                }
-                
-                // Update skills display
-                function updateSkillsDisplay() {
-                    if (!skillsTags) return;
-                    
-                    // Clear existing tags
-                    skillsTags.innerHTML = '';
-                    
-                    // Get all skill inputs
-                    const skillInputs = document.querySelectorAll('#skillsContainer input[type="hidden"][name="skills"]');
-                    const skills = [];
-                    
-                    // Collect all non-empty skills
-                    skillInputs.forEach(input => {
-                        if (input.value.trim() !== '') {
-                            skills.push(input.value.trim());
-                        }
-                    });
-                    
-                    // Update the hidden input with comma-separated values (for backward compatibility)
-                    const skillsHiddenInput = document.getElementById('skills');
-                    if (skillsHiddenInput) {
-                        skillsHiddenInput.value = skills.join(',');
-                    }
-                    
-                    // Add skill tags
-                    skills.forEach(skill => {
-                        if (skill) {
-                            const tag = document.createElement('span');
-                            tag.className = 'badge bg-primary me-1 mb-1';
-                            tag.innerHTML = `
-                                ${skill}
-                                <i class="bi bi-x ms-1" style="cursor: pointer;" onclick="removeSkill(this)"></i>
-                            `;
-                            skillsTags.appendChild(tag);
-                        }
-                    });
-                }
-                
-                // Update the hidden input before form submission
-                if (form) {
-                    form.addEventListener('submit', function() {
-                        const skillsHiddenInput = document.getElementById('skills');
-                        if (skillsHiddenInput) {
-                            // Make sure the form field has the latest value
-                            document.querySelector('input[name="skills"]').value = skillsHiddenInput.value;
-                        }
-                    });
-                }
             }
             
-            // Toggle edit mode if elements exist
+            // Personal Information Edit Functionality
             if (editBtn) {
                 editBtn.addEventListener('click', function() {
                     if (inputs) {
@@ -670,6 +583,266 @@
                     if (formButtons) formButtons.classList.remove('d-none');
                     editBtn.classList.add('d-none');
                 });
+            }
+            
+            // Cancel Edit for Personal Information
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Restore original values
+                    if (form) {
+                        form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
+                            if (originalFormData[input.name] !== undefined) {
+                                input.value = originalFormData[input.name];
+                            }
+                            input.readOnly = true;
+                            input.classList.remove('editable');
+                        });
+                    }
+                    
+                    if (uploadBtn) uploadBtn.disabled = true;
+                    if (resumeUpload) resumeUpload.disabled = true;
+                    if (formButtons) formButtons.classList.add('d-none');
+                    if (editBtn) editBtn.classList.remove('d-none');
+                });
+            }
+            
+            // Handle form submission for personal information
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Make sure all fields are writable before submission
+                    inputs.forEach(input => {
+                        if (input) {
+                            input.readOnly = false;
+                        }
+                    });
+                    
+                    // Submit the form via AJAX
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (response.redirected) {
+                            window.location.href = response.url;
+                        } else {
+                            return response.text().then(text => {
+                                try {
+                                    return text ? JSON.parse(text) : {}
+                                } catch (e) {
+                                    console.error('Error parsing response:', e);
+                                    return {};
+                                }
+                            });
+                        }
+                    })
+                    .then(data => {
+                        // Show success message
+                        if (data && data.success) {
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        } else if (data && data.error) {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while saving. Please try again.');
+                    });
+                });
+            }
+            
+            // Skills Edit Functionality
+            if (editSkillsBtn && skillsInput) {
+                let originalSkills = skillsInput.value;
+                
+                // Initialize as read-only
+                skillsInput.readOnly = true;
+                
+                editSkillsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Store current value before editing
+                    originalSkills = skillsInput.value;
+                    
+                    // Make input editable
+                    skillsInput.readOnly = false;
+                    skillsInput.classList.add('editable');
+                    
+                    // Show form buttons and hide edit button
+                    if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
+                    editSkillsBtn.classList.add('d-none');
+                    
+                    // Focus the input
+                    setTimeout(() => {
+                        skillsInput.focus();
+                        skillsInput.select();
+                    }, 100);
+                });
+                
+                // Handle cancel button for skills
+                if (cancelSkillsEdit) {
+                    cancelSkillsEdit.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Restore original value
+                        skillsInput.value = originalSkills;
+                        skillsInput.readOnly = true;
+                        skillsInput.classList.remove('editable');
+                        
+                        // Hide form buttons and show edit button
+                        if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
+                        editSkillsBtn.classList.remove('d-none');
+                    });
+                }
+                
+                // Handle form submission for skills
+                if (skillsForm) {
+                    skillsForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        // Clean up skills input
+                        let skills = skillsInput.value
+                            .split(',')
+                            .map(skill => skill.trim())
+                            .filter(skill => skill.length > 0)
+                            .join(', ');
+                        
+                        // Update the input value with cleaned skills
+                        skillsInput.value = skills;
+                        
+                        // Make sure the field is not read-only when submitting
+                        skillsInput.readOnly = false;
+                        
+                        // Submit the form via AJAX
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: new FormData(this),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else {
+                                return response.json();
+                            }
+                        })
+                        .then(data => {
+                            if (data && data.success) {
+                                // Reload the page to show updated data
+                                window.location.reload();
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
+                }
+            }
+            
+            // Update the hidden input before form submission for the main profile form
+            if (form) {
+                form.addEventListener('submit', function() {
+                    // Make sure all form data is properly submitted
+                    const inputs = this.querySelectorAll('input, textarea, select');
+                    inputs.forEach(input => {
+                        if (input.readOnly) {
+                            input.readOnly = false;
+                        }
+                    });
+                });
+            }
+            
+            // Toggle edit mode for profile if elements exist
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    if (inputs) {
+                        inputs.forEach(input => {
+                            if (input) {
+                                input.readOnly = false;
+                                input.classList.add('editable');
+                            }
+                        });
+                    }
+                    
+                    if (uploadBtn) uploadBtn.disabled = false;
+                    if (resumeUpload) resumeUpload.disabled = false;
+                    if (formButtons) formButtons.classList.remove('d-none');
+                    editBtn.classList.add('d-none');
+                });
+            }
+            
+            // Skills edit functionality is already initialized above
+            
+            if (editSkillsBtn && skillsInput) {
+                // Store original skills value for cancel
+                let originalSkills = skillsInput.value;
+                
+                // Initialize the input as read-only
+                skillsInput.readOnly = true;
+                
+                editSkillsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Store current value before editing
+                    originalSkills = skillsInput.value;
+                    
+                    // Make input editable
+                    skillsInput.readOnly = false;
+                    skillsInput.classList.add('editable');
+                    
+                    // Show form buttons and hide edit button
+                    if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
+                    editSkillsBtn.classList.add('d-none');
+                    
+                    // Focus the input
+                    setTimeout(() => {
+                        skillsInput.focus();
+                        skillsInput.select();
+                    }, 100);
+                });
+                
+                // Handle cancel button
+                if (cancelSkillsEdit) {
+                    cancelSkillsEdit.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Restore original value
+                        skillsInput.value = originalSkills;
+                        skillsInput.readOnly = true;
+                        skillsInput.classList.remove('editable');
+                        
+                        // Hide form buttons and show edit button
+                        if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
+                        editSkillsBtn.classList.remove('d-none');
+                    });
+                }
+                
+                // Handle form submission
+                if (skillsForm) {
+                    skillsForm.addEventListener('submit', function(e) {
+                        // Clean up skills input
+                        let skills = skillsInput.value
+                            .split(',')
+                            .map(skill => skill.trim())
+                            .filter(skill => skill.length > 0)
+                            .join(', ');
+                        
+                        // Update the input value with cleaned skills
+                        skillsInput.value = skills;
+                        
+                        // Make sure the field is not read-only when submitting
+                        skillsInput.readOnly = false;
+                        
+                        // The form will submit normally after this
+                    });
+                }
             }
             
             // Cancel edit if elements exist
