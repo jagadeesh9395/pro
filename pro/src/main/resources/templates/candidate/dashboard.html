@@ -282,7 +282,7 @@
     <!-- Dashboard Content -->
     <div class="container-fluid py-4">
         <!-- Welcome Banner -->
-        <div class="welcome-banner">
+        <div class="welcome-banner mb-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h2>Welcome back, <span th:text="${fullName}">John</span>!</h2>
@@ -645,7 +645,9 @@
                             </div>
                             <h5>Good Profile!</h5>
                             <p class="text-muted small">Complete your profile to increase your chances of getting hired.</p>
-                            <button class="btn btn-sm btn-outline-primary">Complete Profile</button>
+                            <a href="/candidate/profile" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-person-plus me-1"></i>Complete Profile
+                            </a>
                         </div>
                     </div>
                 </div>
