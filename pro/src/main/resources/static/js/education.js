@@ -485,14 +485,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const deleteModalElement = document.getElementById('deleteEducationModal');
                 hideModal(deleteModal, deleteModalElement);
                 
+                // Show success message
+                showAlert('Education deleted successfully!', 'success');
+                
                 // Remove the education item from the UI
                 const educationItem = document.querySelector(`[data-id="${educationId}"]`);
                 if (educationItem) {
                     educationItem.remove();
                 }
-                
-                // Show success message
-                showAlert('Education deleted successfully!', 'success');
                 
                 // Show no education message if no items left
                 const educationList = document.getElementById('educationList');
