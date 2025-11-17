@@ -216,34 +216,67 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Create education item HTML with field labels
+    // Create education item HTML with field labels and matching experience card style
     function createEducationItem(education) {
         const formatDate = (dateString) => {
             if (!dateString) return 'Not specified';
             return new Date(dateString).toLocaleDateString('en-US', { 
                 year: 'numeric', 
-                month: 'long',
-                day: 'numeric'
+                month: 'long'
             });
         };
         
         const startDate = formatDate(education.startDate);
         const endDate = education.currentlyStudying ? 'Present' : formatDate(education.endDate);
+        const duration = `${startDate} - ${endDate}`;
+        
+        // Calculate duration in years and months
+        const getDuration = (start, end) => {
+            if (!start) return '';
+            const startDate = new Date(start);
+            const endDate = end === 'Present' ? new Date() : new Date(end);
+            
+            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+            months -= startDate.getMonth();
+            months += endDate.getMonth();
+            
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            
+            let duration = [];
+            if (years > 0) duration.push(`${years} ${years === 1 ? 'yr' : 'yrs'}`);
+            if (remainingMonths > 0) duration.push(`${remainingMonths} ${remainingMonths === 1 ? 'mo' : 'mos'}`);
+            
+            return duration.length > 0 ? `• ${duration.join(' ')}` : '';
+        };
+        
+        const durationText = getDuration(education.startDate, education.currentlyStudying ? 'Present' : education.endDate);
         
         const educationItem = document.createElement('div');
-        educationItem.className = 'card mb-3';
+        educationItem.className = 'card education-card mb-4 border-0 shadow-sm';
         educationItem.setAttribute('data-id', education.id);
         
         educationItem.innerHTML = `
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="w-100">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">${education.degree || 'No Degree Specified'}</h5>
+                        <!-- Header with Degree and Institution -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="mb-1 fw-bold">${education.degree || 'No Degree Specified'}</h4>
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <span class="text-primary fw-medium me-3">
+                                        <i class="bi bi-building me-1"></i>${education.institution || 'Not specified'}
+                                    </span>
+                                    <span class="text-muted small">
+                                        <i class="bi bi-calendar3 me-1"></i>${duration} ${durationText}
+                                    </span>
+                                </div>
+                            </div>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-outline-primary edit-education" 
                                     data-id="${education.id}" title="Edit">
-                                    <i class="bi bi-pencil"></i> Edit
+                                    <i class="bi bi-pencil"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger delete-education" 
                                     data-id="${education.id}" title="Delete">
@@ -252,57 +285,63 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         
-                        <div class="row g-2 mb-2">
+                        <!-- Education Details -->
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted me-2">
-                                        <i class="bi bi-building"></i> Institution:
+                                <div class="d-flex align-items-center text-muted">
+                                    <span class="bg-light rounded-circle p-2 me-2">
+                                        <i class="bi bi-book text-primary"></i>
                                     </span>
-                                    <span>${education.institution || 'Not specified'}</span>
+                                    <div>
+                                        <div class="small text-muted">Field of Study</div>
+                                        <div class="fw-medium">${education.fieldOfStudy || 'Not specified'}</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted me-2">
-                                        <i class="bi bi-book"></i> Field of Study:
+                                <div class="d-flex align-items-center text-muted">
+                                    <span class="bg-light rounded-circle p-2 me-2">
+                                        <i class="bi ${education.currentlyStudying ? 'bi-check-circle' : 'bi-calendar-check'} text-primary"></i>
                                     </span>
-                                    <span>${education.fieldOfStudy || 'Not specified'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted me-2">
-                                        <i class="bi bi-calendar-event"></i> Start Date:
-                                    </span>
-                                    <span>${startDate}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted me-2">
-                                        <i class="bi ${education.currentlyStudying ? 'bi-check-circle' : 'bi-calendar-check'}"></i>
-                                        ${education.currentlyStudying ? 'Currently Studying' : 'End Date'}:
-                                    </span>
-                                    <span>${endDate}</span>
+                                    <div>
+                                        <div class="small text-muted">${education.currentlyStudying ? 'Currently Studying' : 'Completion Status'}</div>
+                                        <div class="fw-medium">${education.currentlyStudying ? 'In Progress' : 'Completed'}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- Description -->
                         ${education.description ? `
-                        <div class="mt-2">
-                            <div class="text-muted small mb-1">
-                                <i class="bi bi-card-text"></i> Description:
-                            </div>
-                            <div class="card-text bg-light p-2 rounded">
-                                ${education.description}
+                        <div class="bg-light p-3 rounded-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-card-text text-primary me-2"></i>Description
+                            </h6>
+                            <div class="ms-3">
+                                <p class="mb-0">${education.description.replace(/\n/g, '<br>')}</p>
                             </div>
                         </div>` : ''}
                     </div>
                 </div>
             </div>
+            
+            <style>
+                .education-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    border-left: 4px solid #6f42c1 !important;
+                }
+                .education-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+                }
+                .education-card .btn-group .btn {
+                    opacity: 0.7;
+                    transition: opacity 0.2s ease;
+                }
+                .education-card:hover .btn-group .btn {
+                    opacity: 1;
+                }
+            </style>
         `;
         
         return educationItem;
