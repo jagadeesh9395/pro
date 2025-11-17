@@ -98,7 +98,10 @@ public class WebSecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Allow access to job application endpoints for any authenticated user
                 .requestMatchers("/jobs/*/apply").authenticated()
-                .requestMatchers("/api/education/**").authenticated()
+                .requestMatchers(
+                    "/api/education/**",
+                    "/api/experience/**"
+                ).authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
