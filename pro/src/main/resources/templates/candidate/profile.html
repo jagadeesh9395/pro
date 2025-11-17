@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>My Profile - Candidate Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -252,6 +255,102 @@
                     </div>
                 </div>
                 
+                <!-- Education Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Education</h5>
+                        <button type="button" class="btn btn-sm btn-primary" id="addEducationBtn" data-bs-toggle="modal" data-bs-target="#educationModal">
+                            <i class="bi bi-plus-lg"></i> Add Education
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="educationList">
+                            <!-- Education items will be loaded here dynamically -->
+                            <div class="text-center text-muted py-4" id="noEducationMessage">
+                                <i class="bi bi-mortarboard" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">No education added yet. Click 'Add Education' to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add/Edit Education Modal -->
+                <div class="modal fade" id="educationModal" tabindex="-1" aria-labelledby="educationModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="educationModalLabel">Add Education</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="educationForm">
+                                    <input type="hidden" id="educationId">
+                                    <div class="mb-3">
+                                        <label for="institution" class="form-label">Institution</label>
+                                        <input type="text" class="form-control" id="institution" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="degree" class="form-label">Degree</label>
+                                        <input type="text" class="form-control" id="degree" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="fieldOfStudy" class="form-label">Field of Study</label>
+                                        <input type="text" class="form-control" id="fieldOfStudy" required>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="startDate" class="form-label">Start Date</label>
+                                            <input type="month" class="form-control" id="startDate" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="endDate" class="form-label">End Date</label>
+                                            <div class="input-group">
+                                                <input type="month" class="form-control" id="endDate">
+                                                <div class="input-group-text">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="currentlyStudying">
+                                                        <label class="form-check-label" for="currentlyStudying">
+                                                            Currently Studying
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" rows="3"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="saveEducationBtn">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteEducationModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Deletion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to delete this education entry? This action cannot be undone.
+                                <input type="hidden" id="deleteEducationId">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteEducation">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Change Password Card -->
                 <div class="card" id="change-password">
                     <div class="card-header">
@@ -485,5 +584,11 @@
             }
         });
     </script>
+    
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Education Script -->
+    <script th:src="@{/js/education.js}"></script>
 </body>
 </html>
