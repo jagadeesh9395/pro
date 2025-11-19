@@ -118,7 +118,44 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container py-5">
+    <div class="container py-3">
+        <!-- Page Header with Back Button -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <a href="/candidate/dashboard" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+                <h4 class="mb-0">My Profile</h4>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <a href="#" class="text-dark">
+                        <i class="bi bi-bell fs-5"></i>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="profile-img me-2 d-inline-block"
+                         th:with="nameParts=${candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
+                                 firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
+                                 lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
+                                 initials=${#strings.toUpperCase(
+                                     #strings.length(firstName) > 0 ? 
+                                         (#strings.length(lastName) > 0 ? 
+                                             #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) : 
+                                             #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
+                                         ) : 'US'
+                                 )}"
+                         th:text="${initials}">
+                        US
+                    </div>
+                    <div class="d-inline-block">
+                        <div class="fw-medium" th:text="${candidate.fullName}">John Doe</div>
+                        <small class="text-muted">Candidate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Success/Error Messages -->
         <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>
@@ -127,10 +164,10 @@
         </div>
         <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${param.error[0]}">Failed to update profile.</span>
+            <span th:text="${param.error[0]}">An error occurred while updating your profile.</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        
+
         <div class="row">
             <!-- Left Sidebar -->
             <div class="col-lg-3">
@@ -352,16 +389,14 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="endDate" class="form-label">End Date</label>
-                                            <div class="input-group">
-                                                <input type="month" class="form-control" id="endDate">
-                                                <div class="input-group-text">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" role="switch" id="currentlyStudying">
-                                                        <label class="form-check-label ms-2" for="currentlyStudying">
-                                                            Currently Studying
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                            <input type="month" class="form-control" id="endDate">
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="currentlyStudying">
+                                                <label class="form-check-label" for="currentlyStudying">
+                                                    Currently Studying
+                                                </label>
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -424,16 +459,14 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="endDateExp" class="form-label">End Date</label>
-                                            <div class="input-group">
-                                                <input type="month" class="form-control" id="endDateExp">
-                                                <div class="input-group-text">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" role="switch" id="currentlyWorking">
-                                                        <label class="form-check-label ms-2" for="currentlyWorking">
-                                                            Currently Working
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                            <input type="month" class="form-control" id="endDateExp">
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="currentlyWorking">
+                                                <label class="form-check-label" for="currentlyWorking">
+                                                    Currently Working
+                                                </label>
                                             </div>
                                         </div>
                                         <div class="col-12">

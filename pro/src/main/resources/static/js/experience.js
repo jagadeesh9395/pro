@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 company: document.getElementById('company').value.trim(),
                 position: document.getElementById('position').value.trim(),
                 employmentType: document.getElementById('employmentType').value,
-                location: document.getElementById('location').value.trim(),
+                location: document.getElementById('expLocation').value.trim(),
                 startDate: formatDateForApi(document.getElementById('startDateExp').value),
                 endDate: currentlyWorking ? null : formatDateForApi(document.getElementById('endDateExp').value),
                 currentlyWorking: currentlyWorking,
@@ -535,11 +535,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     // Handle delete confirmation
     const confirmDeleteBtn = document.getElementById('confirmDeleteExperience');
     if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
+        confirmDeleteBtn.addEventListener('click', async function() {
             const expId = document.getElementById('deleteExperienceId').value;
             
             if (!expId) {
@@ -552,19 +552,20 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmDeleteBtn.disabled = true;
             confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...';
             
-            fetch(`/api/experience/${expId}`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            })
-            .then(response => {
+            try {
+                const response = await fetch(`/api/experience/${expId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                
                 if (!response.ok) {
-                    throw new Error('Failed to delete experience');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Failed to delete work experience');
                 }
-                return response.json();
-            })
-            .then(() => {
+                
                 // Remove the experience item from the DOM
-                const expItem = document.getElementById(`exp-${expId}`);
+                // Find the experience card by its data-id attribute
+                const expItem = document.querySelector(`.experience-card[data-id="${expId}"]`);
                 if (expItem) {
                     expItem.remove();
                 }
@@ -581,28 +582,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 hideModal(deleteModal, deleteModalElement);
                 // Show success message
                 showAlert('Work experience deleted successfully!', 'success');
-            })
-            .catch(error => {
+                
+            } catch (error) {
                 console.error('Error deleting experience:', error);
-                showAlert('Failed to delete work experience. Please try again.', 'danger');
-            })
-            .finally(() => {
+                showAlert(error.message || 'Failed to delete work experience. Please try again.', 'danger');
+            } finally {
                 // Reset button state
                 confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.innerHTML = deleteBtnText;
-            });
-        });
-    }
-    
-    // Handle modal hidden event to reset form
-    if (experienceModalElement) {
-        experienceModalElement.addEventListener('hidden.bs.modal', function () {
-            const form = document.getElementById('experienceForm');
-            if (form) {
-                form.reset();
-                document.getElementById('experienceId').value = '';
-                document.getElementById('currentlyWorking').checked = false;
-                document.getElementById('endDateExp').disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
             }
         });
     }

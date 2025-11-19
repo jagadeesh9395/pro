@@ -84,19 +84,39 @@ public class WorkExperienceController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteWorkExperience(@PathVariable String id,
                                                 Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
         try {
+            // Validate ID format
+            if (id == null || id.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Work experience ID is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
             String username = authentication.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
             
+            // First check if the experience exists
+            if (!workExperienceRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "Work experience not found with ID: " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+            // Then check if it belongs to the current user
             WorkExperience experience = workExperienceRepository.findByIdAndCandidateId(id, candidate.getId())
-                    .orElseThrow(() -> new RuntimeException("Work experience not found"));
+                    .orElseThrow(() -> new RuntimeException("You don't have permission to delete this work experience"));
             
             workExperienceRepository.delete(experience);
-            return ResponseEntity.ok().body("Work experience deleted successfully!");
+            
+            response.put("success", true);
+            response.put("message", "Work experience deleted successfully!");
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to delete work experience: " + e.getMessage());
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
     
