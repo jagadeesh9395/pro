@@ -48,6 +48,9 @@ public class Job {
     @Field
     @NotNull
     private LocalDateTime postedAt = LocalDateTime.now();
+    
+    @Field
+    private LocalDateTime lastModifiedAt = LocalDateTime.now();
 
     private boolean active = true;
 

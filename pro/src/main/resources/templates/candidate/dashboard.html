@@ -392,25 +392,37 @@
                     <div class="card-footer bg-white" th:if="${totalPages > 1}">
                         <nav aria-label="Job listings pagination">
                             <ul class="pagination justify-content-center mb-0">
-                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
                                     <a class="page-link"
-                                       th:with="queryParam=${param.query != null ? '&query=' + param.query[0] : ''}, locationParam=${param.location != null ? '&location=' + param.location[0] : ''}"
-                                       th:href="@{'/candidate/dashboard?page=' + (currentPage - 1) + '&size=' + pageSize + queryParam + locationParam}"
+                                       th:if="${currentPage > 0}"
+                                       th:with="prevPage=${currentPage - 1},
+                                               queryStr=${param.query != null ? '&query=' + param.query[0] : ''}, 
+                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
+                                       th:href="@{${'/candidate/dashboard?page=' + prevPage + '&size=' + pageSize + queryStr + locationStr}}"
                                        aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
+                                    <span class="page-link disabled" th:unless="${currentPage > 0}" aria-hidden="true">&laquo;</span>
                                 </li>
                                 <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                                    th:classappend="${currentPage == i} ? 'active'"
-                                    class="page-item">
-                                    <a class="page-link" th:href="@{/candidate/dashboard?(page=${i}&size=${pageSize})}"
+                                    th:class="${'page-item' + (currentPage == i ? ' active' : '')}">
+                                    <a class="page-link" 
+                                       th:with="queryStr=${param.query != null ? 'query=' + param.query[0] : ''},
+                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
+                                       th:href="@{${'/candidate/dashboard?page=' + i + '&size=' + pageSize + (queryStr != '' ? '&' + queryStr : '') + locationStr}}"
                                        th:text="${i + 1}"></a>
                                 </li>
-                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                                    <a class="page-link" th:href="@{/candidate/dashboard?(page=${currentPage + 1}&size=${pageSize})}"
+                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
+                                    <a class="page-link" 
+                                       th:if="${currentPage < totalPages - 1}"
+                                       th:with="nextPage=${currentPage + 1},
+                                               queryStr=${param.query != null ? '&query=' + param.query[0] : ''}, 
+                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
+                                       th:href="@{${'/candidate/dashboard?page=' + nextPage + '&size=' + pageSize + queryStr + locationStr}}"
                                        aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
+                                    <span class="page-link disabled" th:unless="${currentPage < totalPages - 1}" aria-hidden="true">&raquo;</span>
                                 </li>
                             </ul>
                         </nav>

@@ -4,6 +4,7 @@ import com.tal.pro.dto.JobDto;
 import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
 import com.tal.pro.model.Recruiter;
+import com.tal.pro.repository.RecruiterRepository;
 import com.tal.pro.service.JobService;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,6 +23,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -29,12 +32,16 @@ public class JobController {
 
     private final JobService jobService;
     private final JobApplicationService jobApplicationService;
+    private final RecruiterRepository recruiterRepository;
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(JobController.class);
 
     @Autowired
-    public JobController(JobService jobService, JobApplicationService jobApplicationService) {
+    public JobController(JobService jobService, 
+                       JobApplicationService jobApplicationService,
+                       RecruiterRepository recruiterRepository) {
         this.jobService = jobService;
         this.jobApplicationService = jobApplicationService;
+        this.recruiterRepository = recruiterRepository;
     }
     
     @GetMapping("/{jobId}/applications")
@@ -130,15 +137,63 @@ public class JobController {
     }
 
     @PutMapping("/{id}")
-    public String updateJob(
+    @ResponseBody
+    public ResponseEntity<?> updateJob(
             @PathVariable String id,
-            @Valid @ModelAttribute("job") JobDto jobDto,
+            @Valid @RequestBody JobDto jobDto,
             BindingResult result,
-            @AuthenticationPrincipal Recruiter recruiter,
-            RedirectAttributes redirectAttributes) {
+            @AuthenticationPrincipal Object principal) {
+        
+        System.out.println("Received update request for job: " + id);
+        System.out.println("Principal class: " + (principal != null ? principal.getClass().getName() : "null"));
+        
+        if (principal == null) {
+            System.out.println("No authentication found. User not logged in.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                    "success", false,
+                    "message", "You must be logged in to perform this action"
+                ));
+        }
+        
+        // Get the authenticated user's email from UserDetails
+        String userEmail;
+        if (principal instanceof UserDetails) {
+            userEmail = ((UserDetails) principal).getUsername();
+            System.out.println("Authenticated user email: " + userEmail);
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                    "success", false,
+                    "message", "Invalid user session"
+                ));
+        }
+        
+        // Find the recruiter by email
+        Optional<Recruiter> recruiterOpt = recruiterRepository.findByUsername(userEmail);
+        if (recruiterOpt.isEmpty()) {
+            System.out.println("No recruiter found with email: " + userEmail);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                    "success", false,
+                    "message", "You must be logged in as a recruiter to update a job"
+                ));
+        }
+        Recruiter recruiter = recruiterOpt.get();
+        
+        System.out.println("Authenticated as recruiter: " + recruiter.getEmail());
 
         if (result.hasErrors()) {
-            return "recruiter/post-job";
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Validation error",
+                "errors", result.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        (existing, replacement) -> existing + ", " + replacement
+                    ))
+            ));
         }
 
         try {
@@ -158,20 +213,27 @@ public class JobController {
             
             // Proceed with the update
             Job updatedJob = jobService.updateJob(id, jobDto, recruiter);
-            redirectAttributes.addFlashAttribute("successMessage", "Job updated successfully!");
-            redirectAttributes.addFlashAttribute("job", updatedJob);
-            redirectAttributes.addFlashAttribute("isEditMode", true);
-            return "redirect:/recruiter/jobs/success";
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Job updated successfully!",
+                "redirectUrl", "/recruiter/jobs/success"
+            ));
             
         } catch (SecurityException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/access-denied";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/recruiter/dashboard";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error updating job: " + e.getMessage());
-            return "redirect:/recruiter/jobs/" + id + "/edit";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Error updating job: " + e.getMessage()
+            ));
         }
     }
 

@@ -604,7 +604,11 @@
             // Handle mobile view adjustments
             function handleMobileView() {
                 const sidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
+                
+                // Only proceed if sidebar exists
+                if (!sidebar) {
+                    return;
+                }
                 
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('sidebar-visible');
@@ -613,9 +617,15 @@
                 }
             }
             
-            // Run on load and on resize
-            handleMobileView();
-            window.addEventListener('resize', handleMobileView);
+            // Run on load and on resize with debounce
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(handleMobileView, 250);
+            });
+            
+            // Initial check
+            document.addEventListener('DOMContentLoaded', handleMobileView);
         });
     </script>
 </body>

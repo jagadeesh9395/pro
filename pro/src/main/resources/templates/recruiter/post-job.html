@@ -198,12 +198,12 @@
                                   th:action="@{/recruiter/jobs/post}" 
                                   th:data-edit-mode="${isEditMode}"
                                   th:object="${job}" 
-                                  onsubmit="handleFormSubmit(event); return false;" 
+                                  onsubmit="return handleFormSubmit(event);" 
                                   novalidate>
                                 <!-- CSRF Token -->
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                 <!-- Job ID for edit mode -->
-                                <input type="hidden" th:if="${isEditMode}" th:field="*{id}" name="id" />
+                                <input type="hidden" th:if="${isEditMode}" th:field="*{id}" name="id" id="jobId" />
                                 <div class="mb-4">
                                     <label for="jobTitle" class="form-label">Job Title *</label>
                                     <div class="input-group">
@@ -655,12 +655,23 @@
         function handleFormSubmit(event) {
             event.preventDefault();
             
+            // Prevent multiple submissions
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) {
+                return false; // Prevent multiple submissions
+            }
+            
             const form = event.target;
+            const isEditMode = form.getAttribute('data-edit-mode') === 'true';
+            const jobId = document.getElementById('jobId')?.value;
             const formData = new FormData(form);
             const jobData = {};
             
-            // Convert FormData to object
+            // Convert FormData to object and handle special fields
             formData.forEach((value, key) => {
+                // Skip empty values
+                if (value === '') return;
+                
                 // Handle salary fields - convert from LPA to paise
                 if ((key === 'minSalary' || key === 'maxSalary') && value) {
                     jobData[key] = Math.round(parseFloat(value) * 100000); // Convert LPA to paise
@@ -669,45 +680,87 @@
                 }
             });
             
-            // Get the form's action URL and method
-            const url = form.getAttribute('action');
-            const method = form.getAttribute('method') || 'POST';
+            // Add CSRF token to the request body if not already present
+            if (!jobData._csrf) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                if (csrfToken) {
+                    jobData._csrf = csrfToken;
+                }
+            }
             
-            // Show loading state
-            const submitBtn = form.querySelector('button[type="submit"]');
+            // Set the appropriate URL and method based on whether we're creating or updating
+            let url, method;
+            if (isEditMode && jobId) {
+                url = `/recruiter/jobs/${jobId}`;
+                method = 'PUT';
+            } else {
+                url = '/recruiter/jobs/post';
+                method = 'POST';
+            }
+            
+            // Get CSRF token from the page's meta tags
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+            
+            // Prepare headers with proper content type and CSRF token
+            const headers = new Headers();
+            headers.append('Content-Type', 'application/json');
+            headers.append('Accept', 'application/json');
+            headers.append('X-Requested-With', 'XMLHttpRequest');
+            
+            // Add CSRF token to headers
+            if (csrfToken && csrfHeader) {
+                headers.append(csrfHeader, csrfToken);
+            } else {
+                console.warn('CSRF token not found in meta tags');
+            }
+            
+            // Log the headers for debugging
+            console.log('Request headers:', Object.fromEntries(headers.entries()));
+            
+            // Disable the submit button to prevent multiple submissions
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             
-            // Get CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            // Log the request data for debugging
+            console.log('Sending request to:', url);
+            console.log('Request method:', method);
+            console.log('Request payload:', jobData);
             
-            // Prepare headers
-            const headers = {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            };
-            
-            // Add CSRF token if available
-            if (csrfToken && csrfHeader) {
-                headers[csrfHeader] = csrfToken;
-            }
-            
-            // Submit the form data
+            // Submit the form data with credentials
             fetch(url, {
                 method: method,
                 headers: headers,
                 body: JSON.stringify(jobData),
-                credentials: 'same-origin'  // Important for including cookies/session
+                credentials: 'include'  // Include cookies, even for cross-origin requests
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'An error occurred');
-                    });
+            .then(async response => {
+                console.log('Response status:', response.status, response.statusText);
+                const contentType = response.headers.get('content-type');
+                
+                try {
+                    const responseData = await response.text();
+                    console.log('Raw response:', responseData);
+                    
+                    if (!response.ok) {
+                        try {
+                            // Try to parse as JSON first
+                            const errorData = JSON.parse(responseData);
+                            throw new Error(errorData.message || 'An error occurred');
+                        } catch (e) {
+                            // If not JSON, handle as HTML/plain text
+                            console.error('Error parsing error response:', e);
+                            throw new Error(`Server returned status ${response.status}: ${response.statusText}`);
+                        }
+                    }
+                    
+                    // If we get here, the response is OK
+                    return JSON.parse(responseData);
+                } catch (error) {
+                    console.error('Error processing response:', error);
+                    throw error;
                 }
-                return response.json();
             })
             .then(data => {
                 if (data.redirectUrl) {
