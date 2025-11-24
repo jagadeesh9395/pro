@@ -92,6 +92,17 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     public List<JobApplication> getApplicationsByJobId(String jobId) {
         return jobApplicationRepository.findByJobId(jobId);
     }
+    
+    @Override
+    public Optional<JobApplication> findByCandidateId(String candidateId) {
+        // Try to find by candidate ID or email
+        List<JobApplication> applications = jobApplicationRepository.findByCandidateIdOrEmail(candidateId);
+        if (!applications.isEmpty()) {
+            // Return the most recent application
+            return Optional.of(applications.get(0));
+        }
+        return Optional.empty();
+    }
 
     @Override
     public boolean hasCandidateApplied(String jobId, String candidateId) {

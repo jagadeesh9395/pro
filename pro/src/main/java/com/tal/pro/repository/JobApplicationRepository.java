@@ -31,6 +31,9 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
     @Query("{ 'candidate.$id': { $oid: ?0 } }")
     List<JobApplication> findByCandidateIdOrderByAppliedAtDesc(String candidateId);
     
+    @Query("{ $or: [ { 'candidate.$id': { $oid: ?0 } }, { 'email': ?0 } ] }")
+    List<JobApplication> findByCandidateIdOrEmail(String identifier);
+
     @Query(value = "{ 'candidate.$id': { $oid: ?0 } }", fields = "{ 'statusHistory': 0 }")
     List<JobApplication> findBasicInfoByCandidateId(String candidateId);
 

@@ -22,6 +22,13 @@ public interface JobApplicationService {
     Optional<JobApplication> getApplicationById(String applicationId);
 
     List<JobApplication> getApplicationsByCandidateId(String candidateId);
+    
+    /**
+     * Find an application by candidate ID
+     * @param candidateId The ID of the candidate
+     * @return Optional containing the application if found
+     */
+    Optional<JobApplication> findByCandidateId(String candidateId);
 
     List<JobApplication> getApplicationsByJobId(String jobId);
 

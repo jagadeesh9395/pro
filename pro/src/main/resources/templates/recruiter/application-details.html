@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Details - TalentTrove</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --primary-light: #e3f2fd;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-light: #6c757d;
+            --border-color: #e9ecef;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+        }
+        
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.35em 0.65em;
+            border-radius: 0.25rem;
+        }
+        
+        .status-APPLIED { background-color: #e2e3e5; color: #383d41; }
+        .status-UNDER_REVIEW { background-color: #d1ecf1; color: #0c5460; }
+        .status-SHORTLISTED { background-color: #c3e6cb; color: #155724; }
+        .status-INTERVIEW_SCHEDULED { background-color: #b8daff; color: #004085; }
+        .status-OFFER_EXTENDED { background-color: #d4edda; color: #155724; }
+        .status-HIRED { background-color: #28a745; color: white; }
+        .status-REJECTED { background-color: #f8d7da; color: #721c24; }
+        .status-WITHDRAWN { background-color: #e2e3e5; color: #383d41; }
+        
+        .info-card {
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0.25rem;
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.5rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid white;
+            z-index: 1;
+        }
+        
+        .btn-action {
+            min-width: 120px;
+            margin: 0.25rem;
+        }
+        
+        .application-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
+    <div class="container">
+        <a class="navbar-brand" href="/recruiter/dashboard">TalentTrove</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/recruiter/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/recruiter/jobs">Jobs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/recruiter/applications">Applications</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                    <span class="text-light me-3">
+                        <i class="bi bi-building me-1"></i>
+                        <span th:text="${currentUser?.company ?: 'Company'}"></span>
+                    </span>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span th:text="${currentUser?.fullName ?: 'User'}"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/recruiter/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Application Header -->
+<header class="application-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1" th:text="${application.candidate?.fullName}">Candidate Name</h4>
+                <p class="text-muted mb-2" th:text="${application.job?.jobTitle}">Job Title</p>
+                <span class="status-badge"
+                      th:classappend="'status-' + ${application.status?.name()}"
+                      th:text="${#strings.replace(#strings.toUpperCase(application.status?.name()), '_', ' ')}">
+                        STATUS
+                    </span>
+                <small class="text-muted ms-2">
+                    Applied on <span th:if="${appliedAt != null}" th:text="${#temporals.format(appliedAt, 'MMM d, yyyy')}">date</span>
+                    <span th:if="${appliedAt == null and application.appliedAt != null}" th:text="${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">date</span>
+                    <span th:if="${appliedAt == null and application.appliedAt == null}">N/A</span>
+                </small>
+            </div>
+            <div class="d-flex">
+                <a th:href="'/recruiter/jobs/' + ${application.job?.id}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-briefcase me-1"></i> View Job
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown">
+                        <i class="bi bi-pencil-square me-1"></i> Update Status
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li th:each="status : ${T(com.tal.pro.model.JobApplication.ApplicationStatus).values()}">
+                            <a class="dropdown-item"
+                               th:href="@{'/recruiter/applications/' + application.id + '/status?status=' + status}"
+                               th:text="${#strings.replace(#strings.capitalizeWords(#strings.toLowerCase(status.name())), '_', ' ')}">
+                                Status
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="row">
+        <!-- Main Content Column (8 columns) - Pushed to the right -->
+        <div class="col-lg-8 order-2 order-lg-1">
+            <!-- Candidate Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Candidate Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <h6>Contact Information</h6>
+
+                            <!-- Full Name -->
+                            <div class="mb-2">
+                                <strong>Name:</strong>
+                                <span th:if="${fullName != null and !fullName.isEmpty()}"
+                                      th:text="${fullName}" class="ms-2">
+                                    </span>
+                                <span th:if="${(fullName == null or fullName.isEmpty()) and candidateFullName != null}"
+                                      th:text="${candidateFullName}" class="ms-2">
+                                    </span>
+                                <span th:if="${(fullName == null or fullName.isEmpty()) and (candidateFullName == null or candidateFullName.isEmpty())}"
+                                      class="text-muted ms-2">Not provided</span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-2">
+                                <strong>Email:</strong>
+                                <span th:if="${email != null and !email.isEmpty()}"
+                                      th:text="${email}" class="ms-2">
+                                    </span>
+                                <span th:if="${(email == null or email.isEmpty()) and candidateEmail != null}"
+                                      th:text="${candidateEmail}" class="ms-2">
+                                    </span>
+                                <span th:if="${(email == null or email.isEmpty()) and (candidateEmail == null or candidateEmail.isEmpty())}"
+                                      class="text-muted ms-2">Not provided</span>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="mb-2">
+                                <strong>Phone:</strong>
+                                <span th:if="${phone != null and !phone.isEmpty()}"
+                                      th:text="${phone}" class="ms-2">
+                                    </span>
+                                <span th:if="${(phone == null or phone.isEmpty()) and candidatePhone != null}"
+                                      th:text="${candidatePhone}" class="ms-2">
+                                    </span>
+                                <span th:if="${(phone == null or phone.isEmpty()) and (candidatePhone == null or candidatePhone.isEmpty())}"
+                                      class="text-muted ms-2">Not provided</span>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="mb-2">
+                                <strong>Location:</strong>
+                                <span th:if="${candidateLocation != null and !candidateLocation.isEmpty()}"
+                                      th:text="${candidateLocation}" class="ms-2">Location</span>
+                                <span th:if="${candidateLocation == null or candidateLocation.isEmpty()}"
+                                      class="text-muted ms-2">Not provided</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Resume</h6>
+                            <div class="mb-3"
+                                 th:with="resumePath=${application.resumePath != null ? application.resumePath : (application.candidate?.resume?.fileUrl != null ? application.candidate.resume.fileUrl : null)}">
+                                <h6 class="mt-3">Resume</h6>
+                                <a th:if="${resumePath != null}"
+                                   th:href="${'/api/resumes/' + resumePath}"
+                                   target="_blank"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-download me-1"></i> Download Resume
+                                </a>
+                                <a th:if="${(resumePath == null or resumePath.isEmpty()) and resumeUrl != null}"
+                                   th:href="${resumeUrl}"
+                                   target="_blank"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-download me-1"></i> Download Resume
+                                </a>
+                                <p th:if="${(resumePath == null or resumePath.isEmpty()) and (resumeUrl == null or resumeUrl.isEmpty())}"
+                                   class="text-muted">No resume available</p>
+
+                                <h6 class="mt-3">Cover Letter</h6>
+                                <div class="mb-3">
+                                    <div th:if="${coverLetter != null and !coverLetter.isEmpty()}" class="p-3 bg-light rounded">
+                                        <p class="mb-0" th:text="${coverLetter}"></p>
+                                    </div>
+                                    <p th:if="${coverLetter == null or coverLetter.isEmpty()}"
+                                       class="text-muted">No cover letter provided</p>
+                                </div>
+
+                                <h6 class="mt-3">Skills</h6>
+                                <div th:if="${candidateSkills != null and !candidateSkills.isEmpty()}">
+                                    <div class="d-flex flex-wrap">
+                                        <span th:each="skill : ${#strings.arraySplit(candidateSkills, ',')}"
+                                              th:if="${skill != null and !skill.trim().isEmpty()}"
+                                              th:text="${#strings.trim(skill)}"
+                                              class="badge bg-primary text-white me-2 mb-2">
+                                        </span>
+                                    </div>
+                                </div>
+                                <p th:if="${candidateSkills == null or candidateSkills.isEmpty()}" class="text-muted">No skills listed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Application Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item" th:each="history : ${application.statusHistory}">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1" th:text="${#strings.replace(#strings.capitalizeWords(#strings.toLowerCase(history.status.name())), '_', ' ')}">
+                                        Status
+                                    </h6>
+                                    <small class="text-muted" th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
+                                        Date
+                                    </small>
+                                </div>
+                                <p class="mb-1" th:if="${history.notes}" th:text="${history.notes}">Notes about this status change</p>
+                                <small class="text-muted" th:if="${history.changedBy}" th:text="'Updated by ' + history.changedBy">
+                                    Updated by
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Note -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Add Note</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{'/recruiter/applications/' + application.id + '/notes'}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <div class="mb-3">
+                                <label for="note" class="form-label">Internal Note</label>
+                                <textarea class="form-control" id="note" name="note" rows="3" required></textarea>
+                                <div class="form-text">This note will be visible to other recruiters in your company.</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i> Save Note
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right Sidebar Column (4 columns) - Pulled to the left -->
+        <div class="col-lg-4 order-1 order-lg-2 mb-4">
+            <!-- Job Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Job Details</h5>
+                    <a th:if="${job != null}" th:href="'/recruiter/jobs/' + ${job.id}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-square me-1"></i>Edit Job
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div th:if="${jobError != null}" class="alert alert-warning" th:text="${jobError}">
+                        Error loading job details
+                    </div>
+
+                    <div th:if="${job != null}">
+                        <!-- Job Title and Basic Info -->
+                        <h5 class="card-title text-primary mb-3" th:text="${job.jobTitle}">Job Title</h5>
+
+                        <!-- Company and Location -->
+                        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <span th:text="${companyName}">Company Name</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-geo-alt text-muted me-2"></i>
+                                <span th:text="${jobLocation}">Location</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-briefcase text-muted me-2"></i>
+                                <span th:text="${jobType}">Job Type</span>
+                            </div>
+                        </div>
+
+                        <!-- Salary Information -->
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <h6 class="mb-2">Salary Range</h6>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cash-stack text-muted me-2"></i>
+                                <span th:if="${minSalary != null and maxSalary != null}">
+                                        $<span th:text="${#numbers.formatDecimal(minSalary, 1, 'COMMA', 0, 'POINT')}">0</span> - 
+                                        $<span th:text="${#numbers.formatDecimal(maxSalary, 1, 'COMMA', 0, 'POINT')}">0</span> per year
+                                    </span>
+                                <span th:unless="${minSalary != null and maxSalary != null}" class="text-muted">
+                                        Salary not specified
+                                    </span>
+                            </div>
+                        </div>
+
+                        <!-- Job Details -->
+                        <div class="row g-3 mb-3">
+                            <!-- Posted Date -->
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar-check text-muted me-2"></i>
+                                    <div>
+                                        <div class="small text-muted">Posted</div>
+                                        <div th:text="${postedAt}">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Last Updated -->
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-arrow-clockwise text-muted me-2"></i>
+                                    <div>
+                                        <div class="small text-muted">Last Updated</div>
+                                        <div th:text="${lastModifiedAt}">N/A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-tags me-1"></i> Required Skills & Experience
+                            </h6>
+                            <div th:if="${skills != null and skills != 'Not specified'}">
+                                    <span th:each="skill : ${#strings.arraySplit(skills, ',')}"
+                                          class="badge bg-light text-dark me-1 mb-1">
+                                        <span th:text="${#strings.trim(skill)}">Skill</span>
+                                    </span>
+                            </div>
+                            <p th:if="${skills == null or skills == 'Not specified'}" class="text-muted">
+                                No specific skills mentioned
+                            </p>
+
+                            <div th:if="${experience != null and experience != 'Not specified'}" class="mt-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-workspace text-muted me-2"></i>
+                                    <span th:text="${experience}">Experience</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Job Description -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-card-text me-1"></i> Job Description
+                            </h6>
+                            <div class="p-3 bg-light rounded" style="max-height: 200px; overflow-y: auto;">
+                                <div th:if="${jobDescription != null and jobDescription != ''}"
+                                     th:utext="${#strings.escapeXml(jobDescription).replace('\n', '&lt;br&gt;')}">
+                                    Job description goes here...
+                                </div>
+                                <p th:if="${jobDescription == null or jobDescription == ''}" class="text-muted">
+                                    No job description provided.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Requirements -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-list-check me-1"></i> Requirements
+                            </h6>
+                            <div class="p-3 bg-light rounded">
+                                <div th:if="${requirements != null and requirements != ''}"
+                                     th:utext="${#strings.escapeXml(requirements).replace('\n', '&lt;br&gt;')}">
+                                    Job requirements go here...
+                                </div>
+                                <p th:if="${requirements == null or requirements == ''}" class="text-muted">
+                                    No specific requirements listed.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${job == null}" class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No job information available for this application.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary text-start" data-bs-toggle="modal" data-bs-target="#scheduleInterviewModal">
+                            <i class="bi bi-calendar-plus me-2"></i> Schedule Interview
+                        </button>
+                        <button class="btn btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#shortlistModal">
+                            <i class="bi bi-check-circle me-2"></i> Shortlist Candidate
+                        </button>
+                        <button class="btn btn-outline-warning text-start" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="bi bi-x-circle me-2"></i> Reject Application
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Internal Notes -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Internal Notes</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${application.notes != null and !application.notes.isEmpty()}">
+                        <div th:each="note : ${application.notes}" class="mb-3 pb-3 border-bottom" th:if="${note != null}">
+                            <div class="d-flex justify-content-between mb-1">
+                                <strong th:text="${note.addedBy ?: 'System'}">Recruiter Name</strong>
+                                <small class="text-muted"
+                                       th:if="${note.addedAt != null}"
+                                       th:text="${#temporals.format(note.addedAt, 'MMM d, yyyy')}">
+                                    Date
+                                </small>
+                                <small class="text-muted" th:unless="${note.addedAt != null}">
+                                    Date not available
+                                </small>
+                            </div>
+                            <p class="mb-0" th:if="${note.content != null and !note.content.trim().isEmpty()}"
+                               th:text="${note.content}">
+                                Note content goes here...
+                            </p>
+                            <p class="text-muted mb-0" th:unless="${note.content != null and !note.content.trim().isEmpty()}">
+                                No content
+                            </p>
+                        </div>
+                    </div>
+                    <p th:if="${application.notes == null or application.notes.isEmpty()}" class="text-muted">
+                        No internal notes yet.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Interview Modal -->
+<div class="modal fade" id="scheduleInterviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule Interview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{'/recruiter/applications/' + application.id + '/schedule-interview'}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Interview Date & Time</label>
+                        <input type="datetime-local" class="form-control" name="interviewDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Interview Type</label>
+                        <select class="form-select" name="interviewType" required>
+                            <option value="PHONE">Phone Interview</option>
+                            <option value="VIDEO">Video Call</option>
+                            <option value="ONSITE">On-site Interview</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Location or Meeting Link</label>
+                        <input type="text" class="form-control" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Instructions</label>
+                        <textarea class="form-control" name="instructions" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Schedule Interview</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Shortlist Modal -->
+<div class="modal fade" id="shortlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Shortlist Candidate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{'/recruiter/applications/' + application.id + '/status'}" method="post">
+                <input type="hidden" name="status" value="SHORTLISTED">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <p>Are you sure you want to shortlist this candidate?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Add a note (optional)</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Yes, Shortlist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{'/recruiter/applications/' + application.id + '/status'}" method="post">
+                <input type="hidden" name="status" value="REJECTED">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <p>Are you sure you want to reject this application?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for rejection (optional)</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Auto-resize textareas
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+    });
+</script>
+</body>
+</html>

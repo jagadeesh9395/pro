@@ -10,15 +10,15 @@ import java.util.Optional;
 
 public interface ResumeService {
     Resume uploadAndConvertResume(MultipartFile file, String username) throws IOException;
-    
+
     Resume updateResume(String id, MultipartFile file, String username) throws IOException;
-    
+
     Optional<Resume> getResumeById(String id);
-    
+
     String getResumeHtmlContent(String id, boolean maskSensitiveInfo);
 
     List<Resume> searchResumes(ResumeSearchCriteria criteria);
-    
+
     void deleteResume(String id);
 
     default boolean hasAnyCriteria(ResumeSearchCriteria criteria) {
@@ -28,10 +28,4 @@ public interface ResumeService {
         );
     }
 
-//    default String formatFileSize(long bytes) {
-//        if (bytes < 1024) return bytes + " B";
-//        int exp = (int) (Math.log(bytes) / Math.log(1024));
-//        String pre = "KMGTPE".charAt(exp-1) + "";
-//        return String.format("%.1f %sB", bytes / Math.pow(1024, exp), pre);
-//    }
 }
