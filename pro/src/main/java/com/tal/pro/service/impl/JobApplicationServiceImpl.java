@@ -170,6 +170,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     public boolean hasApplied(Candidate candidate, Job job) {
         return jobApplicationRepository.existsByJobIdAndCandidateId(job.getId(), candidate.getId());
     }
+    
+    @Override
+    public Optional<JobApplication> findByCandidateAndJob(Candidate candidate, Job job) {
+        return jobApplicationRepository.findByJobIdAndCandidateId(job.getId(), candidate.getId());
+    }
 
     @Override
     @Transactional
@@ -340,5 +345,10 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 .stream()
                 .limit(10) // or whatever limit you need
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    public Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId) {
+        return jobApplicationRepository.findByJobIdAndCandidateId(jobId, candidateId);
     }
 }

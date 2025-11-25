@@ -16,6 +16,14 @@ public interface JobApplicationService {
     JobApplication submitApplication(String jobId, Candidate candidate, JobApplication application);
 
     boolean hasApplied(Candidate candidate, Job job);
+    
+    /**
+     * Find an application by candidate and job
+     * @param candidate The candidate
+     * @param job The job
+     * @return Optional containing the application if found
+     */
+    Optional<JobApplication> findByCandidateAndJob(Candidate candidate, Job job);
 
     boolean hasCandidateApplied(String jobId, String candidateId);
 
@@ -120,5 +128,13 @@ public interface JobApplicationService {
     JobApplication withdrawApplication(String applicationId, String username);
 
     List<JobApplication> findRecentApplications();
+    
+    /**
+     * Find an application by job ID and candidate ID
+     * @param jobId The ID of the job
+     * @param candidateId The ID of the candidate
+     * @return Optional containing the application if found
+     */
+    Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId);
 
 }

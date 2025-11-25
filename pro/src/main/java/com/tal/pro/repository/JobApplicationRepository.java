@@ -43,6 +43,9 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
     @Query(value = "{ 'job.$id': { $oid: ?0 }, 'candidate.$id': { $oid: ?1 } }", exists = true)
     boolean existsByJobAndCandidate(String jobId, String candidateId);
     
+    @Query("{ 'job.$id': { $oid: ?0 }, 'candidate.$id': { $oid: ?1 } }")
+    Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId);
+    
     @Query("{ 'job.postedBy.$id': { $oid: ?0 } }")
     List<JobApplication> findByJob_PostedById(String recruiterId);
     

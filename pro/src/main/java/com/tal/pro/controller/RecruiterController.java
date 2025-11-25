@@ -18,10 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -224,6 +221,14 @@ public class RecruiterController {
                 candidateId = application.getCandidateId();
             }
             
+            // Add status history if available
+            if (application.getStatusHistory() != null && !application.getStatusHistory().isEmpty()) {
+                // Sort status history by date (newest first)
+                List<ApplicationStatusHistory> sortedHistory = new ArrayList<>(application.getStatusHistory());
+                sortedHistory.sort((h1, h2) -> h2.getChangedAt().compareTo(h1.getChangedAt()));
+                model.addAttribute("statusHistory", sortedHistory);
+            }
+            
             if (candidateId != null) {
                 try {
                     // Fetch the complete candidate details
@@ -276,6 +281,7 @@ public class RecruiterController {
             modelMap.put("resumePath", application.getResumePath());
             modelMap.put("coverLetter", application.getCoverLetter());
             modelMap.put("appliedAt", application.getAppliedAt());
+            modelMap.put("status", application.getStatus());
             
             // Add candidate info if available
             if (application.getCandidate() != null) {

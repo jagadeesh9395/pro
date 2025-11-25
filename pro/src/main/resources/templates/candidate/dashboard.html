@@ -488,13 +488,12 @@
                                         </td>
                                         <td>
                                             <div class="d-flex gap-2">
-                                                <!-- View Application Details (Non-functional) -->
-                                                <a href="#" 
+                                                <!-- View Application Details -->
+                                                <a th:href="@{/jobs/applications/__${app.id}__}" 
                                                    class="btn btn-sm btn-outline-primary"
                                                    title="View Application Details"
                                                    data-bs-toggle="tooltip"
-                                                   data-bs-placement="top"
-                                                   onclick="return false;">
+                                                   data-bs-placement="top">
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
                                                 
@@ -555,7 +554,7 @@
                             
                             <!-- View All Applications Link -->
                             <div class="text-end mt-3" th:if="${not #lists.isEmpty(recentApplications)}">
-                                <a href="/candidate/applications" class="btn btn-link text-decoration-none">
+                                <a th:href="@{/candidate/applications}" class="btn btn-link text-decoration-none">
                                     View All Applications <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>

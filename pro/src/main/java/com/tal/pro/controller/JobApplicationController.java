@@ -1,5 +1,6 @@
 package com.tal.pro.controller;
 
+import com.tal.pro.dto.ApplicationDetailsDto;
 import com.tal.pro.dto.JobApplicationDto;
 import com.tal.pro.exception.ResourceNotFoundException;
 import com.tal.pro.model.*;
@@ -154,13 +155,32 @@ public class JobApplicationController {
                 }
             }
 
+            // Get application status and notes if user has applied
+            String applicationStatus = "";
+            String applicationNotes = "";
+            
+            if (hasApplied[0] && isCandidate) {
+                Optional<JobApplication> applicationOpt = jobApplicationService.findByCandidateAndJob(
+                    candidateRepository.findByUsername(((UserDetails) principal).getUsername()).get(),
+                    job
+                );
+                
+                if (applicationOpt.isPresent()) {
+                    JobApplication application = applicationOpt.get();
+                    applicationStatus = application.getStatus() != null ? application.getStatus().name() : "";
+                    applicationNotes = application.getNotes() != null ? application.getNotes() : "";
+                }
+            }
+            
             model.addAllAttributes(Map.of(
                 "isAuthenticated", isAuthenticated,
                 "isCandidate", isCandidate,
                 "isRecruiter", isRecruiter,
-                "hasApplied", hasApplied[0],  // Get the boolean value from the array
+                "hasApplied", hasApplied[0],
                 "dashboardType", dashboardType,
-                "job", job
+                "job", job,
+                "applicationStatus", applicationStatus,
+                "applicationNotes", applicationNotes
             ));
 
             return "candidate/job-details";
@@ -193,14 +213,23 @@ public class JobApplicationController {
             return "redirect:/jobs?error=not_found";
         }
         
-        // Check if the current user has applied for this job
+        // Check if the current user has applied for this job and get application status
         boolean hasApplied = false;
+        String applicationStatus = null;
+        
         if (candidate != null && candidate.getId() != null) {
             hasApplied = jobApplicationService.hasCandidateApplied(jobId, candidate.getId());
+            if (hasApplied) {
+                // Get the application status if the candidate has applied
+                applicationStatus = jobApplicationService.findByJobIdAndCandidateId(jobId, candidate.getId())
+                    .map(app -> app.getStatus().name())
+                    .orElse(null);
+            }
         }
         
         model.addAttribute("job", jobOpt.get());
         model.addAttribute("hasApplied", hasApplied);
+        model.addAttribute("applicationStatus", applicationStatus);
         model.addAttribute("isAuthenticated", candidate != null);
         
         return "candidate/job-details";
@@ -606,7 +635,11 @@ public class JobApplicationController {
                 application.setResumePath(candidate.getResumeUrl());
             }
 
+            // Create and populate DTO
+            ApplicationDetailsDto appDetails = ApplicationDetailsDto.fromJobApplication(application);
+            
             // Add attributes to the model
+            model.addAttribute("appDetails", appDetails);
             model.addAttribute("application", application);
             model.addAttribute("job", job);
             model.addAttribute("candidate", candidate);

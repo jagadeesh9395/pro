@@ -25,61 +25,73 @@
         
         .status-badge {
             font-size: 0.9rem;
-            padding: 0.4em 0.8em;
-            border-radius: 50rem;
-            font-weight: 500;
+            padding: 0.35em 0.65em;
+            border-radius: 0.25rem;
         }
         
-        .status-applied {
-            background-color: #e7f1ff;
-            color: #0d6efd;
-        }
+        .status-APPLIED { background-color: #e2e3e5; color: #383d41; }
+        .status-UNDER_REVIEW { background-color: #d1ecf1; color: #0c5460; }
+        .status-SHORTLISTED { background-color: #c3e6cb; color: #155724; }
+        .status-INTERVIEW_SCHEDULED { background-color: #b8daff; color: #004085; }
+        .status-OFFER_EXTENDED { background-color: #d4edda; color: #155724; }
+        .status-HIRED { background-color: #28a745; color: white; }
+        .status-REJECTED { background-color: #f8d7da; color: #721c24; }
+        .status-WITHDRAWN { background-color: #e2e3e5; color: #383d41; }
         
-        .status-shortlisted {
-            background-color: #e6f7ee;
-            color: #198754;
-        }
-        
-        .status-interview {
-            background-color: #fff3cd;
-            color: #664d03;
-        }
-        
-        .status-hired {
-            background-color: #d1e7dd;
-            color: #0a3622;
-        }
-        
-        .status-rejected, .status-withdrawn {
-            background-color: #f8d7da;
-            color: #58151c;
+        .info-card {
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0.25rem;
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
         }
         
         .timeline {
             position: relative;
             padding-left: 2rem;
-            border-left: 2px solid var(--border-color);
-            margin-left: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
         }
         
         .timeline-item {
             position: relative;
             padding-bottom: 1.5rem;
-        }
-        
-        .timeline-item:last-child {
-            padding-bottom: 0;
+            padding-left: 1.5rem;
         }
         
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -2.5rem;
+            left: -0.5rem;
             top: 0.25rem;
             width: 1rem;
             height: 1rem;
             border-radius: 50%;
-            background-color: var(--primary-color);
+            background: var(--primary-color);
+            border: 2px solid white;
+            z-index: 1;
+        }
+        
+        .btn-action {
+            min-width: 120px;
+            margin: 0.25rem;
+        }
+        
+        .application-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
         }
     </style>
 </head>
@@ -144,326 +156,152 @@
         </div>
     </nav>
 
-    <div class="container my-5">
-        
-        <div class="row mb-4">
-            <div class="col-12">
-                <a href="/candidate/dashboard" class="text-decoration-none d-inline-flex align-items-center mb-3">
-                    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
-                </a>
-                <h2>Application Details</h2>
+    <!-- Application Header -->
+    <header class="application-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1" th:text="${job?.jobTitle ?: 'Job Title'}">Job Title</h4>
+                    <p class="text-muted mb-2" th:if="${job?.companyName}">
+                        <i class="bi bi-building me-1"></i>
+                        <span th:text="${job.companyName}"></span>
+                    </p>
+                    <span class="status-badge"
+                          th:classappend="'status-' + ${appDetails.status}"
+                          th:text="${appDetails.statusDisplayName}">
+                        STATUS
+                    </span>
+                    <small class="text-muted ms-2">
+                        Applied on <span th:text="${appDetails.appliedDate}">date</span>
+                    </small>
+                </div>
             </div>
         </div>
-
+    </header>
+    
+    <div class="container py-4">
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-md-8">
+                <!-- Application Status -->
                 <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Application Status</h5>
+                    </div>
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div class="flex-grow-1 me-4">
-                                <h3 class="mb-2" th:text="${job?.jobTitle ?: 'Job Title'}">Job Title</h3>
-                                <div class="d-flex flex-wrap align-items-center gap-3">
-                                    <div class="d-flex flex-column">
-                                        <p class="text-muted mb-1" th:if="${job?.companyName}">
-                                            <i class="bi bi-building me-1"></i>
-                                            <span th:text="${job.companyName}"></span>
-                                            <span th:if="${job?.location}" th:text="' • ' + ${job.location}" class="ms-1"></span>
-                                        </p>
-                                        <p class="text-muted mb-1" th:if="${job?.jobType}">
-                                            <i class="bi bi-briefcase me-1"></i>
-                                            <span th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}"></span>
-                                        </p>
-                                        <p class="text-muted mb-0" th:if="${job?.experience}">
-                                            <i class="bi bi-graph-up me-1"></i>
-                                            <span th:text="'Experience: ' + ${job.experience}"></span>
-                                        </p>
-                                    </div>
-                                </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Current Status:</strong> 
+                                    <span class="badge" 
+                                          th:classappend="'status-' + ${appDetails.status}"
+                                          th:text="${appDetails.statusDisplayName}">
+                                        Status
+                                    </span>
+                                </p>
+                                <p class="mb-2"><strong>Application ID:</strong> 
+                                    <span th:text="${appDetails.applicationId}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Applied On:</strong> 
+                                    <span th:text="${appDetails.appliedDate}">-</span>
+                                </p>
                             </div>
-                            <div class="d-flex flex-column align-items-end" style="min-width: 180px;">
-                                <div class="mb-2 p-2 bg-light rounded text-end">
-                                    <p class="mb-1">
-                                        <strong>Applied On:</strong> 
-                                        <span class="text-primary fw-medium" th:text="${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
-                                            Date
-                                        </span>
-                                    </p>
-                                    <th:block th:with="status=${application?.status != null ? application.status : T(com.tal.pro.model.JobApplication.ApplicationStatus).APPLIED}">
-                                        <span class="badge p-2" 
-                                              th:classappend="'status-' + ${status.name().toLowerCase().replace('_', '-')}"
-                                              th:text="${status.displayName}">
-                                            Status
-                                        </span>
-                                    </th:block>
-                                </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Last Updated:</strong> 
+                                    <span th:text="${appDetails.lastUpdated}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Notice Period:</strong> 
+                                    <span th:text="${appDetails.noticePeriod}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Expected Salary:</strong> 
+                                    <span th:text="${appDetails.expectedSalary}">-</span>
+                                </p>
                             </div>
                         </div>
-
-                        <div class="mb-4">
-                            <h5>Application Information</h5>
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <p class="mb-2"><strong>Application ID:</strong> 
-                                                <span class="text-muted" th:text="${application.id}">ID</span>
-                                            </p>
-                                            <p class="mb-2"><strong>Job ID:</strong> 
-                                                <a th:href="@{/candidate/jobs/{id}(id=${job.id})}" th:text="${job.id}">Job ID</a>
-                                            </p>
-                                            <p class="mb-2" th:if="${application.updatedAt}">
-                                                <strong>Last Updated:</strong> 
-                                                <span class="text-muted" th:text="${#temporals.format(application.updatedAt, 'MMM d, yyyy hh:mm a')}">Date</span>
-                                            </p>
-                                            <p class="mb-2" th:if="${application.updatedBy}">
-                                                <strong>Updated By:</strong> 
-                                                <span class="text-muted" th:text="${application.updatedBy}">System</span>
-                                            </p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p class="mb-2">
-                                                <strong>Job Type:</strong>
-                                                <span class="text-muted" th:if="${job?.jobType}" 
-                                                      th:text="${T(com.tal.pro.model.Job.JobType).valueOf(job.jobType).name().replace('_', ' ')}">
-                                                    Job Type
-                                                </span>
-                                                <span class="text-muted" th:unless="${job?.jobType}">Not specified</span>
-                                            </p>
-                                            <p class="mb-2" th:if="${job?.experience}">
-                                                <strong>Experience Required:</strong>
-                                                <span class="text-muted" th:text="${job.experience}">Experience</span>
-                                            </p>
-                                            <p class="mb-2" th:if="${job?.location}">
-                                                <strong>Location:</strong>
-                                                <span class="text-muted" th:text="${job.location}">Location</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+                
+                <!-- Job Details -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Job Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Job Title:</strong> 
+                                    <span th:text="${appDetails.job.jobTitle}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Company:</strong> 
+                                    <span th:text="${appDetails.job.companyName}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Location:</strong> 
+                                    <span th:text="${appDetails.job.location}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Job Type:</strong> 
+                                    <span th:text="${appDetails.job.jobType}">-</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Experience:</strong> 
+                                    <span th:text="${appDetails.job.experience}">-</span>
+                                </p>
+                                <p class="mb-2"><strong>Salary Range:</strong> 
+                                    <span th:if="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
+                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.job.minSalary/100000, 1, 1, 'COMMA')}"></span> - ₹<span th:text="${#numbers.formatDecimal(appDetails.job.maxSalary/100000, 1, 1, 'COMMA')}"></span> LPA
+                                    </span>
+                                    <span th:unless="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
+                                        Not specified
+                                    </span>
+                                </p>
+                                <p class="mb-2"><strong>Posted On:</strong> 
+                                    <span th:if="${appDetails.job.postedAt != null}" th:text="${#temporals.format(appDetails.job.postedAt, 'MMM d, yyyy')}">-</span>
+                                    <span th:unless="${appDetails.job.postedAt != null}">-</span>
+                                </p>
                             </div>
                         </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <h5>Your Application</h5>
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <!-- Personal Information -->
-                                    <div class="mb-4">
-                                        <h6>Personal Information</h6>
-                                        <div class="card bg-light">
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <p class="mb-2">
-                                                            <strong>Full Name:</strong>
-                                                            <span class="text-muted" th:with="fullName=${application.fullName != null && !application.fullName.isEmpty() ? application.fullName : (candidate.fullName != null ? candidate.fullName : 'Not provided')}"
-                                                                  th:text="${fullName}">Full Name</span>
-                                                        </p>
-                                                        <p class="mb-2">
-                                                            <strong>Email:</strong>
-                                                            <span class="text-muted" th:with="email=${application.email != null && !application.email.isEmpty() ? application.email : (candidate.email != null ? candidate.email : 'Not provided')}"
-                                                                  th:text="${email}">email@example.com</span>
-                                                        </p>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <p class="mb-2">
-                                                            <strong>Phone:</strong>
-                                                            <span class="text-muted" th:with="phone=${application.phone != null && !application.phone.isEmpty() ? application.phone : (candidate.phoneNumber != null ? candidate.phoneNumber : 'Not provided')}"
-                                                                  th:text="${phone}">Phone</span>
-                                                        </p>
-                                                        <p class="mb-2">
-                                                            <strong>Current Company:</strong>
-                                                            <span class="text-muted" th:with="company=${application.currentCompany != null && !#strings.isEmpty(application.currentCompany) ? application.currentCompany : (candidate.currentCompany != null ? candidate.currentCompany : 'Not specified')}"
-                                                                  th:text="${company}">Company</span>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Application Details -->
-                                    <div class="mb-4">
-                                        <h6>Application Details</h6>
-                                        <div class="card bg-light">
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <!-- Debug Info (remove in production) -->
-                                                        <div class="alert alert-info d-none">
-                                                            <p>Application ID: <span th:text="${application.id}"></span></p>
-                                                            <p>Status: <span th:text="${application.status}"></span></p>
-                                                            <p>Notice Period: <span th:text="${application.noticePeriod}"></span></p>
-                                                            <p>Expected Salary: <span th:text="${application.expectedSalary}"></span></p>
-                                                        </div>
-                                                        
-                                                        <!-- Application Status -->
-                                                        <p class="mb-2">
-                                                            <strong>Current Status:</strong>
-                                                            <span class="badge" 
-                                                                  th:classappend="${application.status != null ? 'status-' + #strings.toLowerCase(application.status.name()) : 'status-unknown'}"
-                                                                  th:text="${application.status?.displayName ?: 'Unknown'}">
-                                                                Status
-                                                            </span>
-                                                        </p>
-                                                        
-                                                        <!-- Application ID -->
-                                                        <p class="mb-2">
-                                                            <strong>Application ID:</strong>
-                                                            <span class="text-muted" th:text="${application.id}">ID</span>
-                                                        </p>
-                                                        
-                                                        <!-- Applied On -->
-                                                        <p class="mb-2">
-                                                            <strong>Applied On:</strong>
-                                                            <span class="text-muted">
-                                                                <span th:if="${application.appliedAt != null}" 
-                                                                      th:text="${#temporals.format(application.appliedAt, 'MMM d, yyyy hh:mm a')}">
-                                                                </span>
-                                                                <span th:if="${application.appliedAt == null}">
-                                                                    Not available
-                                                                </span>
-                                                            </span>
-                                                        </p>
-                                                        
-                                                        <!-- Notice Period -->
-                                                        <p class="mb-2">
-                                                            <strong>Notice Period:</strong>
-                                                            <span class="text-muted" th:text="${application.noticePeriod != null ? application.noticePeriod + ' days' : 'Not specified'}">
-                                                                Not specified
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                    
-                                                    <div class="col-md-6">
-                                                        <!-- Last Updated -->
-                                                        <p class="mb-2">
-                                                            <strong>Last Updated:</strong>
-                                                            <span class="text-muted">
-                                                                <span th:if="${application.updatedAt != null}" 
-                                                                      th:text="${#temporals.format(application.updatedAt, 'MMM d, yyyy hh:mm a')}">
-                                                                </span>
-                                                                <span th:if="${application.updatedAt == null}">
-                                                                    Not available
-                                                                </span>
-                                                            </span>
-                                                        </p>
-                                                        
-                                                        <!-- Updated By -->
-                                                        <p class="mb-2" th:if="${application.updatedBy != null}">
-                                                            <strong>Updated By:</strong>
-                                                            <span class="text-muted" th:text="${application.updatedBy}">
-                                                                System
-                                                            </span>
-                                                        </p>
-                                                        
-                                                        <!-- Expected Salary -->
-                                                        <p class="mb-2">
-                                                            <strong>Expected Salary:</strong>
-                                                            <span class="text-muted">
-                                                                <span th:if="${application.expectedSalary != null}" th:remove="tag">
-                                                                    $<span th:text="${#numbers.formatDecimal(application.expectedSalary, 1, 'COMMA', 2, 'POINT')}"></span>
-                                                                    <span th:if="${application.expectedSalaryType != null}" 
-                                                                          th:text="' ' + ${application.expectedSalaryType}">
-                                                                    </span>
-                                                                </span>
-                                                                <span th:if="${application.expectedSalary == null}" th:remove="tag">
-                                                                    Not specified
-                                                                </span>
-                                                            </span>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Resume Section - Temporarily Hidden -->
-                                    <div class="alert alert-info">
-                                        <i class="bi bi-info-circle me-2"></i>
-                                        Resume management is currently unavailable. Please check back later.
-                                    </div>
-
-                                    <!-- Cover Letter Section -->
-                                    <div class="mb-4">
-                                        <h6>Cover Letter</h6>
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <div th:if="${application.coverLetter != null && !application.coverLetter.isEmpty()}">
-                                                    <div style="white-space: pre-line;" th:utext="${#strings.escapeXml(application.coverLetter)}"></div>
-                                                </div>
-                                                <div th:if="${application.coverLetter == null || application.coverLetter.isEmpty()}" 
-                                                     class="text-muted">
-                                                    No cover letter provided with this application.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Additional Information -->
-                                    <div th:if="${application.additionalInfo != null && !application.additionalInfo.isEmpty()}" class="mb-4">
-                                        <h6>Additional Information</h6>
-                                        <div class="border rounded p-3 bg-white">
-                                            <p class="mb-0" style="white-space: pre-line;" th:text="${application.additionalInfo}"></p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="mt-3">
+                            <h6>Job Description:</h6>
+                            <div th:if="${appDetails.job.description}" th:utext="${appDetails.job.description}" class="job-description">
+                                [Job description content]
+                            </div>
+                            <div th:unless="${appDetails.job.description}" class="text-muted">
+                                No job description available.
                             </div>
                         </div>
-
-                            <h5>Job Description</h5>
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6>Job Description</h6>
-                                    <div th:if="${job.description}" th:utext="${job.description}">
-                                        Job description content...
-                                    </div>
-                                    <div th:unless="${job.description}" class="text-muted">
-                                        No job description available.
-                                    </div>
-                                    
-                                    <div th:if="${job.requirements}" class="mt-3">
-                                        <h6>Requirements</h6>
-                                        <div th:utext="${job.requirements}"></div>
-                                    </div>
-                                    
-                                    <div th:if="${job.skills}" class="mt-3">
-                                        <h6>Skills</h6>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            <span th:each="skill : ${#strings.arraySplit(job.skills, ',')}" 
-                                                  class="badge bg-primary">
-                                                <span th:text="${#strings.trim(skill)}">Skill</span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mt-3">
-                                        <h6>Salary Range</h6>
-                                        <div th:if="${job.minSalary != null and job.maxSalary != null}" 
-                                             th:text="'₹' + ${#numbers.formatDecimal(job.minSalary, 0, 'POINT', 0, 'COMMA')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary, 0, 'POINT', 0, 'COMMA')}">
-                                            Salary range
-                                        </div>
-                                        <div th:if="${job.minSalary != null and job.maxSalary == null}" 
-                                             th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary, 0, 'POINT', 0, 'COMMA')}">
-                                            Minimum salary
-                                        </div>
-                                        <div th:if="${job.minSalary == null and job.maxSalary != null}" 
-                                             th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary, 0, 'POINT', 0, 'COMMA')}">
-                                            Maximum salary
-                                        </div>
-                                        <div th:if="${job.minSalary == null and job.maxSalary == null}" class="text-muted">
-                                            Not specified
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="mt-3" th:if="${appDetails.job.skills}">
+                            <h6>Skills Required:</h6>
+                            <div th:each="skill : ${#strings.arraySplit(appDetails.job.skills, ',')}" class="d-inline-block me-2 mb-2">
+                                <span class="badge bg-light text-dark">
+                                    <span th:text="${#strings.trim(skill)}">Skill</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Status History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div th:each="history : ${statusHistory}" class="timeline-item">
+                                <h6 class="mb-1">
+                                    <span th:text="${history.status}"></span>
+                                    <small class="text-muted ms-2" th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}"></small>
+                                </h6>
+                                <p class="mb-1 text-muted" th:if="${history.notes}" th:text="${history.notes}"></p>
+                                <small class="text-muted" th:if="${history.changedBy}" th:text="'Updated by: ' + ${history.changedBy}"></small>
+                            </div>
+                            <div th:if="${#lists.isEmpty(statusHistory)}" class="text-muted">
+                                No status history available.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-4">
+            
+            <div class="col-md-4">
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5>Application Status</h5>
@@ -489,7 +327,6 @@
                             </div>
                             
                             <!-- Application Status Timeline -->
-                            <!-- Status Timeline -->
                             <div th:with="statusName=${application.status?.name()}">
                                 <!-- Applied Status -->
                                 <div class="timeline-item" th:classappend="${statusName != 'APPLIED' ? 'text-muted' : ''}">
@@ -594,7 +431,11 @@
                                 <div class="timeline-item" th:if="${statusName == 'WITHDRAWN'}">
                                     <h6>Application Withdrawn</h6>
                                     <p class="small">
-                            
+                                        This application has been withdrawn.
+                                    </p>
+                                </div>
+                            </div>
+
                             <!-- Status History -->
                             <div th:if="${not #lists.isEmpty(application.statusHistory)}" class="mt-4">
                                 <h6>Status History</h6>
@@ -603,7 +444,8 @@
                                         <div class="d-flex justify-content-between">
                                             <div>
                                                 <strong th:text="${history.status?.displayName}">Status</strong>
-                                                <p class="mb-0 small" th:if="${history.notes != null and !history.notes.isEmpty()}" th:text="${history.notes}">Status update notes</p>
+                                                <p class="mb-0 small" th:if="${history.notes != null and !history.notes.isEmpty()}" 
+                                                   th:text="${history.notes}">Status update notes</p>
                                             </div>
                                             <small class="text-muted" 
                                                    th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
@@ -628,13 +470,17 @@
                     <div class="card-body">
                         <h5>Actions</h5>
                         <div class="d-grid gap-2">
-                            <a th:if="${canWithdraw}" 
-                               th:href="@{/candidate/applications/} + ${application.id} + '/withdraw'"
-                               class="btn btn-outline-danger"
-                               onclick="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
-                                <i class="bi bi-x-circle me-1"></i> Withdraw Application
-                            </a>
-                            <a th:href="@{/candidate/jobs/} + ${job.id}" class="btn btn-outline-primary">
+                            <form th:if="${appDetails.status != 'WITHDRAWN' and appDetails.status != 'REJECTED' and appDetails.status != 'HIRED'}" 
+                                  th:action="@{/candidate/applications/__${appDetails.applicationId}__/withdraw}" 
+                                  method="post" 
+                                  class="d-grid"
+                                  onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="bi bi-x-circle me-1"></i> Withdraw Application
+                                </button>
+                            </form>
+                            <a th:href="@{/candidate/jobs/} + ${appDetails.job.id}" class="btn btn-outline-primary">
                                 <i class="bi bi-eye me-1"></i> View Job Posting
                             </a>
                             <a th:href="@{/candidate/applications}" class="btn btn-outline-secondary">
@@ -646,6 +492,7 @@
             </div>
         </div>
     </div>
+
 
     <footer class="bg-light py-4 mt-5">
         <div class="container text-center">

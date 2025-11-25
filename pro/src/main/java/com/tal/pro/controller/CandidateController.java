@@ -260,4 +260,27 @@ public class CandidateController {
             return "redirect:/candidate/profile#change-password";
         }
     }
+    
+    @PostMapping("/applications/{id}/withdraw")
+    public String withdrawApplication(@PathVariable("id") String applicationId,
+                                    Principal principal,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            // Get the candidate to verify ownership
+            String username = principal.getName();
+            Candidate candidate = candidateRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Candidate not found"));
+            
+            // Withdraw the application using the candidate's ID
+            jobApplicationService.withdrawApplication(applicationId, candidate.getId());
+            
+            redirectAttributes.addFlashAttribute("success", "Application withdrawn successfully!");
+            return "redirect:/candidate/dashboard";
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Failed to withdraw application: " + e.getMessage());
+            return "redirect:/candidate/applications/" + applicationId;
+        }
+    }
 }

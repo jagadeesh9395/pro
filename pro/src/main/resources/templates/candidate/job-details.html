@@ -90,6 +90,122 @@
             border-color: #3a5a80;
         }
         
+        /* Status Badges */
+        .status-badge {
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            text-transform: capitalize;
+        }
+        
+        .status-applied {
+            background-color: #e2f0fd;
+            color: #1a73e8;
+            border: 1px solid #bbdefb;
+        }
+        
+        .status-under_review, .status-interviewing {
+            background-color: #fff8e1;
+            color: #ff8f00;
+            border: 1px solid #ffe082;
+        }
+        
+        .status-shortlisted, .status-interview_scheduled {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .status-hired {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            font-weight: 600;
+        }
+        
+        .status-rejected, .status-withdrawn {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .status-offer_extended {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+            font-weight: 600;
+        }
+        
+        /* Status Section Styling */
+        .application-status-section {
+            width: 100%;
+        }
+        
+        .status-display {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .status-display.status-applied {
+            border-left-color: #1a73e8;
+            background-color: #e2f0fd;
+        }
+        
+        .status-display.status-under_review,
+        .status-display.status-interviewing {
+            border-left-color: #ff8f00;
+            background-color: #fff8e1;
+        }
+        
+        .status-display.status-shortlisted,
+        .status-display.status-interview_scheduled {
+            border-left-color: #2e7d32;
+            background-color: #e8f5e9;
+        }
+        
+        .status-display.status-hired {
+            border-left-color: #1b5e20;
+            background-color: #e8f5e9;
+        }
+        
+        .status-display.status-offer_extended {
+            border-left-color: #1565c0;
+            background-color: #e3f2fd;
+        }
+        
+        .status-display.status-rejected,
+        .status-display.status-withdrawn {
+            border-left-color: #c62828;
+            background-color: #ffebee;
+        }
+        
+        .status-notes {
+            background-color: rgba(0, 0, 0, 0.03);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.75rem;
+            border-left: 3px solid #dee2e6;
+        }
+        
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .btn i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Make sure the modal is on top of other elements */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        
+        .modal {
+            z-index: 1041 !important;
+        }
+        
         .requirements-list {
             white-space: pre-wrap;      /* Preserve line breaks and spaces */
             word-wrap: break-word;      /* Break long words if needed */
@@ -166,13 +282,74 @@
                                 </button>
                             </div>
                             
-                            <div th:if="${hasApplied}" class="d-flex align-items-center">
-                                <button class="btn btn-success" disabled>
-                                    <i class="bi bi-check-circle me-1"></i> Applied
-                                </button>
-                                <a th:href="@{/candidate/applications}" class="btn btn-outline-primary ms-2">
-                                    <i class="bi bi-card-list"></i> View Application
-                                </a>
+                            <div th:if="${hasApplied}" class="d-flex align-items-center flex-wrap">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge status-badge me-2" 
+                                          th:classappend="'status-' + ${#strings.toLowerCase(applicationStatus)}"
+                                          th:text="${applicationStatus == 'WITHDRAWN' ? 'Withdrawn' : 
+                                                  applicationStatus == 'REJECTED' ? 'Not Selected' : 
+                                                  applicationStatus == 'HIRED' ? 'Hired' : 
+                                                  applicationStatus == 'SHORTLISTED' ? 'Shortlisted' : 
+                                                  applicationStatus == 'INTERVIEW_SCHEDULED' ? 'Interview Scheduled' : 
+                                                  applicationStatus == 'INTERVIEWING' ? 'In Progress' : 
+                                                  'Applied'}"
+                                          data-bs-toggle="tooltip" 
+                                          th:attr="data-bs-title=${applicationNotes != null ? 'Notes: ' + applicationNotes : 'No additional notes'}">
+                                        Applied
+                                    </span>
+                                    
+                                    <!-- Withdraw Button (only show if application can be withdrawn) -->
+                                    <div class="ms-3">
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#withdrawModal">
+                                            <i class="bi bi-x-circle"></i> Withdraw Application
+                                        </button>
+                                        
+                                        <!-- Withdraw Confirmation Modal -->
+                                        <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="withdrawModalLabel">Confirm Withdrawal</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to withdraw your application for <strong th:text="${job.jobTitle}">this position</strong>?</p>
+                                                        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> This action cannot be undone.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form th:action="@{/applications/} + ${applicationId} + '/withdraw'" method="post" class="d-inline">
+                                                            <button type="submit" class="btn btn-danger">
+                                                                <i class="bi bi-x-circle"></i> Yes, Withdraw Application
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="w-100">
+                                    <a th:href="@{/candidate/applications}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-card-list"></i> View Application
+                                    </a>
+                                    <a th:if="${applicationStatus == 'INTERVIEW_SCHEDULED' || applicationStatus == 'INTERVIEWING'}" 
+                                       href="#" class="btn btn-outline-success btn-sm ms-2">
+                                        <i class="bi bi-calendar-check"></i> View Interview Details
+                                    </a>
+                                </div>
+                                
+                                <!-- Status Notes -->
+                                <div th:if="${applicationNotes != null}" class="mt-2 w-100">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> 
+                                        <span th:text="${applicationNotes}">Additional notes about your application</span>
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         

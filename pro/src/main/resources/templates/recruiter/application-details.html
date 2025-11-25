@@ -150,9 +150,9 @@
                 <h4 class="mb-1" th:text="${application.candidate?.fullName}">Candidate Name</h4>
                 <p class="text-muted mb-2" th:text="${application.job?.jobTitle}">Job Title</p>
                 <span class="status-badge"
-                      th:classappend="'status-' + ${application.status?.name()}"
-                      th:text="${#strings.replace(#strings.toUpperCase(application.status?.name()), '_', ' ')}">
-                        STATUS
+                      th:classappend="'status-' + ${application?.status?.name() ?: status?.name()}"
+                      th:text="${#strings.replace(#strings.toUpperCase(application?.status?.name() ?: status?.name()), '_', ' ')}">
+                        <span th:if="${application?.status == null and status == null}">STATUS</span>
                     </span>
                 <small class="text-muted ms-2">
                     Applied on <span th:if="${appliedAt != null}" th:text="${#temporals.format(appliedAt, 'MMM d, yyyy')}">date</span>
