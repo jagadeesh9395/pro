@@ -6,12 +6,16 @@ import com.tal.pro.model.Candidate;
 import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
 import com.tal.pro.repository.JobApplicationRepository;
+import com.tal.pro.event.ApplicationStatusEvent;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.service.JobService;
+import com.tal.pro.service.KafkaProducerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +24,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
     private final JobService jobService;
+    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository, JobService jobService) {
+    public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository, 
+                                   JobService jobService,
+                                   KafkaProducerService kafkaProducerService) {
         this.jobApplicationRepository = jobApplicationRepository;
         this.jobService = jobService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Override
@@ -53,7 +62,48 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Override
     public Optional<JobApplication> getApplicationById(String applicationId) {
-        return jobApplicationRepository.findById(applicationId);
+        if (applicationId == null || applicationId.trim().isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Check for common template literals or invalid formats
+        if (applicationId.equals("application.id") || applicationId.equals("${application.id}") || applicationId.contains("{")) {
+            return Optional.empty();
+        }
+
+        try {
+            // First try to find by application ID
+            Optional<JobApplication> app = jobApplicationRepository.findById(applicationId);
+            if (app.isPresent()) {
+                return app;
+            }
+
+            // If not found by ID, try to find by candidate email
+            if (applicationId.contains("@")) {  // Only try email lookup if it looks like an email
+                List<JobApplication> apps = jobApplicationRepository.findByCandidateEmail(applicationId.toLowerCase());
+                if (!apps.isEmpty()) {
+                    return Optional.of(apps.get(0));
+                }
+            }
+
+            return Optional.empty();
+
+        } catch (IllegalArgumentException e) {
+            // This will catch invalid ObjectId format errors
+            try {
+                if (applicationId.contains("@")) {  // Only try email lookup if it looks like an email
+                    List<JobApplication> apps = jobApplicationRepository.findByCandidateEmail(applicationId.toLowerCase());
+                    if (!apps.isEmpty()) {
+                        return Optional.of(apps.get(0));
+                    }
+                }
+                return Optional.empty();
+            } catch (Exception ex) {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -95,13 +145,40 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     
     @Override
     public Optional<JobApplication> findByCandidateId(String candidateId) {
-        // Try to find by candidate ID or email
-        List<JobApplication> applications = jobApplicationRepository.findByCandidateIdOrEmail(candidateId);
-        if (!applications.isEmpty()) {
-            // Return the most recent application
-            return Optional.of(applications.get(0));
+        if (candidateId == null || candidateId.trim().isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        
+        try {
+            // First try to find by candidate ID (as ObjectId)
+            List<JobApplication> applications = jobApplicationRepository.findByCandidateId(candidateId);
+            if (!applications.isEmpty()) {
+                return Optional.of(applications.get(0));
+            }
+            
+            // If not found by ID, try by email (case-insensitive)
+            applications = jobApplicationRepository.findByCandidateEmail(candidateId.toLowerCase());
+            if (!applications.isEmpty()) {
+                return Optional.of(applications.get(0));
+            }
+            
+            return Optional.empty();
+            
+        } catch (IllegalArgumentException e) {
+            // This will catch invalid ObjectId format errors
+            
+            try {
+                List<JobApplication> applications = jobApplicationRepository.findByCandidateEmail(candidateId.toLowerCase());
+                if (!applications.isEmpty()) {
+                    return Optional.of(applications.get(0));
+                }
+            } catch (Exception ex) {
+            }
+            
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -115,43 +192,128 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return updateApplicationStatus(applicationId, status, "Status updated", updatedBy);
     }
     
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    
     @Override
     @Transactional
     public JobApplication updateApplicationStatus(String applicationId, JobApplication.ApplicationStatus status, 
                                                 String notes, String updatedBy) {
-        JobApplication application = jobApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
-
-        // Only update if status has changed
-        if (application.getStatus() != status) {
-            // Add to status history
-            addStatusHistory(application, status, notes, updatedBy);
-            
-            // Update status and timestamps
-            application.setStatus(status);
-            application.setUpdatedAt(LocalDateTime.now());
-            application.setUpdatedBy(updatedBy);
-            
-            return jobApplicationRepository.save(application);
+        if (applicationId == null || applicationId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Application ID cannot be null or empty");
         }
         
-        return application;
+        if (applicationId.length() != 24) {
+        }
+        
+        if (status == null) {
+            throw new IllegalArgumentException("Status cannot be null");
+        }
+        
+                
+        try {
+            // Find the application
+            JobApplication application = jobApplicationRepository.findById(applicationId)
+                    .orElseThrow(() -> {
+                        log.error("Application not found - ID: {}", applicationId);
+                        return new RuntimeException("Application not found with ID: " + applicationId);
+                    });
+
+            // Only update if status has changed
+            if (application.getStatus() != status) {
+                log.debug("Status changed from {} to {} for application: {}", 
+                        application.getStatus(), status, applicationId);
+                        
+                // Add to status history
+                addStatusHistory(application, status, notes, updatedBy);
+                
+                // Update status and timestamps
+                application.setStatus(status);
+                application.setUpdatedAt(LocalDateTime.now());
+                application.setUpdatedBy(updatedBy);
+                
+                try {
+                    JobApplication updatedApp = jobApplicationRepository.save(application);
+                    log.info("Successfully updated application status - ID: {}, New Status: {}", 
+                            applicationId, status);
+                    
+                    // Send WebSocket notification
+                    sendStatusUpdateNotification(updatedApp, notes, updatedBy);
+                    
+                    return updatedApp;
+                } catch (Exception e) {
+                    log.error("Error saving application status update - ID: {}, Error: {}", 
+                            applicationId, e.getMessage(), e);
+                    throw new RuntimeException("Failed to update application status: " + e.getMessage(), e);
+                }
+            }
+            
+            log.debug("No status change detected for application: {}", applicationId);
+            return application;
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid application ID format: {}", applicationId);
+            throw new IllegalArgumentException("Invalid application ID format", e);
+        } catch (RuntimeException e) {
+            log.error("Error updating application status - ID: {}, Error: {}", 
+                    applicationId, e.getMessage(), e);
+            throw e; // Re-throw to be handled by the controller
+        } catch (Exception e) {
+            log.error("Unexpected error updating application status - ID: {}, Error: {}", 
+                    applicationId, e.getMessage(), e);
+            throw new RuntimeException("An unexpected error occurred while updating the application status", e);
+        }
     }
     
     /**
      * Adds a new status history entry to the application
      */
+    /**
+     * Sends WebSocket notification for application status updates
+     */
+    private void sendStatusUpdateNotification(JobApplication application, String notes, String updatedBy) {
+        try {
+            ApplicationStatusEvent event = new ApplicationStatusEvent();
+            event.setApplicationId(application.getId());
+            event.setCandidateId(application.getCandidate().getId());
+            event.setNewStatus(application.getStatus());
+            event.setNotes(notes);
+            event.setUpdatedBy(updatedBy);
+            event.setTimestamp(LocalDateTime.now());
+            event.setJobId(application.getJob() != null ? application.getJob().getId() : null);
+            event.setJobTitle(application.getJob() != null ? application.getJob().getJobTitle() : null);
+
+            // Send to candidate's private queue
+            messagingTemplate.convertAndSendToUser(
+                event.getCandidateId(),
+                "/queue/status-updates",
+                event
+            );
+
+            // Send to application-specific topic
+            messagingTemplate.convertAndSend(
+                "/topic/application/" + application.getId() + "/status-updates",
+                event
+            );
+
+            log.debug("Sent WebSocket notification for application status update: {}", application.getId());
+        } catch (Exception e) {
+            log.error("Failed to send WebSocket notification for application {}: {}", 
+                     application.getId(), e.getMessage(), e);
+        }
+    }
+
     private void addStatusHistory(JobApplication application, JobApplication.ApplicationStatus status, 
                                 String notes, String changedBy) {
         if (application.getStatusHistory() == null) {
             application.setStatusHistory(new ArrayList<>());
         }
         
-        ApplicationStatusHistory history = new ApplicationStatusHistory();
+        JobApplication.ApplicationStatusHistory history = new JobApplication.ApplicationStatusHistory();
         history.setStatus(status);
         history.setNotes(notes);
-        history.setChangedAt(LocalDateTime.now());
-        history.setChangedBy(changedBy);
+        history.setUpdatedAt(LocalDateTime.now());
+        history.setUpdatedBy(changedBy);
         
         application.getStatusHistory().add(history);
         
@@ -184,15 +346,61 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
                 
         if (existing.getStatus() != application.getStatus()) {
+            JobApplication.ApplicationStatus oldStatus = existing.getStatus();
             addStatusHistory(application, application.getStatus(), 
                            "Application updated with status: " + application.getStatus().getDisplayName(), 
                            updatedBy);
+            
+            // Publish status update event
+            publishApplicationStatusUpdate(application, oldStatus, updatedBy);
         }
         
         application.setUpdatedAt(LocalDateTime.now());
         application.setUpdatedBy(updatedBy);
         
         return jobApplicationRepository.save(application);
+    }
+
+    private void publishApplicationStatusUpdate(JobApplication application, JobApplication.ApplicationStatus oldStatus, String updatedBy) {
+        if (application == null) {
+            log.error("Cannot publish status update: application is null");
+            return;
+        }
+
+        if (application.getId() == null || application.getId().trim().isEmpty()) {
+            log.error("Cannot publish status update: application ID is null or empty");
+            return;
+        }
+
+        if (application.getJob() == null || application.getJob().getId() == null) {
+            log.error("Cannot publish status update: job or job ID is null");
+            return;
+        }
+
+        if (application.getCandidate() == null || application.getCandidate().getId() == null) {
+            log.error("Cannot publish status update: candidate or candidate ID is null");
+            return;
+        }
+
+        try {
+            ApplicationStatusEvent event = new ApplicationStatusEvent(
+                application.getId(),
+                application.getJob().getId(),
+                application.getCandidate().getId(),
+                oldStatus,
+                application.getStatus(),
+                updatedBy,
+                "Status updated from " + (oldStatus != null ? oldStatus : "N/A") + 
+                    " to " + (application.getStatus() != null ? 
+                        application.getStatus().getDisplayName() : "N/A"),
+                application.getJob().getJobTitle(),
+                LocalDateTime.now()
+            );
+            kafkaProducerService.sendStatusUpdate(event);
+        } catch (Exception e) {
+            log.error("Failed to publish status update for application {}: {}", 
+                     application.getId(), e.getMessage(), e);
+        }
     }
 
     @Override
@@ -311,7 +519,17 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     public List<ApplicationStatusHistory> getApplicationStatusHistory(String applicationId) {
         return jobApplicationRepository.findStatusHistoryById(applicationId)
                 .map(JobApplication::getStatusHistory)
-                .orElseGet(ArrayList::new);
+                .orElseGet(ArrayList::new)
+                .stream()
+                .map(history -> {
+                    ApplicationStatusHistory statusHistory = new ApplicationStatusHistory();
+                    statusHistory.setStatus(history.getStatus());
+                    statusHistory.setNotes(history.getNotes());
+                    statusHistory.setChangedAt(history.getUpdatedAt());
+                    statusHistory.setChangedBy(history.getUpdatedBy());
+                    return statusHistory;
+                })
+                .collect(Collectors.toList());
     }
     
     @Override

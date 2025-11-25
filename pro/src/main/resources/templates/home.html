@@ -707,14 +707,6 @@
             const contentType = response.headers.get('content-type');
             const responseText = await response.text();
             
-            // Log the raw response for debugging
-            console.log('Auth check response:', {
-                status: response.status,
-                statusText: response.statusText,
-                contentType,
-                responseText: responseText.substring(0, 200) // Log first 200 chars to avoid huge logs
-            });
-            
             if (!response.ok) {
                 return Promise.reject(`Server responded with ${response.status}: ${response.statusText}`);
             }
@@ -726,7 +718,6 @@
             try {
                 return JSON.parse(responseText);
             } catch (e) {
-                console.error('Failed to parse JSON response:', e);
                 return Promise.reject('Invalid JSON response');
             }
         })
@@ -738,7 +729,6 @@
             }
         })
         .catch(error => {
-            console.log('Authentication check failed:', error);
             updateNavigation(false);
         });
     });

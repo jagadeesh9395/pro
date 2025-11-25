@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application Details - TalentTrove</title>
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- WebSocket and STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.1/bundles/stomp.umd.min.js"></script>
+    <script>
+        // Create a global reference to STOMP
+        window.Stomp = window.StompJs || window.Stomp;
+    </script>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -23,20 +34,344 @@
             color: var(--text-color);
         }
         
-        .status-badge {
+        /* Status Progress Bar Styles */
+        .status-progress {
+            margin-bottom: 2rem;
+        }
+        
+        .status-progress .progress {
+            border-radius: 4px;
+            background-color: #e9ecef;
+            height: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Status History Styles */
+        .status-notes {
+            color: #495057;
             font-size: 0.9rem;
-            padding: 0.35em 0.65em;
+            margin: 4px 0 8px 0;
+            padding-left: 8px;
+            border-left: 2px solid #dee2e6;
+        }
+        
+        .status-meta {
+            display: flex;
+            align-items: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+        
+        /* Status Colors */
+        .status-applied {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-shortlisted {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-interview_scheduled {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-hired {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-progress .progress-bar {
+            transition: width 0.6s ease;
+        }
+        
+        .status-progress small {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .status-progress small > span {
+            width: 20%;
+            text-align: center;
+            position: relative;
+        }
+        
+        .status-progress small > span i {
+            display: block;
+            margin: 0 auto 0.25rem;
+            font-size: 1.25rem;
+        }
+        
+        .status-progress small > span.text-success i {
+            color: #28a745;
+        }
+        
+        .status-progress small > span.text-primary {
+            color: #007bff !important;
+        }
+        
+        .status-progress small > span.text-primary i {
+            color: #007bff;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
         }
         
-        .status-APPLIED { background-color: #e2e3e5; color: #383d41; }
-        .status-UNDER_REVIEW { background-color: #d1ecf1; color: #0c5460; }
-        .status-SHORTLISTED { background-color: #c3e6cb; color: #155724; }
-        .status-INTERVIEW_SCHEDULED { background-color: #b8daff; color: #004085; }
-        .status-OFFER_EXTENDED { background-color: #d4edda; color: #155724; }
-        .status-HIRED { background-color: #28a745; color: white; }
-        .status-REJECTED { background-color: #f8d7da; color: #721c24; }
-        .status-WITHDRAWN { background-color: #e2e3e5; color: #383d41; }
+        .badge-applied { background-color: #6c757d; color: white; }
+        .badge-under_review { background-color: #17a2b8; color: white; }
+        .badge-shortlisted { background-color: #17a2b8; color: white; }
+        .badge-interview_scheduled { background-color: #007bff; color: white; }
+        .badge-interviewing { background-color: #6610f2; color: white; }
+        .badge-offer_extended { background-color: #ffc107; color: #212529; }
+        .badge-hired { background-color: #28a745; color: white; }
+        .badge-rejected { background-color: #dc3545; color: white; }
+        .badge-withdrawn { background-color: #6c757d; color: white; }
+        
+        /* Timeline Styles */
+        .timeline {
+            position: relative;
+            padding-left: 1.5rem;
+            border-left: 2px solid #e9ecef;
+            margin-left: 1rem;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+        
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: -0.5rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #007bff;
+            border: 2px solid white;
+            z-index: 1;
+        }
+        
+        .timeline-item.text-muted:before {
+            background-color: #6c757d;
+        }
+        
+        /* Vertical Status Progress */
+        .status-progress-vertical {
+            position: relative;
+            padding-left: 1.75rem;
+            margin: 0;
+        }
+        
+        .status-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .status-step {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            min-height: 3.5rem;
+            padding: 0.25rem 0;
+        }
+        
+        .step-icon {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding-right: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            margin-top: 0.125rem;
+        }
+        
+        .step-icon i {
+            font-size: 1.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            line-height: 1.5rem;
+            text-align: center;
+            display: inline-block;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .step-details {
+            flex: 1;
+            padding-bottom: 1.5rem;
+            padding-left: 0.75rem;
+            padding-top: 0.125rem;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .step-description {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-top: 0.25rem;
+            color: #6c757d;
+        }
+        
+        .step-connector {
+            position: absolute;
+            left: 1.0625rem;
+            top: 2.25rem;
+            bottom: -0.5rem;
+            width: 2px;
+            background-color: #e9ecef;
+            z-index: 1;
+        }
+        
+        .status-step.completed .step-connector {
+            background-color: #28a745;
+        }
+        
+        .status-step.completed .step-icon i {
+            color: #28a745;
+        }
+        
+        .status-step.current .step-connector {
+            background: linear-gradient(to bottom, #28a745 0%, #28a745 30%, #e9ecef 30%, #e9ecef 100%);
+        }
+        
+        .status-step.current .step-icon i {
+            color: #007bff;
+        }
+        
+        .status-step.pending .step-icon i {
+            color: #6c757d;
+        }
+        
+        @media (max-width: 768px) {
+            .status-progress-vertical {
+                padding-left: 1.5rem;
+            }
+            
+            .step-icon i {
+                font-size: 1.25rem;
+            }
+            
+            .step-details {
+                padding-bottom: 1.25rem;
+            }
+        }
+        
+        /* Status Colors */
+        .status-APPLIED { background-color: #74b9ff; color: white; }
+        .status-UNDER_REVIEW { background-color: #00b894; color: white; }
+        .status-SHORTLISTED { background-color: #fdcb6e; color: #2d3436; }
+        .status-INTERVIEW_SCHEDULED { background-color: #00cec9; color: white; }
+        .status-INTERVIEWING { background-color: #0984e3; color: white; }
+        .status-OFFER_EXTENDED { background-color: #fab1a0; color: #2d3436; }
+        .status-HIRED { background-color: #55efc4; color: #2d3436; }
+        .status-REJECTED { background-color: #d63031; color: white; }
+        .status-WITHDRAWN { background-color: #636e72; color: white; }
+        
+        /* Status Update Form */
+        .status-update-form {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        .status-update-form select, 
+        .status-update-form textarea {
+            margin-bottom: 1rem;
+        }
+        
+        /* Status History */
+        .status-history-item {
+            padding: 0.75rem 1rem;
+            border-left: 3px solid #dee2e6;
+            margin-bottom: 0.5rem;
+            background-color: white;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .status-history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        /* WebSocket Status */
+        #connection-status {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            z-index: 1000;
+            box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        #connection-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        #connection-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        #connection-status .status-dot {
+            display: inline-block;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        #connection-status.connected .status-dot {
+            background-color: #28a745;
+        }
+        
+        #connection-status.disconnected .status-dot {
+            background-color: #dc3545;
+        }
+        
+        /* Notification Toast */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
         
         .info-card {
             border-left: 4px solid var(--primary-color);
@@ -94,412 +429,832 @@
             border-bottom: 1px solid var(--border-color);
         }
     </style>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Parse status display names from server
+        const statusDisplayNames = (function() {
+            try {
+                const namesElement = document.getElementById('statusDisplayNames');
+                if (!namesElement) {
+                    throw new Error('Status display names element not found');
+                }
+                const namesJson = namesElement.value;
+                if (!namesJson) {
+                    throw new Error('Status display names are empty');
+                }
+                // The JSON is already properly formatted from the server
+                return JSON.parse(namesJson);
+            } catch (e) {
+                // Fallback to default values if there's an error
+                return {
+                    'APPLIED': 'Applied',
+                    'UNDER_REVIEW': 'Under Review',
+                    'SHORTLISTED': 'Shortlisted',
+                    'INTERVIEW_SCHEDULED': 'Interview Scheduled',
+                    'INTERVIEWING': 'Interviewing',
+                    'OFFER_EXTENDED': 'Offer Extended',
+                    'HIRED': 'Hired',
+                    'REJECTED': 'Rejected',
+                    'WITHDRAWN': 'Withdrawn'
+                };
+            }
+        })();
+        
+        const applicationId = /*[[${applicationId}]]*/ '';
+        const userId = /*[[${userId}]]*/ '';
+        const isRecruiter = /*[[${isRecruiter}]]*/ false;
+        const wsEndpoint = /*[[${wsEndpoint}]]*/ '';
+        
+        // Add CSRF token for WebSocket connection
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        
+        // WebSocket connection status
+        let stompClient = null;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        
+        // Status color mapping
+        const statusColors = {
+            'APPLIED': '#74b9ff',
+            'UNDER_REVIEW': '#00b894',
+            'SHORTLISTED': '#fdcb6e',
+            'INTERVIEW_SCHEDULED': '#00cec9',
+            'INTERVIEWING': '#0984e3',
+            'OFFER_EXTENDED': '#fab1a0',
+            'HIRED': '#55efc4',
+            'REJECTED': '#d63031',
+            'WITHDRAWN': '#636e72'
+        };
+        
+        // Status display names are already defined above with server values and fallback
+        
+        // Initialize WebSocket connection when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            connect();
+            setupEventListeners();
+            checkWebSocketConnection();
+        });
+        
+        // Set up event listeners for UI elements
+        function setupEventListeners() {
+            // Status update form submission
+            const statusForm = document.getElementById('status-update-form');
+            if (statusForm) {
+                statusForm.addEventListener('submit', handleStatusUpdate);
+            }
+            
+            // Close button for notifications
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-close') || e.target.closest('.btn-close')) {
+                    const toast = e.target.closest('.toast');
+                    if (toast) {
+                        const bsToast = bootstrap.Toast.getInstance(toast);
+                        if (bsToast) {
+                            bsToast.hide();
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize WebSocket connection
+        let stompClient = null;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        
+        // Connect to WebSocket server
+        function connect() {
+            if (!applicationId) {
+                console.error('Application ID is required for WebSocket connection');
+                return;
+            }
+            
+            // Create SockJS connection
+            const socket = new SockJS('/ws');
+            
+            // Create STOMP client
+            stompClient = Stomp.Stomp.over(socket);
+            
+            // Set debug to log STOMP messages (remove in production)
+            stompClient.debug = function(str) {
+                console.log('STOMP: ' + str);
+            };
+            
+            // Set headers for authentication
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
+            // Connect to the WebSocket
+            stompClient.connect(headers, 
+                function(frame) {
+                    console.log('Connected to WebSocket');
+                    reconnectAttempts = 0;
+                    updateConnectionStatus(true);
+                    
+                    // Subscribe to application status updates
+                    const statusTopic = `/topic/application/${applicationId}/status`;
+                    stompClient.subscribe(statusTopic, function(message) {
+                        try {
+                            const statusUpdate = JSON.parse(message.body);
+                            updateApplicationStatus(statusUpdate);
+                            
+                            // Show notification for status changes
+                            if (statusUpdate.newStatus) {
+                                showNotification({
+                                    type: 'info',
+                                    title: 'Status Updated',
+                                    message: `Your application status has been updated to: ${statusDisplayNames[statusUpdate.newStatus] || statusUpdate.newStatus}`,
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Error processing status update:', e);
+                        }
+                    });
+                    
+                    // Subscribe to user-specific updates if userId is available
+                    if (userId) {
+                        const userQueue = `/user/queue/status-updates`;
+                        stompClient.subscribe(userQueue, function(message) {
+                            try {
+                                const notification = JSON.parse(message.body);
+                                showNotification({
+                                    type: 'info',
+                                    title: 'Update',
+                                    message: notification.notes || 'Your application has been updated',
+                                    timestamp: notification.timestamp || new Date().toISOString()
+                                });
+                            } catch (e) {
+                                console.error('Error processing user update:', e);
+                            }
+                        });
+                    }
+                },
+                function(error) {
+                    console.error('WebSocket connection error:', error);
+                    updateConnectionStatus(false);
+                    
+                    // Attempt to reconnect with exponential backoff
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                        console.log(`Attempting to reconnect in ${timeout/1000} seconds...`);
+                        setTimeout(connect, timeout);
+                        reconnectAttempts++;
+                    } else {
+                        console.error('Max reconnection attempts reached');
+                    }
+                }
+            );
+        }    
+                        // Store subscriptions for cleanup
+                        window.appSocket.subscriptions = {
+                            appStatus: appStatusSubscription,
+                            userUpdates: userUpdatesSubscription
+                        };
+                    }
+                    
+                }, function(error) {
+                    updateConnectionStatus(false);
+                    attemptReconnect();
+                });
+            }
+        }
+        
+        // Handle status update message from WebSocket
+        function handleStatusUpdateMessage(update) {
+            
+            // Get the display name for the status
+            const displayName = statusDisplayNames[update.status] || update.status;
+            
+            // Update the status badge
+            const statusBadge = document.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.textContent = displayName;
+                statusBadge.className = 'badge status-badge status-' + (update.status || 'unknown').toLowerCase();
+                
+                // Also update the status in the dropdown if it's open
+                const statusSelect = document.getElementById('status');
+                if (statusSelect) {
+                    const options = statusSelect.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].value === update.status) {
+                            statusSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                
+                }
+                
+                // Add to status history if there are notes or an updater
+                if (update.notes || update.updatedBy) {
+                    const historyItem = {
+                        status: update.status,
+                        notes: update.notes,
+                        changedAt: update.timestamp || new Date().toISOString(),
+                        changedBy: update.updatedBy || 'System'
+                    };
+                    addStatusToHistory(historyItem);
+                }
+            }
+            
+            // Add to status history
+            addStatusToHistory(update);
+            
+            // Show notification
+            showNotification({
+                type: 'info',
+                title: 'Status Updated',
+                message: `Application status changed to: ${statusDisplayNames[update.newStatus] || update.newStatus}`,
+                timestamp: update.timestamp || new Date().toISOString()
+            });
+        }
+        
+        // Add a new status update to the history
+        function addStatusToHistory(update) {
+            const historyContainer = document.getElementById('status-history-container');
+            if (!historyContainer) return;
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'status-history-item';
+            
+            const status = update.newStatus;
+            const displayName = statusDisplayNames[status] || status;
+            const timestamp = update.timestamp ? new Date(update.timestamp).toLocaleString() : 'Just now';
+            const notes = update.notes ? `<p class="mb-0 text-muted">${update.notes}</p>` : '';
+            
+            historyItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge status-${status}">${displayName}</span>
+                    <small class="text-muted">${timestamp}</small>
+                </div>
+                ${notes}
+                <div class="small text-muted mt-1">Updated by: ${update.updatedBy || 'System'}</div>
+            `;
+            
+            // Insert at the beginning of the history
+            historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+        }
+        
+        // Handle form submission for status updates
+        function handleStatusUpdate(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const status = form.querySelector('select[name="status"]').value;
+            const notes = form.querySelector('textarea[name="notes"]').value;
+            
+            // Create status update event
+            const statusUpdate = {
+                applicationId: applicationId,
+                newStatus: status,
+                notes: notes,
+                updatedBy: userId
+            };
+            
+            // Send via WebSocket if connected, otherwise fall back to REST
+            if (stompClient && stompClient.connected) {
+                stompClient.send(
+                    "/app/application/status/update",
+                    {},
+                    JSON.stringify(statusUpdate)
+                );
+            } else {
+                // Fallback to REST API
+                fetch(`/api/applications/${applicationId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({
+                        status: status,
+                        notes: notes
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update status');
+                    }
+                    return response.json();
+                })
+                .then(updatedApp => {
+                    // Update UI with the new status
+                    handleStatusUpdateMessage({
+                        newStatus: updatedApp.status,
+                        notes: notes,
+                        updatedBy: userId,
+                        timestamp: new Date().toISOString()
+                    });
+                })
+                .catch(error => {
+                    showNotification({
+                        type: 'error',
+                        title: 'Update Failed',
+                        message: 'Failed to update application status. Please try again.'
+                    });
+                });
+            }
+            
+            // Reset form
+            form.reset();
+            
+            // Hide the modal if this is in one
+            const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
+            if (modal) {
+                modal.hide();
+            }
+        }
+        
+        // Show a notification to the user
+        function showNotification(notification) {
+            const container = document.getElementById('notification-container');
+            if (container) {
+                // Add notification to container
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${notification.type || 'info'}`;
+                alertDiv.role = 'alert';
+                alertDiv.innerHTML = `
+                    <strong>${notification.title || 'Notification'}</strong>
+                    <p class="mb-0">${notification.message || ''}</p>
+                    <small class="d-block mt-1">${new Date(notification.timestamp).toLocaleString()}</small>
+                `;
+                container.prepend(alertDiv);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        }
+        /*]]>*/
+    </script>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
-        <div class="container">
-            <a class="navbar-brand" href="/">TalentTrove</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/dashboard}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/dashboard') ? 'active' : ''}">
-                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/applications}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/applications') ? 'active' : ''}">
-                            <i class="bi bi-briefcase me-1"></i> My Applications
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/profile}" 
-                           th:classappend="${#strings.startsWith(currentPath, '/candidate/profile') ? 'active' : ''}">
-                            <i class="bi bi-person me-1"></i> My Profile
-                        </a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <div class="dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-2"></i>
-                            <span th:text="${candidate != null ? candidate.username : 'User'}">User</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" th:href="@{/candidate/dashboard}">
-                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" th:href="@{/candidate/profile}">
-                                    <i class="bi bi-person me-2"></i> My Profile
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post" class="d-inline w-100">
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
+    <div class="container">
+        <a class="navbar-brand" href="/">TalentTrove</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/candidate/dashboard}"
+                       th:classappend="${#strings.startsWith(currentPath, '/candidate/dashboard') ? 'active' : ''}">
+                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/candidate/applications}"
+                       th:classappend="${#strings.startsWith(currentPath, '/candidate/applications') ? 'active' : ''}">
+                        <i class="bi bi-briefcase me-1"></i> My Applications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/candidate/profile}"
+                       th:classappend="${#strings.startsWith(currentPath, '/candidate/profile') ? 'active' : ''}">
+                        <i class="bi bi-person me-1"></i> My Profile
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span th:text="${candidate != null ? candidate.username : 'User'}">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/candidate/dashboard}">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/candidate/profile}">
+                                <i class="bi bi-person me-2"></i> My Profile
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <!-- Application Header -->
-    <header class="application-header">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="mb-1" th:text="${job?.jobTitle ?: 'Job Title'}">Job Title</h4>
-                    <p class="text-muted mb-2" th:if="${job?.companyName}">
-                        <i class="bi bi-building me-1"></i>
-                        <span th:text="${job.companyName}"></span>
-                    </p>
-                    <span class="status-badge"
-                          th:classappend="'status-' + ${appDetails.status}"
-                          th:text="${appDetails.statusDisplayName}">
+<!-- Application Header -->
+<header class="application-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1" th:text="${job?.jobTitle ?: 'Job Title'}">Job Title</h4>
+                <p class="text-muted mb-2" th:if="${job?.companyName}">
+                    <i class="bi bi-building me-1"></i>
+                    <span th:text="${job.companyName}"></span>
+                </p>
+                <span class="status-badge"
+                      th:classappend="'status-' + ${appDetails.status}"
+                      th:text="${appDetails.statusDisplayName}">
                         STATUS
                     </span>
-                    <small class="text-muted ms-2">
-                        Applied on <span th:text="${appDetails.appliedDate}">date</span>
-                    </small>
-                </div>
+                <small class="text-muted ms-2">
+                    Applied on <span th:text="${appDetails.appliedDate}">date</span>
+                </small>
             </div>
         </div>
-    </header>
-    
-    <div class="container py-4">
-        <div class="row">
-            <div class="col-md-8">
-                <!-- Application Status -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Application Status</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Current Status:</strong> 
-                                    <span class="badge" 
-                                          th:classappend="'status-' + ${appDetails.status}"
-                                          th:text="${appDetails.statusDisplayName}">
+    </div>
+</header>
+
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Application Details</h2>
+        <a href="/candidate/dashboard" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Application Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Application Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Current Status:</strong>
+                                <span class="badge"
+                                      th:classappend="'status-' + ${appDetails.status}"
+                                      th:text="${appDetails.statusDisplayName}">
                                         Status
                                     </span>
-                                </p>
-                                <p class="mb-2"><strong>Application ID:</strong> 
-                                    <span th:text="${appDetails.applicationId}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Applied On:</strong> 
-                                    <span th:text="${appDetails.appliedDate}">-</span>
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Last Updated:</strong> 
-                                    <span th:text="${appDetails.lastUpdated}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Notice Period:</strong> 
-                                    <span th:text="${appDetails.noticePeriod}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Expected Salary:</strong> 
-                                    <span th:text="${appDetails.expectedSalary}">-</span>
-                                </p>
-                            </div>
+                            </p>
+                            <p class="mb-2"><strong>Application ID:</strong>
+                                <span th:text="${appDetails.applicationId}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Applied On:</strong>
+                                <span th:text="${appDetails.appliedDate}">-</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Last Updated:</strong>
+                                <span th:text="${appDetails.lastUpdated}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Notice Period:</strong>
+                                <span th:text="${appDetails.noticePeriod}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Expected Salary:</strong>
+                                <span th:if="${appDetails.expectedSalary != null}">
+                                    <span th:if="${T(org.apache.commons.lang3.math.NumberUtils).isCreatable(#strings.toString(appDetails.expectedSalary))}">
+                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.expectedSalary/100000, 1, 1, 'COMMA')}"></span> LPA
+                                    </span>
+                                    <span th:unless="${T(org.apache.commons.lang3.math.NumberUtils).isCreatable(#strings.toString(appDetails.expectedSalary))}" 
+                                          th:text="${appDetails.expectedSalary}">
+                                    </span>
+                                </span>
+                                <span th:if="${appDetails.expectedSalary == null}">-</span>
+                            </p>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Job Details -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Job Details</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Job Title:</strong> 
-                                    <span th:text="${appDetails.job.jobTitle}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Company:</strong> 
-                                    <span th:text="${appDetails.job.companyName}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Location:</strong> 
-                                    <span th:text="${appDetails.job.location}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Job Type:</strong> 
-                                    <span th:text="${appDetails.job.jobType}">-</span>
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Experience:</strong> 
-                                    <span th:text="${appDetails.job.experience}">-</span>
-                                </p>
-                                <p class="mb-2"><strong>Salary Range:</strong> 
-                                    <span th:if="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
-                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.job.minSalary/100000, 1, 1, 'COMMA')}"></span> - ₹<span th:text="${#numbers.formatDecimal(appDetails.job.maxSalary/100000, 1, 1, 'COMMA')}"></span> LPA
+            </div>
+
+            <!-- Job Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Job Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Job Title:</strong>
+                                <span th:text="${appDetails.job.jobTitle}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Company:</strong>
+                                <span th:text="${appDetails.job.companyName}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Location:</strong>
+                                <span th:text="${appDetails.job.location}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Job Type:</strong>
+                                <span th:text="${appDetails.job.jobType}">-</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Experience:</strong>
+                                <span th:text="${appDetails.job.experience}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Salary Range:</strong>
+                                <span th:if="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
+                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.job.minSalary/100000, 1, 1, 'COMMA')}"></span> - ₹<span
+                                        th:text="${#numbers.formatDecimal(appDetails.job.maxSalary/100000, 1, 1, 'COMMA')}"></span> LPA
                                     </span>
-                                    <span th:unless="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
+                                <span th:unless="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
                                         Not specified
                                     </span>
-                                </p>
-                                <p class="mb-2"><strong>Posted On:</strong> 
-                                    <span th:if="${appDetails.job.postedAt != null}" th:text="${#temporals.format(appDetails.job.postedAt, 'MMM d, yyyy')}">-</span>
-                                    <span th:unless="${appDetails.job.postedAt != null}">-</span>
-                                </p>
-                            </div>
+                            </p>
+                            <p class="mb-2"><strong>Posted On:</strong>
+                                <span th:if="${appDetails.job.postedAt != null}" th:text="${#temporals.format(appDetails.job.postedAt, 'MMM d, yyyy')}">-</span>
+                                <span th:unless="${appDetails.job.postedAt != null}">-</span>
+                            </p>
+                            <p class="mb-2"><strong>Posted By:</strong>
+                                <span th:if="${appDetails.job.postedBy != null}" th:text="${appDetails.job.postedBy.fullName}">-</span>
+                                <span th:unless="${appDetails.job.postedBy != null}">-</span>
+                            </p>
                         </div>
-                        <div class="mt-3">
-                            <h6>Job Description:</h6>
-                            <div th:if="${appDetails.job.description}" th:utext="${appDetails.job.description}" class="job-description">
-                                [Job description content]
-                            </div>
-                            <div th:unless="${appDetails.job.description}" class="text-muted">
-                                No job description available.
-                            </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6>Job Description:</h6>
+                        <div th:if="${appDetails.job.description}" th:utext="${appDetails.job.description}" class="job-description">
+                            [Job description content]
                         </div>
-                        <div class="mt-3" th:if="${appDetails.job.skills}">
-                            <h6>Skills Required:</h6>
-                            <div th:each="skill : ${#strings.arraySplit(appDetails.job.skills, ',')}" class="d-inline-block me-2 mb-2">
+                        <div th:unless="${appDetails.job.description}" class="text-muted">
+                            No job description available.
+                        </div>
+                    </div>
+                    <div class="mt-3" th:if="${appDetails.job.skills}">
+                        <h6>Skills Required:</h6>
+                        <div th:each="skill : ${#strings.arraySplit(appDetails.job.skills, ',')}" class="d-inline-block me-2 mb-2">
                                 <span class="badge bg-light text-dark">
                                     <span th:text="${#strings.trim(skill)}">Skill</span>
                                 </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Status History -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Status History</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="timeline">
-                            <div th:each="history : ${statusHistory}" class="timeline-item">
-                                <h6 class="mb-1">
-                                    <span th:text="${history.status}"></span>
-                                    <small class="text-muted ms-2" th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}"></small>
-                                </h6>
-                                <p class="mb-1 text-muted" th:if="${history.notes}" th:text="${history.notes}"></p>
-                                <small class="text-muted" th:if="${history.changedBy}" th:text="'Updated by: ' + ${history.changedBy}"></small>
-                            </div>
-                            <div th:if="${#lists.isEmpty(statusHistory)}" class="text-muted">
-                                No status history available.
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5>Application Status</h5>
-                        <div class="timeline mt-4">
-                            <!-- Dynamic status history -->
-                            <div th:if="${not #lists.isEmpty(application.statusHistory)}">
-                                <div class="timeline-item" th:each="history : ${application.statusHistory}">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h6 class="mb-1" th:text="${history.status?.displayName}">Status</h6>
-                                            <p class="mb-1" th:text="${history.notes}">Status update notes</p>
-                                        </div>
+
+            <!-- Status History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Status History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div th:each="history : ${statusHistory}" class="timeline-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="w-100">
+                                    <!-- Status and Enum -->
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="badge me-2" 
+                                              th:classappend="'status-' + ${history.status?.name()?.toLowerCase()}"
+                                              th:text="${history.status?.displayName}">
+                                            Status
+                                        </span>
+                                        <small class="text-muted text-uppercase" 
+                                               th:text="'(' + ${history.status?.name()?.toLowerCase()} + ')'">
+                                            (status_enum)
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Status Notes -->
+                                    <p class="status-notes mb-2" th:if="${history.notes}" th:text="${history.notes}"></p>
+                                    
+                                    <!-- Meta Information -->
+                                    <div class="status-meta">
+                                        <small class="text-muted" th:if="${history.changedBy}">
+                                            By <span th:text="${userIdToUsername != null && userIdToUsername.get(history.changedBy) != null ? 
+                                                           userIdToUsername.get(history.changedBy) : 
+                                                           (history.changedBy == 'system' ? 'System' : history.changedBy)}">
+                                                User
+                                            </span>
+                                        </small>
+                                        <span class="mx-1 text-muted">•</span>
                                         <small class="text-muted" 
                                                th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
-                                            Oct 15, 2023
-                                        </small>
-                                    </div>
-                                    <small class="text-muted" th:if="${history.changedBy != null}" 
-                                           th:text="'Updated by: ' + ${history.changedBy}">
-                                        Updated by: System
-                                    </small>
-                                </div>
-                            </div>
-                            
-                            <!-- Application Status Timeline -->
-                            <div th:with="statusName=${application.status?.name()}">
-                                <!-- Applied Status -->
-                                <div class="timeline-item" th:classappend="${statusName != 'APPLIED' ? 'text-muted' : ''}">
-                                    <h6>Applied</h6>
-                                    <p class="small text-muted" th:if="${application.appliedAt != null}" 
-                                       th:text="'Applied on ' + ${#temporals.format(application.appliedAt, 'MMM d, yyyy')}">
-                                        Applied on Date
-                                    </p>
-                                    <p class="small">Your application has been received and is under review.</p>
-                                </div>
-
-                                <!-- Under Review Status -->
-                                <div class="timeline-item" th:classappend="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal() ? 'text-muted' : ''}">
-                                    <h6>Under Review</h6>
-                                    <p class="small" th:if="${statusName == 'UNDER_REVIEW'}">
-                                        Your application is currently being reviewed by our hiring team.
-                                    </p>
-                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()}">
-                                        Your application has been reviewed.
-                                    </p>
-                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).UNDER_REVIEW.ordinal()}">
-                                        Your application is pending review.
-                                    </p>
-                                </div>
-
-                                <!-- Shortlisted Status -->
-                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal() ? 'text-muted' : ''}">
-                                    <h6>Shortlisted</h6>
-                                    <p class="small" th:if="${statusName == 'SHORTLISTED'}">
-                                        Your application has been shortlisted!
-                                    </p>
-                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal()}">
-                                        Your application was shortlisted and has progressed to the next stage.
-                                    </p>
-                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).SHORTLISTED.ordinal()}">
-                                        Pending shortlisting decision
-                                    </p>
-                                </div>
-
-                                <!-- Interview Scheduled Status -->
-                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal() ? 'text-muted' : ''}">
-                                    <h6>Interview Scheduled</h6>
-                                    <p class="small" th:if="${statusName == 'INTERVIEW_SCHEDULED'}">
-                                        Interview details will be shared with you soon.
-                                    </p>
-                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
-                                        Interview was completed.
-                                    </p>
-                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEW_SCHEDULED.ordinal()}">
-                                        Interview scheduling pending
-                                    </p>
-                                </div>
-
-                                <!-- Interviewing Status -->
-                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal() ? 'text-muted' : ''}">
-                                    <h6>Interviewing</h6>
-                                    <p class="small" th:if="${statusName == 'INTERVIEWING'}">
-                                        Your interview is in progress.
-                                    </p>
-                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal()}">
-                                        Interview completed.
-                                    </p>
-                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).INTERVIEWING.ordinal()}">
-                                        Interview pending
-                                    </p>
-                                </div>
-
-                                <!-- Offer Extended Status -->
-                                <div class="timeline-item" th:classappend="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal() ? 'text-muted' : ''}">
-                                    <h6>Offer Extended</h6>
-                                    <p class="small" th:if="${statusName == 'OFFER_EXTENDED'}">
-                                        Congratulations! An offer has been extended to you.
-                                    </p>
-                                    <p class="small" th:if="${statusName != null and T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() > T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal()}">
-                                        Offer was extended.
-                                    </p>
-                                    <p class="small" th:if="${statusName == null or T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(statusName).ordinal() < T(com.tal.pro.model.JobApplication$ApplicationStatus).OFFER_EXTENDED.ordinal()}">
-                                        Offer not extended yet
-                                    </p>
-                                </div>
-
-                                <!-- Hired Status -->
-                                <div class="timeline-item" th:classappend="${statusName != 'HIRED' ? 'text-muted' : ''}">
-                                    <h6>Hired</h6>
-                                    <p class="small" th:if="${statusName == 'HIRED'}">
-                                        Congratulations! You've been hired for this position.
-                                    </p>
-                                    <p class="small" th:if="${statusName != 'HIRED' and statusName != 'REJECTED' and statusName != 'WITHDRAWN'}">
-                                        Pending hiring decision
-                                    </p>
-                                </div>
-
-                                <!-- Rejected Status -->
-                                <div class="timeline-item" th:if="${statusName == 'REJECTED'}">
-                                    <h6>Application Rejected</h6>
-                                    <p class="small">
-                                        We appreciate your interest, but we've decided to move forward with other candidates.
-                                    </p>
-                                </div>
-
-                                <!-- Withdrawn Status -->
-                                <div class="timeline-item" th:if="${statusName == 'WITHDRAWN'}">
-                                    <h6>Application Withdrawn</h6>
-                                    <p class="small">
-                                        This application has been withdrawn.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Status History -->
-                            <div th:if="${not #lists.isEmpty(application.statusHistory)}" class="mt-4">
-                                <h6>Status History</h6>
-                                <div class="list-group list-group-flush">
-                                    <div th:each="history : ${application.statusHistory}" class="list-group-item border-0 px-0 py-2">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <strong th:text="${history.status?.displayName}">Status</strong>
-                                                <p class="mb-0 small" th:if="${history.notes != null and !history.notes.isEmpty()}" 
-                                                   th:text="${history.notes}">Status update notes</p>
-                                            </div>
-                                            <small class="text-muted" 
-                                                   th:text="${#temporals.format(history.changedAt, 'MMM d, yyyy hh:mm a')}">
-                                                Oct 15, 2023
-                                            </small>
-                                        </div>
-                                        <small class="text-muted" th:if="${history.changedBy != null}" 
-                                               th:text="'Updated by: ' + ${history.changedBy}">
-                                            Updated by: System
+                                            Date
                                         </small>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${#lists.isEmpty(application.statusHistory)}" class="text-muted mt-4">
-                                No status history available
-                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(statusHistory)}" class="text-muted">
+                            No status history available.
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="card">
-                    <div class="card-body">
-                        <h5>Actions</h5>
-                        <div class="d-grid gap-2">
-                            <form th:if="${appDetails.status != 'WITHDRAWN' and appDetails.status != 'REJECTED' and appDetails.status != 'HIRED'}" 
-                                  th:action="@{/candidate/applications/__${appDetails.applicationId}__/withdraw}" 
-                                  method="post" 
-                                  class="d-grid"
-                                  onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                <button type="submit" class="btn btn-outline-danger">
-                                    <i class="bi bi-x-circle me-1"></i> Withdraw Application
-                                </button>
-                            </form>
-                            <a th:href="@{/candidate/jobs/} + ${appDetails.job.id}" class="btn btn-outline-primary">
-                                <i class="bi bi-eye me-1"></i> View Job Posting
-                            </a>
-                            <a th:href="@{/candidate/applications}" class="btn btn-outline-secondary">
-                                <i class="bi bi-list-ul me-1"></i> Back to Applications
-                            </a>
-                        </div>
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Status Overview Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Status Overview</h5>
+                </div>
+                <div class="card-body">
+
+                    <!-- Vertical Status Progress -->
+                    <div class="status-progress-vertical">
+                        <th:block th:with="
+                                statuses=${T(com.tal.pro.model.JobApplication$ApplicationStatus).values()},
+                                currentStatus=${appDetails.status != null ? T(com.tal.pro.model.JobApplication$ApplicationStatus).valueOf(appDetails.status) : T(com.tal.pro.model.JobApplication$ApplicationStatus).APPLIED},
+                                currentStatusOrdinal=${currentStatus.ordinal()}">
+
+                            <div class="status-steps">
+                                <div th:each="status,iter : ${statuses}"
+                                     th:with="isCompleted=${iter.index < currentStatusOrdinal}, isCurrent=${iter.index == currentStatusOrdinal}"
+                                     class="status-step"
+                                     th:classappend="${isCompleted ? 'completed' : (isCurrent ? 'current' : '')}">
+
+                                    <div class="step-connector" th:if="!${iter.last}"></div>
+
+                                    <div class="step-icon">
+                                        <i th:class="${isCompleted ? 'fas fa-check-circle text-success' : (isCurrent ? 'fas fa-arrow-circle-right text-primary' : 'far fa-circle text-muted')}"
+                                           aria-hidden="true"></i>
+                                    </div>
+
+                                    <div class="step-details">
+                                        <div class="d-flex align-items-center">
+                                                <span class="step-title"
+                                                      th:class="${isCompleted ? 'text-success' : (isCurrent ? 'fw-bold text-primary' : 'text-muted')}"
+                                                      th:text="${status.displayName}">
+                                                    Status
+                                                </span>
+                                            <span th:if="${isCurrent}" class="badge ms-2"
+                                                  th:classappend="'bg-' + ${status.name() == 'REJECTED' ? 'danger' : (status.name() == 'HIRED' ? 'success' : 'primary')}">
+                                                    Current
+                                                </span>
+                                        </div>
+
+                                        <div class="step-description small mt-1" th:if="${isCurrent}">
+                                                <span th:switch="${status.name()}">
+                                                    <span th:case="'APPLIED'">Application submitted and under review</span>
+                                                    <span th:case="'UNDER_REVIEW'">Your application is being reviewed</span>
+                                                    <span th:case="'SHORTLISTED'">You've been shortlisted for the next round</span>
+                                                    <span th:case="'INTERVIEW_SCHEDULED'" th:if="${application.interviewDate != null}">
+                                                        Interview scheduled for <span th:text="${#temporals.format(application.interviewDate, 'MMM d, yyyy hh:mm a')}"></span>
+                                                    </span>
+                                                    <span th:case="'INTERVIEW_SCHEDULED'" th:unless="${application.interviewDate != null}">
+                                                        Interview scheduling in progress
+                                                    </span>
+                                                    <span th:case="'INTERVIEWING'">Interview in progress</span>
+                                                    <span th:case="'OFFER_EXTENDED'">Offer has been extended</span>
+                                                    <span th:case="'HIRED'">Congratulations! You've been hired</span>
+                                                    <span th:case="'REJECTED'">Application not selected</span>
+                                                    <span th:case="'WITHDRAWN'">Application withdrawn</span>
+                                                </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-
-    <footer class="bg-light py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0 text-muted">&copy; 2023 TalentTrove. All rights reserved.</p>
+    <div class="card">
+        <div class="card-body">
+            <h5>Actions</h5>
+            <div class="d-grid gap-2">
+                <form th:if="${appDetails.status != 'WITHDRAWN' and appDetails.status != 'REJECTED' and appDetails.status != 'HIRED'}"
+                      th:action="@{/candidate/applications/__${appDetails.applicationId}__/withdraw}"
+                      method="post"
+                      class="d-grid"
+                      onsubmit="return confirm('Are you sure you want to withdraw this application? This action cannot be undone.');">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i> Withdraw Application
+                    </button>
+                </form>
+                <a th:href="@{/candidate/jobs/} + ${appDetails.job.id}" class="btn btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> View Job Posting
+                </a>
+                <a th:href="@{/candidate/applications}" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-ul me-1"></i> Back to Applications
+                </a>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
+</div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Application Status -->
+<div class="card mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Application Status</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateStatusModal"
+                th:if="${isRecruiter}">
+            <i class="bi bi-pencil-square me-1"></i> Update Status
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center">
+                <span class="badge status-badge"
+                      th:classappend="'status-' + ${application?.status ?: 'UNKNOWN'}"
+                      th:text="${application?.status != null ? (#maps.get(statusDisplayNames, application.status.name()) ?: 'Unknown Status') : 'Status Not Available'}">
+                    Status
+                </span>
+            <span class="ms-3 text-muted" th:if="${application.updatedAt}"
+                  th:text="'Last updated: ' + ${#temporals.format(application.updatedAt, 'MMM d, yyyy hh:mm a')}">
+                    Last updated: Jan 1, 2023
+                </span>
+        </div>
+
+    </div>
+</div>
+
+<footer class="bg-light py-4 mt-5">
+    <div class="container text-center">
+        <p class="mb-0 text-muted">&copy; 2023 TalentTrove. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- Notification Container -->
+<div id="notification-container" class="toast-container"></div>
+
+<!-- Connection Status Indicator -->
+<div id="connection-status" class="disconnected">
+    <span class="status-dot"></span> Connecting...
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Application Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="status-update-form" th:action="@{/api/applications/__${application.id}__/status}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">New Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option th:each="status : ${T(com.tal.pro.model.JobApplication.ApplicationStatus).values()}"
+                                    th:value="${status.name()}"
+                                    th:text="${status.displayName}"
+                                    th:selected="${status == application.status}">
+                                Status
+                            </option>
+                        </select>
+                        <!-- Hidden input for status display names -->
+                        <input type="hidden" id="statusDisplayNames" th:value="${statusDisplayNames}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                                  placeholder="Add any notes about this status change..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Initialize tooltips and other UI elements -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Auto-resize textareas
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+
+        // Initialize modals if needed
+        if (window.location.hash === '#updateStatus') {
+            const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+            modal.show();
+        }
+    });
+</script>
 </body>
 </html>

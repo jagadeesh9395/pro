@@ -306,7 +306,6 @@
         // Initialize button state
         const updateButtonState = () => {
             const hasFile = selectedFile !== null || document.querySelector('.has-existing-resume');
-            console.log('Updating button state. Has file:', hasFile, 'Upload button found:', !!uploadButton);
             if (uploadButton) {
                 uploadButton.disabled = !hasFile;
             }
@@ -383,7 +382,6 @@
             // Handle dropped files
             dropZone.addEventListener('drop', handleDrop, false);
         } else {
-            console.warn('Drop zone element not found');
         }
 
         // Handle file selection via button
@@ -394,7 +392,6 @@
                 }
             });
         } else {
-            console.warn('File input element not found');
         }
 
         function handleFiles(files) {
@@ -418,11 +415,9 @@
                 selectedFile = file;
 
                 // Update UI
-                console.log('Updating UI with file:', file.name);
                 if (fileName) fileName.textContent = file.name;
                 if (fileSize) fileSize.textContent = formatFileSize(file.size);
                 if (fileInfo) fileInfo.classList.add('show');
-                console.log('Calling updateButtonState from handleFiles');
                 updateButtonState();
             }
         }
@@ -499,7 +494,6 @@
                     }, 1500);
                 })
                 .catch(error => {
-                    console.error('Upload error:', error);
                     showAlert(error.message || 'Failed to upload resume. Please try again.', 'danger');
                 })
                 .finally(() => {

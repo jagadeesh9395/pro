@@ -53,23 +53,17 @@ public class ResumeController {
                                         @RequestParam("file") MultipartFile file,
                                         Principal principal) {
         try {
-            log.info("Received request to update resume with ID: {}", id);
-            
             if (file == null || file.isEmpty()) {
-                log.warn("No file provided for resume update");
                 return ResponseEntity.badRequest().body("Please select a file to upload");
             }
             
-            log.info("Processing resume update for user: {}", principal.getName());
             Resume updatedResume = resumeService.updateResume(id, file, principal.getName());
             
             if (updatedResume == null) {
-                log.error("Failed to update resume: updateResume returned null");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body("Failed to update resume");
             }
             
-            log.info("Resume updated successfully. ID: {}", updatedResume.getId());
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Resume updated successfully");

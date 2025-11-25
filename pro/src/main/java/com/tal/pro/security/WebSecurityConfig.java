@@ -84,13 +84,21 @@ public class WebSecurityConfig {
                     csrf.csrfTokenRepository(csrfTokenRepository())
                             .ignoringRequestMatchers(
                                     "/h2-console/**",
-                                    "/api/auth/**"
+                                    "/api/auth/**",
+                                    "/ws/**",
+                                    "/topic/**",
+                                    "/app/**",
+                                    "/user/**"
                             );
-                    // Enable CSRF for all requests
+                    // Enable CSRF for all requests except the ignored ones
                     csrf.requireCsrfProtectionMatcher(
                             new AndRequestMatcher(
                                     CsrfFilter.DEFAULT_CSRF_MATCHER,
-                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/api/auth/**"))
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/api/auth/**")),
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/ws/**")),
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/topic/**")),
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/app/**")),
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/user/**"))
                             )
                     );
                 })
@@ -120,7 +128,12 @@ public class WebSecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/actuator/**"
+                                "/actuator/**",
+                                // WebSocket endpoints
+                                "/ws/**",
+                                "/topic/**",
+                                "/app/**",
+                                "/user/**"
                         ).permitAll()
                         .requestMatchers("/recruiter/**").hasRole("RECRUITER")
                         .requestMatchers("/candidate/**").hasRole("CANDIDATE")
@@ -202,19 +215,33 @@ public class WebSecurityConfig {
             "authorization",
             "content-type",
             "x-csrf-token",
-            "x-requested-with"
+            "x-requested-with",
+            "x-xsrf-token"
         ));
         configuration.setExposedHeaders(Arrays.asList(
             "authorization",
             "content-type",
             "x-csrf-token",
-            "x-requested-with"
+            "x-requested-with",
+            "x-xsrf-token"
         ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // 1 hour
 
+        // Add WebSocket specific CORS configuration
+        CorsConfiguration webSocketConfig = new CorsConfiguration();
+        webSocketConfig.setAllowedOrigins(Arrays.asList("*"));
+        webSocketConfig.addAllowedMethod("*");
+        webSocketConfig.addAllowedHeader("*");
+        webSocketConfig.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/ws/**", webSocketConfig);
+        source.registerCorsConfiguration("/topic/**", webSocketConfig);
+        source.registerCorsConfiguration("/app/**", webSocketConfig);
+        source.registerCorsConfiguration("/user/**", webSocketConfig);
+        
         return source;
     }
 

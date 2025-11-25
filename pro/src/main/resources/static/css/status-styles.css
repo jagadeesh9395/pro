@@ -1,0 +1,205 @@
+/* Status Badge Styles */
+.status-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, 
+                border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Status Colors */
+.status-applied {
+    background-color: #74b9ff;
+}
+
+.status-under-review {
+    background-color: #00b894;
+}
+
+.status-shortlisted {
+    background-color: #fdcb6e;
+    color: #2d3436;
+}
+
+.status-interview-scheduled {
+    background-color: #00cec9;
+}
+
+.status-interviewing {
+    background-color: #0984e3;
+}
+
+.status-offer-extended {
+    background-color: #fab1a0;
+    color: #2d3436;
+}
+
+.status-hired {
+    background-color: #55efc4;
+    color: #2d3436;
+}
+
+.status-rejected {
+    background-color: #d63031;
+}
+
+.status-withdrawn {
+    background-color: #636e72;
+}
+
+/* Status History Styles */
+.status-history {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+.status-history h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+.history-item {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    border-left: 4px solid #6c757d;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
+}
+
+.history-item .timestamp {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.history-item .status {
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.2rem;
+    font-size: 0.75rem;
+    color: white;
+}
+
+.history-item .notes {
+    margin: 0.5rem 0 0.25rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.history-item .updated-by {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+/* Status Update Form */
+.status-update-form {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+}
+
+.status-update-form h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+.status-update-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.status-update-form .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* WebSocket Connection Status */
+.connection-status {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 1060;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.connection-status.connected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-status.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.connection-status.connecting {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1100;
+    min-width: 300px;
+}
+
+.toast {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.toast-header {
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .status-update-form {
+        margin-top: 1rem;
+    }
+    
+    .history-item {
+        padding: 0.5rem;
+    }
+    
+    .toast-container {
+        left: 1rem;
+        right: 1rem;
+        min-width: auto;
+    }
+}

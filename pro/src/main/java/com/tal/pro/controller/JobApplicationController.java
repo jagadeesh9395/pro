@@ -2,15 +2,17 @@ package com.tal.pro.controller;
 
 import com.tal.pro.dto.ApplicationDetailsDto;
 import com.tal.pro.dto.JobApplicationDto;
+import com.tal.pro.event.ApplicationStatusEvent;
 import com.tal.pro.exception.ResourceNotFoundException;
 import com.tal.pro.model.*;
 import com.tal.pro.model.JobApplication.ApplicationStatus;
 import com.tal.pro.repository.CandidateRepository;
 import com.tal.pro.repository.RecruiterRepository;
 import com.tal.pro.security.services.UserDetailsImpl;
-import com.tal.pro.service.CandidateService;
-import com.tal.pro.service.JobApplicationService;
-import com.tal.pro.service.JobService;
+import com.tal.pro.service.*;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -53,23 +56,37 @@ public class JobApplicationController {
     private final CandidateService candidateService;
     private final RecruiterRepository recruiterRepository;
     private final CandidateRepository candidateRepository;
+    private final KafkaProducerService kafkaProducerService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final UserService userService;
 
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Autowired
-    public JobApplicationController(CandidateRepository candidateRepository, RecruiterRepository recruiterRepository, 
-                                  CandidateService candidateService, JobApplicationService jobApplicationService, 
-                                  JobService jobService) {
+    public JobApplicationController(CandidateRepository candidateRepository, 
+                                  RecruiterRepository recruiterRepository, 
+                                  CandidateService candidateService, 
+                                  JobApplicationService jobApplicationService, 
+                                  JobService jobService,
+                                  KafkaProducerService kafkaProducerService,
+                                  SimpMessagingTemplate messagingTemplate,
+                                  UserService userService) {
         this.candidateRepository = candidateRepository;
         this.recruiterRepository = recruiterRepository;
         this.candidateService = candidateService;
         this.jobApplicationService = jobApplicationService;
         this.jobService = jobService;
+        this.kafkaProducerService = kafkaProducerService;
+        this.messagingTemplate = messagingTemplate;
+        this.userService = userService;
     }
 
 
 
+    /**
+     * REST endpoint to update application status
+     */
     @PostMapping("/applications/{id}/status")
     public String updateApplicationStatus(
             @PathVariable("id") String applicationId,
@@ -81,6 +98,9 @@ public class JobApplicationController {
         try {
             String updatedBy = authentication.getName();
             JobApplication application = jobApplicationService.updateApplicationStatus(applicationId, status, notes, updatedBy);
+            
+            // The Kafka event will be published by the service layer
+            
             redirectAttributes.addFlashAttribute("success", "Application status updated successfully!");
             return "redirect:/recruiter/applications/" + application.getId();
         } catch (ResourceNotFoundException e) {
@@ -90,6 +110,32 @@ public class JobApplicationController {
             redirectAttributes.addFlashAttribute("error", "Error updating application status: " + e.getMessage());
             return "redirect:/recruiter/dashboard";
         }
+    }
+    
+    /**
+    
+    /**
+     * REST endpoint to get application status history
+     */
+    @GetMapping("/applications/{id}/history")
+    @ResponseBody
+    public ResponseEntity<?> getStatusHistory(@PathVariable String id) {
+        try {
+            List<ApplicationStatusHistory> history = jobApplicationService.getApplicationStatusHistory(id);
+            return ResponseEntity.ok(history);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error retrieving status history: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * WebSocket endpoint to subscribe to application status updates
+     */
+    @MessageMapping("/application/{applicationId}/subscribe")
+    public void subscribeToApplication(@PathVariable String applicationId) {
+        // Subscription handling is automatic via @SubscribeMapping
     }
 
     @PostMapping("/applications/{id}/notes")
@@ -187,7 +233,6 @@ public class JobApplicationController {
         } catch (ResourceNotFoundException e) {
             return "redirect:/jobs?error=not_found";
         } catch (Exception e) {
-            log.error("Error viewing job: {}", id, e);
             return "redirect:/jobs?error=server_error";
         }
     }
@@ -568,7 +613,22 @@ public class JobApplicationController {
             @PathVariable String applicationId,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request,
+            CsrfToken csrfToken) {
+        
+        // Add CSRF token to model
+        if (csrfToken != null) {
+            model.addAttribute("_csrf", csrfToken);
+        }
+        
+        // Create a map of status display names
+        Map<String, String> statusDisplayNames = new HashMap<>();
+        for (JobApplication.ApplicationStatus status : JobApplication.ApplicationStatus.values()) {
+            statusDisplayNames.put(status.name(), status.getDisplayName());
+        }
+        model.addAttribute("statusDisplayNames", statusDisplayNames);
+        
 
         System.out.println("Viewing application details for ID: " + applicationId);
 
@@ -613,10 +673,50 @@ public class JobApplicationController {
             // Get application status history
             List<ApplicationStatusHistory> statusHistory =
                     jobApplicationService.getApplicationStatusHistory(applicationId);
+            
+            // Create a map of user IDs to usernames for status history
+            Map<String, String> userIdToUsername = new HashMap<>();
+            
+            // Add system user
+            userIdToUsername.put("system", "System");
+            
+            // Add current user
+            if (userDetails != null) {
+                userIdToUsername.put(userDetails.getId(), userDetails.getUsername());
+            }
+            
+            // Add all unique user IDs from status history
+            if (statusHistory != null) {
+                for (ApplicationStatusHistory history : statusHistory) {
+                    if (history.getChangedBy() != null && !userIdToUsername.containsKey(history.getChangedBy())) {
+                        try {
+                            // Try to get username from user service if available
+                            if (userService != null) {
+                                String username = userService.getUsernameById(history.getChangedBy());
+                                if (username != null) {
+                                    userIdToUsername.put(history.getChangedBy(), username);
+                                    continue;
+                                }
+                            }
+                            // Fallback to just using the ID as the display name
+                            userIdToUsername.put(history.getChangedBy(), history.getChangedBy());
+                        } catch (Exception e) {
+                            // If there's any error, just use the ID
+                            userIdToUsername.put(history.getChangedBy(), history.getChangedBy());
+                        }
+                    }
+                }
+            }
 
             // Get the candidate details
             Candidate candidate = candidateService.getCandidateById(application.getCandidate().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Candidate not found with id: " + application.getCandidate().getId()));
+            
+            // Add the candidate's username if available
+            if (candidate != null && candidate.getId() != null) {
+                userIdToUsername.put(candidate.getId(), candidate.getFullName() != null ? 
+                    candidate.getFullName() : candidate.getEmail());
+            }
 
             // Ensure application has all required fields, fallback to candidate data if needed
             if ((application.getFullName() == null || application.getFullName().isEmpty()) && candidate.getFullName() != null) {
@@ -639,12 +739,27 @@ public class JobApplicationController {
             ApplicationDetailsDto appDetails = ApplicationDetailsDto.fromJobApplication(application);
             
             // Add attributes to the model
+            // Add WebSocket connection details
+            String serverName = request.getServerName();
+            int serverPort = request.getServerPort();
+            String wsProtocol = request.isSecure() ? "wss" : "ws";
+            String wsEndpoint = String.format("%s://%s:%d/ws", wsProtocol, serverName, serverPort);
+            
+            // Add model attributes
             model.addAttribute("appDetails", appDetails);
             model.addAttribute("application", application);
             model.addAttribute("job", job);
             model.addAttribute("candidate", candidate);
             model.addAttribute("statusHistory", statusHistory != null ? statusHistory : new ArrayList<ApplicationStatusHistory>());
             model.addAttribute("currentPath", "/candidate/applications/" + applicationId);
+            model.addAttribute("wsEndpoint", wsEndpoint);
+            model.addAttribute("applicationId", applicationId);
+            
+            // Add user role for WebSocket subscriptions
+            boolean isRecruiter = userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_RECRUITER"));
+            model.addAttribute("isRecruiter", isRecruiter);
+            model.addAttribute("userId", userDetails.getId());
 
             return "candidate/application-details";
         } catch (ResourceNotFoundException e) {

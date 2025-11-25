@@ -1,6 +1,6 @@
 package com.tal.pro.dto;
 
-import com.tal.pro.model.ApplicationStatusHistory;
+import com.tal.pro.model.JobApplication.ApplicationStatusHistory;
 import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
 import lombok.AllArgsConstructor;

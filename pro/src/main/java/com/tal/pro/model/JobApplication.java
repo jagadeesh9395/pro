@@ -1,7 +1,11 @@
 package com.tal.pro.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -15,6 +19,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JobApplication {
 
     @Id
@@ -77,6 +83,29 @@ public class JobApplication {
 
         public String getDisplayName() {
             return displayName;
+        }
+    }
+    
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApplicationStatusHistory {
+        private ApplicationStatus status;
+        private String notes;
+        private String updatedBy;
+        private LocalDateTime updatedAt = LocalDateTime.now();
+        
+        // Custom constructor without updatedAt parameter - will use current time
+        public ApplicationStatusHistory(ApplicationStatus status, String notes, String updatedBy) {
+            this.status = status;
+            this.notes = notes;
+            this.updatedBy = updatedBy;
+            // updatedAt is automatically set to now
+        }
+        
+        // Ensure updatedAt is never null
+        public LocalDateTime getUpdatedAt() {
+            return updatedAt != null ? updatedAt : LocalDateTime.now();
         }
     }
 }

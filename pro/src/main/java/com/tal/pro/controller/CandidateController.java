@@ -16,9 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -97,9 +98,29 @@ public class CandidateController {
                         ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") +
                         ", Status: " + (app.getStatus() != null ? app.getStatus().name() : "No Status"));
 
-                // Sort status history by change date (newest first)
+                // Sort status history by change date (newest first), handling null values
                 if (app.getStatusHistory() != null) {
-                    app.getStatusHistory().sort((h1, h2) -> h2.getChangedAt().compareTo(h1.getChangedAt()));
+                    try {
+                        app.getStatusHistory().sort((h1, h2) -> {
+                            // Handle null history items
+                            if (h1 == null && h2 == null) return 0;
+                            if (h1 == null) return 1;  // nulls last
+                            if (h2 == null) return -1;  // nulls last
+                            
+                            // Handle null timestamps
+                            if (h1.getUpdatedAt() == null && h2.getUpdatedAt() == null) return 0;
+                            if (h1.getUpdatedAt() == null) return 1;  // nulls last
+                            if (h2.getUpdatedAt() == null) return -1;  // nulls last
+                            
+                            // Safe to compare since we've handled null cases
+                            return h2.getUpdatedAt().compareTo(h1.getUpdatedAt());
+                        });
+                        System.out.println("Successfully sorted status history for application: " + app.getId());
+                    } catch (Exception e) {
+                        System.err.println("Error sorting status history for application " + app.getId() + ": " + e.getMessage());
+                        e.printStackTrace();
+                        // Continue with unsorted list if there's an error
+                    }
                 }
             });
 
@@ -114,6 +135,18 @@ public class CandidateController {
             if (recentApplications.size() < Math.min(5, applications.size())) {
                 System.out.println("Filtered out " + (applications.size() - recentApplications.size()) + " applications with null appliedAt");
             }
+
+            // Add status display names to model
+            Map<String, String> statusDisplayMap = new java.util.LinkedHashMap<>();
+            for (JobApplication.ApplicationStatus status : JobApplication.ApplicationStatus.values()) {
+                statusDisplayMap.put(status.name(), status.getDisplayName());
+            }
+            // Convert to JSON string manually to avoid Thymeleaf template issues
+            String statusDisplayJson = "{" + statusDisplayMap.entrySet().stream()
+                    .map(e -> String.format("\"%s\":\"%s\"", e.getKey(), e.getValue()))
+                    .collect(Collectors.joining(",")) + "}";
+            
+            model.addAttribute("statusDisplayNames", statusDisplayJson);
 
             // Add candidate and user info to model
             model.addAttribute("candidate", candidate);
@@ -181,12 +214,12 @@ public class CandidateController {
 
     @PostMapping("/profile/update-personal")
     public String updatePersonalInfo(@RequestParam("fullName") String fullName,
-                                   @RequestParam("email") String email,
-                                   @RequestParam("phoneNumber") String phoneNumber,
-                                   @RequestParam("location") String location,
-                                   @RequestParam("experience") String experience,
-                                   Principal principal,
-                                   RedirectAttributes redirectAttributes) {
+                                     @RequestParam("email") String email,
+                                     @RequestParam("phoneNumber") String phoneNumber,
+                                     @RequestParam("location") String location,
+                                     @RequestParam("experience") String experience,
+                                     Principal principal,
+                                     RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
@@ -212,8 +245,8 @@ public class CandidateController {
 
     @PostMapping("/profile/update-skills")
     public String updateSkills(@RequestParam("skills") String skills,
-                              Principal principal,
-                              RedirectAttributes redirectAttributes) {
+                               Principal principal,
+                               RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
@@ -227,7 +260,7 @@ public class CandidateController {
                         .filter(s -> !s.isEmpty())
                         .collect(Collectors.joining(", "));
             }
-            
+
             candidate.setSkills(cleanedSkills);
             candidateRepository.save(candidate);
 
@@ -260,23 +293,23 @@ public class CandidateController {
             return "redirect:/candidate/profile#change-password";
         }
     }
-    
+
     @PostMapping("/applications/{id}/withdraw")
     public String withdrawApplication(@PathVariable("id") String applicationId,
-                                    Principal principal,
-                                    RedirectAttributes redirectAttributes) {
+                                      Principal principal,
+                                      RedirectAttributes redirectAttributes) {
         try {
             // Get the candidate to verify ownership
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Candidate not found"));
-            
+
             // Withdraw the application using the candidate's ID
             jobApplicationService.withdrawApplication(applicationId, candidate.getId());
-            
+
             redirectAttributes.addFlashAttribute("success", "Application withdrawn successfully!");
             return "redirect:/candidate/dashboard";
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Failed to withdraw application: " + e.getMessage());
