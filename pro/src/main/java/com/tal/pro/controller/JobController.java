@@ -95,7 +95,7 @@ public class JobController {
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Job posted successfully!",
-                "redirectUrl", "/recruiter/jobs/success"
+                "redirectUrl", "/recruiter/jobs/success/" + createdJob.getId()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -106,11 +106,11 @@ public class JobController {
         }
     }
 
-    @GetMapping("/success")
-    public String showSuccessPage(@ModelAttribute("job") Job job, Model model) {
-        if (!model.containsAttribute("job")) {
-            return "redirect:/recruiter/dashboard";
-        }
+    @GetMapping("/success/{jobId}")
+    public String showSuccessPage(@PathVariable String jobId, Model model) {
+        Job job = jobService.getJobById(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
+        model.addAttribute("job", job);
         return "recruiter/job-success";
     }
     
@@ -216,7 +216,7 @@ public class JobController {
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Job updated successfully!",
-                "redirectUrl", "/recruiter/jobs/success"
+                "redirectUrl", "/recruiter/jobs/success/" + id
             ));
             
         } catch (SecurityException e) {

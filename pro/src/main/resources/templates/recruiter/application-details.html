@@ -205,39 +205,15 @@
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     <div>
                         <div class="fw-semibold">Unable to Update Status</div>
-                        <div class="small">
-                            <p>Could not determine the application ID. This might happen if:</p>
-                            <ul>
-                                <li>The page wasn't loaded correctly</li>
-                                <li>The application data is incomplete</li>
-                                <li>There was an error loading the application</li>
-                            </ul>
-                            <p class="mt-2 mb-0">Please try refreshing the page. If the problem persists, contact support.</p>
-                        </div>
-                        <div class="small mt-2" th:if="${applicationId != null or (application != null and application.id != null)}">
-                            <div th:if="${applicationId != null}">
-                                Application ID from model: <code th:text="${applicationId}">appId</code>
-                            </div>
-                            <div th:if="${application != null and application.id != null}">
-                                Application ID from object: <code th:text="${application.id}">appId</code>
-                            </div>
-                        </div>
+                        <div class="small">Please refresh the page or contact support if the issue persists.</div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
     </div>
 </header>
 
-                <div>Candidate Object: <code th:text="${application?.candidate != null ? 'Present' : 'NULL'}">N/A</code></div>
             </div>
-        </div>
-        <div class="mt-2" th:if="${#ctx.containsVariable('_csrf')}">
-            <div>CSRF Token: <small class="text-muted">Present</small></div>
-        </div>
-        <div class="mt-2" th:unless="${#ctx.containsVariable('_csrf')}">
-            <div class="text-danger">CSRF Token: <strong>MISSING</strong></div>
         </div>
     </div>
 </div>
