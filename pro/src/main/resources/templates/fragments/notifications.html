@@ -24,8 +24,8 @@
             </ul>
         </div>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+        <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 loadUnreadCount();
@@ -38,7 +38,10 @@
 
             function loadUnreadCount() {
                 fetch('/api/notifications/unread-count')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
                     .then(data => {
                         const badge = document.getElementById('notification-badge');
                         if (data.count > 0) {
@@ -47,12 +50,16 @@
                         } else {
                             badge.style.display = 'none';
                         }
-                    });
+                    })
+                    .catch(error => console.error('Error loading unread count:', error));
             }
 
             function loadNotifications() {
                 fetch('/api/notifications?size=5')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
                     .then(data => {
                         const list = document.getElementById('notification-list');
                         list.innerHTML = '';
@@ -78,15 +85,22 @@
                         } else {
                             list.innerHTML = '<li class="p-3 text-center text-muted">No notifications</li>';
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                        const list = document.getElementById('notification-list');
+                        list.innerHTML = '<li class="p-3 text-center text-danger">Error loading notifications</li>';
                     });
             }
 
             function markAsRead(id) {
                 fetch(`/api/notifications/${id}/read`, { method: 'POST' })
-                    .then(() => {
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
                         loadUnreadCount();
                         loadNotifications();
-                    });
+                    })
+                    .catch(error => console.error('Error marking notification as read:', error));
             }
 
             function connectWebSocket() {
@@ -101,9 +115,17 @@
                         loadNotifications();
                         
                         // Optional: Show toast
-                        const body = JSON.parse(notification.body);
-                        // showToast(body.title, body.message);
+                        try {
+                            const body = JSON.parse(notification.body);
+                            // showToast(body.title, body.message);
+                        } catch (e) {
+                            console.error('Error parsing notification body:', e);
+                        }
                     });
+                }, function(error) {
+                    console.error('WebSocket connection error:', error);
+                    // Retry connection after 5 seconds
+                    setTimeout(connectWebSocket, 5000);
                 });
             }
         </script>

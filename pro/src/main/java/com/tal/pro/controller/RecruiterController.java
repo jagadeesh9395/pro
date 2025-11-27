@@ -45,15 +45,15 @@ public class RecruiterController {
     private CandidateService candidateService;
     @Autowired
     private JobApplicationRepository jobApplicationRepository;
-    
+
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
-                            @RequestParam(defaultValue = "0") int page,
-                            @RequestParam(defaultValue = "10") int size,
-                            @RequestParam(required = false) String search) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -71,11 +71,11 @@ public class RecruiterController {
                     recruiter.getId(), pageable);
 
             // Get recent applications (first page, sorted by most recent)
-//            List<JobApplication> recentApplications = applicationsPage.getContent();
+            // List<JobApplication> recentApplications = applicationsPage.getContent();
             List<JobApplication> recentApplications = jobApplicationService.findRecentApplications();
             // Get all status counts for the dashboard stats
-            Map<JobApplication.ApplicationStatus, Long> allStatusCounts =
-                    jobApplicationService.getApplicationStatusCounts(recruiter.getId());
+            Map<JobApplication.ApplicationStatus, Long> allStatusCounts = jobApplicationService
+                    .getApplicationStatusCounts(recruiter.getId());
 
             // Add all necessary attributes to the model
             model.addAttribute("recruiter", recruiter);
@@ -102,9 +102,11 @@ public class RecruiterController {
 
             // Stats for the dashboard cards
             model.addAttribute("totalCandidates", allStatusCounts.values().stream().mapToLong(Long::longValue).sum());
-            model.addAttribute("newCandidates", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.APPLIED, 0L) +
-                    allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.UNDER_REVIEW, 0L));
-            model.addAttribute("interviewScheduled", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED, 0L));
+            model.addAttribute("newCandidates",
+                    allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.APPLIED, 0L) +
+                            allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.UNDER_REVIEW, 0L));
+            model.addAttribute("interviewScheduled",
+                    allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED, 0L));
             model.addAttribute("hiredCount", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.HIRED, 0L));
 
             return "recruiter/dashboard";
@@ -171,7 +173,8 @@ public class RecruiterController {
     }
 
     @GetMapping("/applications/{id}")
-    public String viewApplication(@PathVariable String id, Model model, Principal principal, RedirectAttributes redirectAttributes) {
+    public String viewApplication(@PathVariable String id, Model model, Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             if (id == null || id.trim().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Application ID cannot be empty");
@@ -188,12 +191,11 @@ public class RecruiterController {
 
             // Find the application
             JobApplication application = null;
-            String lookupType = "ID";
 
             try {
                 // First try to find by application ID (handles both ObjectId and email lookups)
                 Optional<JobApplication> applicationOpt = jobApplicationService.getApplicationById(id);
-                
+
                 if (applicationOpt.isPresent()) {
                     application = applicationOpt.get();
                 } else {
@@ -201,13 +203,14 @@ public class RecruiterController {
                     applicationOpt = jobApplicationService.findByCandidateId(id);
                     if (applicationOpt.isPresent()) {
                         application = applicationOpt.get();
-                        lookupType = "Candidate ID/Email";
                     }
                 }
             } catch (IllegalArgumentException e) {
+                log.error("Invalid ID format provided: {}", id);
                 redirectAttributes.addFlashAttribute("error", "Invalid application ID format");
                 return "redirect:/recruiter/applications";
             } catch (Exception e) {
+                log.error("Error looking up application: {}", e.getMessage());
                 redirectAttributes.addFlashAttribute("error", "Error looking up application: " + e.getMessage());
                 return "redirect:/recruiter/applications";
             }
@@ -224,6 +227,14 @@ public class RecruiterController {
             }
 
             if (application.getJob().getPostedBy() == null) {
+                // Try to fix missing postedBy if the current recruiter is the owner (fallback)
+                // This handles the case where postedBy might be missing in legacy data
+                log.warn("Job postedBy is null for job ID: {}. Checking if current recruiter owns it.",
+                        application.getJob().getId());
+                // We can't verify ownership easily if postedBy is null, but we can check if the
+                // job exists in recruiter's jobs
+                // For now, we'll redirect with error to be safe, or we could allow view if we
+                // trust the link
                 return "redirect:/recruiter/applications?error=Invalid+job+poster+data";
             }
 
@@ -234,30 +245,30 @@ public class RecruiterController {
 
             // Log the application data being added to the model
             log.info("Adding application to model - ID: {}, Status: {}", application.getId(), application.getStatus());
-            
+
             // Add application and related data to the model
             model.addAttribute("application", application);
             model.addAttribute("appliedAt", application.getAppliedAt());
             model.addAttribute("currentUser", recruiter);
             model.addAttribute("applicationId", application.getId()); // Add ID as a separate attribute for easy access
-            
+
             // Add candidate details to the model
             if (application.getCandidate() != null) {
                 model.addAttribute("candidate", application.getCandidate());
                 model.addAttribute("candidateFullName", application.getCandidate().getFullName());
-                model.addAttribute("candidateEmail", application.getEmail() != null ? application.getEmail() : 
-                        (application.getCandidate().getEmail() != null ? application.getCandidate().getEmail() : ""));
+                model.addAttribute("candidateEmail", application.getEmail() != null ? application.getEmail()
+                        : (application.getCandidate().getEmail() != null ? application.getCandidate().getEmail() : ""));
             }
-            
+
             if (application.getJob() != null) {
                 model.addAttribute("job", application.getJob());
                 model.addAttribute("jobTitle", application.getJob().getJobTitle());
             }
-            
+
             // Log the model attributes for debugging
-            log.debug("Model attributes - Application ID: {}, Status: {}", 
-                     application.getId(), application.getStatus());
-            
+            log.debug("Model attributes - Application ID: {}, Status: {}",
+                    application.getId(), application.getStatus());
+
             // Add candidate details to the model
             Candidate candidate = null;
             String candidateId = null;
@@ -272,7 +283,8 @@ public class RecruiterController {
             // Add status history if available
             if (application.getStatusHistory() != null && !application.getStatusHistory().isEmpty()) {
                 // Sort status history by date (newest first)
-                List<JobApplication.ApplicationStatusHistory> sortedHistory = new ArrayList<>(application.getStatusHistory());
+                List<JobApplication.ApplicationStatusHistory> sortedHistory = new ArrayList<>(
+                        application.getStatusHistory());
                 model.addAttribute("statusHistory", sortedHistory);
             }
 
@@ -287,14 +299,18 @@ public class RecruiterController {
                         application.setCandidate(candidate);
 
                         // Update application with candidate details if missing
-                        // If application is missing contact info but candidate has it, update the application
-                        if ((application.getFullName() == null || application.getFullName().isEmpty()) && candidate.getFullName() != null) {
+                        // If application is missing contact info but candidate has it, update the
+                        // application
+                        if ((application.getFullName() == null || application.getFullName().isEmpty())
+                                && candidate.getFullName() != null) {
                             application.setFullName(candidate.getFullName());
                         }
-                        if ((application.getEmail() == null || application.getEmail().isEmpty()) && candidate.getEmail() != null) {
+                        if ((application.getEmail() == null || application.getEmail().isEmpty())
+                                && candidate.getEmail() != null) {
                             application.setEmail(candidate.getEmail());
                         }
-                        if ((application.getPhone() == null || application.getPhone().isEmpty()) && candidate.getPhoneNumber() != null) {
+                        if ((application.getPhone() == null || application.getPhone().isEmpty())
+                                && candidate.getPhoneNumber() != null) {
                             application.setPhone(candidate.getPhoneNumber());
                         }
 
@@ -326,7 +342,7 @@ public class RecruiterController {
                     });
                     log.debug("Successfully sorted status history for application: {}", application.getId());
                 } catch (Exception e) {
-                    log.error("Error sorting status history for application {}: {}", 
+                    log.error("Error sorting status history for application {}: {}",
                             application.getId(), e.getMessage(), e);
                     // Continue without sorting if there's an error
                 }
@@ -384,7 +400,8 @@ public class RecruiterController {
                     modelMap.put("lastModifiedAt", job.getLastModifiedAt() != null ? job.getLastModifiedAt() : "N/A");
 
                     // Job requirements and details
-                    modelMap.put("requirements", job.getRequirements() != null ? job.getRequirements() : "No specific requirements listed");
+                    modelMap.put("requirements",
+                            job.getRequirements() != null ? job.getRequirements() : "No specific requirements listed");
 
                 } else {
                     modelMap.put("jobError", "No job details available for this application");
@@ -405,10 +422,15 @@ public class RecruiterController {
             model.addAttribute("currentUser", recruiter);
 
             return "recruiter/application-details";
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid ID format in viewApplication: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Invalid ID format: " + e.getMessage());
+            return "redirect:/recruiter/applications";
         } catch (Exception e) {
             System.err.println("Error in viewApplication: " + e.getMessage());
             e.printStackTrace();
-            return "redirect:/recruiter/applications?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            return "redirect:/recruiter/applications?error="
+                    + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
         }
     }
 
@@ -434,14 +456,14 @@ public class RecruiterController {
                 redirectAttributes.addFlashAttribute("error", "Application ID is invalid");
                 return "redirect:/recruiter/applications";
             }
-            
+
             // Check for common template literals or invalid formats
             if (id.equals("application.id") || id.equals("${application.id}") || id.contains("{")) {
                 log.error("Template literal detected in application ID: {}", id);
                 redirectAttributes.addFlashAttribute("error", "Invalid application ID format");
                 return "redirect:/recruiter/applications";
             }
-            
+
             // Get the current user
             String username = principal.getName();
             Recruiter recruiter = recruiterRepository.findByUsername(username)
@@ -449,9 +471,9 @@ public class RecruiterController {
                         log.error("Recruiter not found for username: {}", username);
                         return new RuntimeException("Recruiter not found");
                     });
-                    
+
             log.debug("Recruiter {} attempting to update status for application ID: {}", username, id);
-            
+
             // Find the application
             Optional<JobApplication> applicationOpt = jobApplicationService.getApplicationById(id);
             if (!applicationOpt.isPresent()) {
@@ -459,10 +481,10 @@ public class RecruiterController {
                 redirectAttributes.addFlashAttribute("error", "Application not found");
                 return "redirect:/recruiter/applications";
             }
-            
+
             JobApplication application = applicationOpt.get();
             log.info("Found application - ID: {}, Current Status: {}", application.getId(), application.getStatus());
-            
+
             // Verify job data is present
             if (application.getJob() == null) {
                 log.error("Job is null for application ID: {}", application.getId());
@@ -473,7 +495,7 @@ public class RecruiterController {
                 // Verify recruiter has access to this application only if job poster exists
                 String jobPosterId = application.getJob().getPostedBy().getId();
                 if (jobPosterId == null || !jobPosterId.equals(recruiter.getId())) {
-                    log.warn("Unauthorized access attempt. Recruiter ID: {}, Job Poster ID: {}", 
+                    log.warn("Unauthorized access attempt. Recruiter ID: {}, Job Poster ID: {}",
                             recruiter.getId(), jobPosterId);
                     redirectAttributes.addFlashAttribute("error", "You are not authorized to update this application");
                     return "redirect:/recruiter/applications";
@@ -482,33 +504,32 @@ public class RecruiterController {
                 log.warn("Job poster is null for job ID: {}", application.getJob().getId());
             }
 
-            log.info("Updating application status - Application ID: {}, Status: {}, Updated By: {}", 
+            log.info("Updating application status - Application ID: {}, Status: {}, Updated By: {}",
                     id, status, username);
 
             try {
                 // Save the old status for the event
                 JobApplication.ApplicationStatus oldStatus = application.getStatus();
-                
+
                 // Update the application status
                 application.setStatus(status);
                 application.setUpdatedAt(LocalDateTime.now());
                 application.setUpdatedBy(recruiter.getId());
-                
+
                 // Add to status history
                 if (application.getStatusHistory() == null) {
                     application.setStatusHistory(new ArrayList<>());
                 }
                 application.getStatusHistory().add(new JobApplication.ApplicationStatusHistory(
-                        status, 
-                        notes, 
-                        recruiter.getId(), 
-                        LocalDateTime.now()
-                ));
-                
+                        status,
+                        notes,
+                        recruiter.getId(),
+                        LocalDateTime.now()));
+
                 // Save the updated application
                 jobApplicationRepository.save(application);
                 log.info("Successfully updated application status - ID: {}, New Status: {}", id, status);
-                
+
                 // Publish status update event
                 try {
                     String jobTitle = application.getJob() != null ? application.getJob().getJobTitle() : "Unknown Job";
@@ -521,29 +542,28 @@ public class RecruiterController {
                             recruiter.getId(),
                             notes,
                             jobTitle,
-                            LocalDateTime.now()
-                    ));
+                            LocalDateTime.now()));
                     log.debug("Published status update event for application ID: {}", id);
                 } catch (Exception e) {
                     log.error("Error publishing status update event for application {}: {}", id, e.getMessage(), e);
                     // Don't fail the entire operation if event publishing fails
                 }
-                
+
                 redirectAttributes.addFlashAttribute("success", "Application status updated successfully");
                 return "redirect:/recruiter/applications/" + id;
-                
+
             } catch (Exception e) {
                 log.error("Error updating application status - ID: {}, Error: {}", id, e.getMessage(), e);
-                String errorMessage = "Error updating status: " + 
-                    (e.getMessage() != null ? e.getMessage() : "Unknown error occurred");
+                String errorMessage = "Error updating status: " +
+                        (e.getMessage() != null ? e.getMessage() : "Unknown error occurred");
                 redirectAttributes.addFlashAttribute("error", errorMessage);
                 return "redirect:/recruiter/applications/" + id;
             }
 
         } catch (Exception e) {
-            log.error("Unexpected error in updateApplicationStatus - ID: {}, Error: {}", 
+            log.error("Unexpected error in updateApplicationStatus - ID: {}, Error: {}",
                     id, e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", 
+            redirectAttributes.addFlashAttribute("error",
                     "An unexpected error occurred while updating the application status");
             return "redirect:/recruiter/applications";
         }
@@ -578,8 +598,8 @@ public class RecruiterController {
         }
     }
 
-//    @Autowired
-//    private SearchService searchService;
+    // @Autowired
+    // private SearchService searchService;
 
     @GetMapping("/search-candidates")
     public String searchCandidates(
@@ -605,25 +625,25 @@ public class RecruiterController {
             // Create search criteria
             ResumeSearchCriteria criteria = ResumeSearchCriteria.builder()
                     .keyword(query).build();
-//                    .city(location)
-//                    .state(location)
-//                    .uploadedBefore(uploadedBefore)
-//                    .build();
+            // .city(location)
+            // .state(location)
+            // .uploadedBefore(uploadedBefore)
+            // .build();
 
             // Set skills if provided
-//            if (skills != null && !skills.isEmpty()) {
-//                criteria.setProgrammingLanguages(skills);
-//                criteria.setFrameworks(skills);
-//            }
-//
-//            // Set individual fields for better search
-//            if (query != null) {
-//                criteria.setFullName(query);
-//                criteria.setCompanyName(query);
-//                criteria.setJobTitle(query);
-//                criteria.setInstitution(query);
-//                criteria.setDegree(query);
-//            }
+            // if (skills != null && !skills.isEmpty()) {
+            // criteria.setProgrammingLanguages(skills);
+            // criteria.setFrameworks(skills);
+            // }
+            //
+            // // Set individual fields for better search
+            // if (query != null) {
+            // criteria.setFullName(query);
+            // criteria.setCompanyName(query);
+            // criteria.setJobTitle(query);
+            // criteria.setInstitution(query);
+            // criteria.setDegree(query);
+            // }
 
             // Perform search
             List<Resume> searchResults = resumeService.searchResumes(criteria);
@@ -635,8 +655,7 @@ public class RecruiterController {
             Page<Resume> resumePage = new PageImpl<>(
                     searchResults.subList(start, end),
                     pageable,
-                    searchResults.size()
-            );
+                    searchResults.size());
 
             // Add recruiter info
             model.addAttribute("recruiter", recruiter);
@@ -703,8 +722,8 @@ public class RecruiterController {
 
     @PostMapping("/profile/update")
     public String updateProfile(@ModelAttribute("recruiter") Recruiter recruiterDetails,
-                                Principal principal,
-                                RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -736,10 +755,10 @@ public class RecruiterController {
 
     @PostMapping("/profile/change-password")
     public String changePassword(@RequestParam String currentPassword,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String confirmPassword,
-                                 Principal principal,
-                                 RedirectAttributes redirectAttributes) {
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
