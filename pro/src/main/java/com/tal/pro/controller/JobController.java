@@ -115,7 +115,36 @@ public class JobController {
     }
     
     @GetMapping("/{id}/edit")
-    public String editJobForm(@PathVariable String id, Model model, @AuthenticationPrincipal Recruiter recruiter) {
+    public String editJobForm(@PathVariable String id, Model model, 
+                            @AuthenticationPrincipal Object principal,
+                            RedirectAttributes redirectAttributes) {
+        
+        // Check if user is authenticated
+        if (principal == null) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to edit a job");
+            return "redirect:/login";
+        }
+        
+        // Get the recruiter from the principal
+        Recruiter recruiter;
+        if (principal instanceof Recruiter) {
+            recruiter = (Recruiter) principal;
+        } else if (principal instanceof UserDetails) {
+            // If using UserDetails, try to load the recruiter
+            String username = ((UserDetails) principal).getUsername();
+            recruiter = recruiterRepository.findByUsername(username).orElse(null);
+        } else {
+            recruiter = null;
+        }
+
+        if (recruiter == null) {
+            redirectAttributes.addFlashAttribute("error", "Only recruiters can edit jobs");
+            return "redirect:/access-denied";
+        }
+
+        // Create final copy of redirectAttributes for use in lambda
+        final RedirectAttributes finalRedirectAttributes = redirectAttributes;
+        
         return jobService.getJobById(id)
                 .map(job -> {
                     // If job doesn't have a postedBy, assign it to the current recruiter
@@ -124,7 +153,8 @@ public class JobController {
                         jobService.saveJob(job);
                     } 
                     // Check if the current user is the owner of the job
-                    else if (!job.getPostedBy().getId().equals(recruiter.getId())) {
+                    else if (job.getPostedBy() != null && !job.getPostedBy().getId().equals(recruiter.getId())) {
+                        finalRedirectAttributes.addFlashAttribute("error", "You don't have permission to edit this job");
                         return "redirect:/access-denied";
                     }
                     
@@ -133,7 +163,10 @@ public class JobController {
                     model.addAttribute("isEditMode", true);
                     return "recruiter/post-job";
                 })
-                .orElse("redirect:/recruiter/dashboard");
+                .orElseGet(() -> {
+                    finalRedirectAttributes.addFlashAttribute("error", "Job not found");
+                    return "redirect:/recruiter/dashboard";
+                });
     }
 
     @PutMapping("/{id}")
@@ -238,7 +271,18 @@ public class JobController {
     }
 
     @GetMapping("/view/{id}")
-    public String viewJob(@PathVariable String id, Model model, @AuthenticationPrincipal Object principal) {
+    public String viewJob(
+            @PathVariable String id, 
+            Model model, 
+            @AuthenticationPrincipal Object principal,
+            RedirectAttributes redirectAttributes) {
+        
+        // Basic validation for MongoDB ObjectId format (24 hex chars)
+        if (id == null || id.trim().isEmpty() || id.length() != 24 || !id.matches("^[a-fA-F0-9]+$")) {
+            redirectAttributes.addFlashAttribute("error", "Invalid job ID format");
+            return "redirect:/recruiter/dashboard";
+        }
+        
         try {
             Job job = jobService.getJobById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + id));
@@ -253,9 +297,13 @@ public class JobController {
                 model.addAttribute("isCandidate", false);
             }
             
-            return "candidate/job-details";
+            return "recruiter/job-details";
         } catch (ResourceNotFoundException e) {
-            return "redirect:/jobs?error=not_found";
+            redirectAttributes.addFlashAttribute("error", "Job not found");
+            return "redirect:/recruiter/dashboard";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error loading job: " + e.getMessage());
+            return "redirect:/recruiter/dashboard";
         }
     }
 }

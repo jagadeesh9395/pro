@@ -140,7 +140,21 @@ public class JobService {
     }
 
     public Optional<Job> getJobById(String id) {
-        return jobRepository.findById(id);
+        // Validate ID format (MongoDB ObjectId must be 24 hex characters)
+        if (id == null || id.trim().isEmpty() || id.length() != 24 || !id.matches("^[a-fA-F0-9]+$")) {
+            log.warn("Invalid job ID format: {}", id);
+            return Optional.empty();
+        }
+        
+        try {
+            return jobRepository.findById(id);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid job ID format: {}", id, e);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error fetching job with ID: {}", id, e);
+            return Optional.empty();
+        }
     }
 
     public List<Job> getJobsByRecruiter(Recruiter recruiter) {

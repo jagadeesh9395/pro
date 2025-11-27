@@ -1,5 +1,5 @@
 /**
- * WebSocket client for handling real-time application status updates
+ * WebSocket client for handling real-time application status updates and notifications
  */
 class ApplicationWebSocket {
     constructor() {
@@ -7,46 +7,77 @@ class ApplicationWebSocket {
         this.connected = false;
         this.subscriptions = new Map();
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.reconnectDelay = 5000; // 5 seconds
+        this.maxReconnectAttempts = 10;
+        this.reconnectDelay = 3000; // Start with 3 seconds
+        this.notificationCallbacks = [];
         this.connect();
     }
 
     connect() {
-        const socket = new SockJS('/ws');
-        this.stompClient = Stomp.over(socket);
-        
-        this.stompClient.connect({}, (frame) => {
-            console.log('Connected: ' + frame);
-            this.connected = true;
-            this.reconnectAttempts = 0;
+        try {
+            const socket = new SockJS('/ws');
+            this.stompClient = Stomp.over(socket);
+            this.stompClient.debug = () => {}; // Disable debug logging
             
-            // Resubscribe to existing subscriptions
-            this.subscriptions.forEach((subscription, destination) => {
-                this.subscribe(destination, subscription.callback);
+            this.stompClient.connect({}, (frame) => {
+                console.log('WebSocket connected successfully');
+                this.connected = true;
+                this.reconnectAttempts = 0;
+                
+                // Resubscribe to existing subscriptions
+                this.subscriptions.forEach((subscription, destination) => {
+                    this.subscribe(destination, subscription.callback);
+                });
+                
+                // Notify all registered callbacks of successful connection
+                this.notificationCallbacks.forEach(callback => {
+                    callback({ type: 'connected' });
+                });
+                
+            }, (error) => {
+                console.error('WebSocket connection error:', error);
+                this.connected = false;
+                this.reconnect();
             });
             
-        }, (error) => {
-            console.error('WebSocket connection error:', error);
-            this.connected = false;
+            // Handle connection close
+            socket.onclose = () => {
+                this.connected = false;
+                console.log('WebSocket connection closed');
+                this.reconnect();
+            };
+            
+        } catch (error) {
+            console.error('Error initializing WebSocket:', error);
             this.reconnect();
-        });
+        }
     }
 
     subscribe(destination, callback) {
-        if (this.connected) {
-            const subscription = this.stompClient.subscribe(destination, (message) => {
-                const statusUpdate = JSON.parse(message.body);
-                callback(statusUpdate);
-                this.updateUI(statusUpdate);
-            });
-            
-            this.subscriptions.set(destination, {
-                subscription: subscription,
-                callback: callback
-            });
-            
-            return subscription;
+        if (this.connected && this.stompClient) {
+            try {
+                const subscription = this.stompClient.subscribe(destination, (message) => {
+                    try {
+                        const data = JSON.parse(message.body);
+                        console.log('Received message on', destination, data);
+                        callback(data);
+                        this.notifyCallbacks(data);
+                    } catch (e) {
+                        console.error('Error processing message:', e);
+                    }
+                });
+                
+                this.subscriptions.set(destination, {
+                    subscription: subscription,
+                    callback: callback
+                });
+                
+                console.log('Subscribed to', destination);
+                return subscription;
+            } catch (error) {
+                console.error('Error subscribing to', destination, error);
+                return null;
+            }
         } else {
             // Queue the subscription for when we reconnect
             this.subscriptions.set(destination, { callback: callback });
@@ -60,106 +91,70 @@ class ApplicationWebSocket {
     unsubscribe(destination) {
         const sub = this.subscriptions.get(destination);
         if (sub && sub.subscription) {
-            sub.subscription.unsubscribe();
+            try {
+                sub.subscription.unsubscribe();
+                console.log('Unsubscribed from', destination);
+            } catch (error) {
+                console.error('Error unsubscribing from', destination, error);
+            }
         }
         this.subscriptions.delete(destination);
     }
 
     reconnect() {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-            setTimeout(() => this.connect(), this.reconnectDelay);
+            const delay = Math.min(this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts), 30000); // Max 30s delay
+            console.log(`Attempting to reconnect in ${delay/1000} seconds (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})...`);
+            
+            // Notify callbacks of reconnection attempt
+            this.notificationCallbacks.forEach(callback => {
+                callback({ 
+                    type: 'reconnecting', 
+                    attempt: this.reconnectAttempts + 1,
+                    maxAttempts: this.maxReconnectAttempts,
+                    nextAttemptIn: delay/1000
+                });
+            });
+            
+            setTimeout(() => {
+                this.reconnectAttempts++;
+                this.connect();
+            }, delay);
         } else {
             console.error('Max reconnection attempts reached. Please refresh the page to try again.');
+            this.notificationCallbacks.forEach(callback => {
+                callback({ 
+                    type: 'disconnected',
+                    reason: 'Max reconnection attempts reached',
+                    timestamp: new Date().toISOString()
+                });
+            });
         }
     }
 
-    updateUI(statusUpdate) {
-        // Update the status badge
-        const statusBadge = document.querySelector(`[data-application-id="${statusUpdate.applicationId}"] .status-badge`);
-        if (statusBadge) {
-            const statusText = this.formatStatusText(statusUpdate.newStatus);
-            statusBadge.textContent = statusText;
-            statusBadge.className = `status-badge status-${statusUpdate.newStatus.toLowerCase().replace('_', '-')}`;
+    onNotification(callback) {
+        if (typeof callback === 'function') {
+            this.notificationCallbacks.push(callback);
         }
-
-        // Show a notification
-        this.showNotification(
-            `Application Status Updated`, 
-            `Status changed from ${this.formatStatusText(statusUpdate.oldStatus)} to ${this.formatStatusText(statusUpdate.newStatus)}`,
-            this.getStatusColor(statusUpdate.newStatus)
-        );
-
-        // Update the status history
-        this.updateStatusHistory(statusUpdate);
+        return this;
     }
 
-    formatStatusText(status) {
-        // Convert status from UPPER_SNAKE_CASE to Title Case
-        if (!status) return '';
-        return status.toLowerCase()
-                   .split('_')
-                   .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                   .join(' ');
-    }
-
-    getStatusColor(status) {
-        const colors = {
-            'APPLIED': '#74b9ff',
-            'UNDER_REVIEW': '#00b894',
-            'SHORTLISTED': '#fdcb6e',
-            'INTERVIEW_SCHEDULED': '#00cec9',
-            'INTERVIEWING': '#0984e3',
-            'OFFER_EXTENDED': '#fab1a0',
-            'HIRED': '#55efc4',
-            'REJECTED': '#d63031',
-            'WITHDRAWN': '#636e72'
-        };
-        return colors[status] || '#333333';
-    }
-
-    showNotification(title, message, color) {
-        // Check if Toastr is available
-        if (window.toastr) {
-            toastr.info(message, title);
-        } 
-        // Fallback to browser notification if available
-        else if (window.Notification && Notification.permission === 'granted') {
-            new Notification(title, { body: message });
+    offNotification(callback) {
+        const index = this.notificationCallbacks.indexOf(callback);
+        if (index > -1) {
+            this.notificationCallbacks.splice(index, 1);
         }
-        // Fallback to console
-        else {
-            console.log(`[${title}] ${message}`);
-        }
+        return this;
     }
 
-    updateStatusHistory(statusUpdate) {
-        // Update the status history list
-        const historyList = document.querySelector(`[data-application-id="${statusUpdate.applicationId}"] .status-history`);
-        if (historyList) {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            
-            const formattedDate = new Date(statusUpdate.timestamp).toLocaleString();
-            const statusText = this.formatStatusText(statusUpdate.newStatus);
-            
-            historyItem.innerHTML = `
-                <span class="timestamp">${formattedDate}</span>
-                <span class="status ${statusUpdate.newStatus.toLowerCase().replace('_', '-')}">
-                    ${statusText}
-                </span>
-                ${statusUpdate.notes ? `<div class="notes">${statusUpdate.notes}</div>` : ''}
-                <div class="updated-by">Updated by: ${statusUpdate.updatedBy || 'System'}</div>
-            `;
-            
-            // Insert at the beginning of the list
-            if (historyList.firstChild) {
-                historyList.insertBefore(historyItem, historyList.firstChild);
-            } else {
-                historyList.appendChild(historyItem);
+    notifyCallbacks(data) {
+        this.notificationCallbacks.forEach(callback => {
+            try {
+                callback({ type: 'notification', data });
+            } catch (e) {
+                console.error('Error in notification callback:', e);
             }
-        }
+        });
     }
 }
 
@@ -167,24 +162,181 @@ class ApplicationWebSocket {
 document.addEventListener('DOMContentLoaded', () => {
     // Only initialize if SockJS and Stomp are available
     if (window.SockJS && window.Stomp) {
+        // Initialize WebSocket connection
         window.appWebSocket = new ApplicationWebSocket();
         
-        // Subscribe to user-specific updates if we have a user ID
+        // Get user information from the page
         const candidateId = document.body.dataset.candidateId;
+        const recruiterId = document.body.dataset.recruiterId;
+        const applicationId = document.body.dataset.applicationId;
+        
+        // Subscribe to user-specific notifications
         if (candidateId) {
-            window.appWebSocket.subscribe(`/user/${candidateId}/queue/status-updates`, (update) => {
-                console.log('Status update received for candidate:', update);
+            const userQueue = `/user/${candidateId}/queue/status-updates`;
+            window.appWebSocket.subscribe(userQueue, (update) => {
+                console.log('Status update for candidate:', update);
+                showStatusUpdateNotification(update);
+                
+                // Update the UI if we're on a relevant page
+                updateApplicationStatusUI(update);
+            });
+        }
+        
+        // Subscribe to recruiter-specific notifications
+        if (recruiterId) {
+            const recruiterQueue = `/user/${recruiterId}/queue/notifications`;
+            window.appWebSocket.subscribe(recruiterQueue, (notification) => {
+                console.log('Notification for recruiter:', notification);
+                showRecruiterNotification(notification);
             });
         }
         
         // Subscribe to application-specific updates if we have an application ID
-        const applicationId = document.body.dataset.applicationId;
         if (applicationId) {
-            window.appWebSocket.subscribe(`/topic/application/${applicationId}/status-updates`, (update) => {
+            const appTopic = `/topic/application/${applicationId}/status-updates`;
+            window.appWebSocket.subscribe(appTopic, (update) => {
                 console.log('Application status update:', update);
+                showStatusUpdateNotification(update);
+                updateApplicationStatusUI(update);
             });
         }
+        
+        // Handle connection status changes
+        window.appWebSocket.onNotification((event) => {
+            console.log('WebSocket notification:', event);
+            
+            if (event.type === 'connected') {
+                console.log('Successfully connected to WebSocket server');
+                // Refresh notifications on connect
+                if (window.refreshNotifications) {
+                    window.refreshNotifications();
+                }
+            } else if (event.type === 'reconnecting') {
+                console.log(`Reconnecting... (${event.attempt}/${event.maxAttempts})`);
+            } else if (event.type === 'disconnected') {
+                console.error('Disconnected from WebSocket server');
+            } else if (event.type === 'notification') {
+                console.log('Received notification:', event.data);
+            }
+        });
+        
+        // Expose refresh function
+        window.refreshNotifications = function() {
+            if (window.loadNotifications) {
+                window.loadNotifications();
+            }
+            if (window.loadUnreadCount) {
+                window.loadUnreadCount();
+            }
+        };
+        
     } else {
         console.warn('SockJS and/or Stomp not available. Real-time updates disabled.');
     }
 });
+
+// Helper functions for showing notifications
+function showStatusUpdateNotification(update) {
+    const statusText = formatStatusText(update.newStatus);
+    const title = 'Application Status Update';
+    const message = `Your application status has been updated to: ${statusText}`;
+    
+    showToast(title, message, 'info');
+    
+    // Update the notification badge if it exists
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        const currentCount = parseInt(badge.textContent) || 0;
+        badge.textContent = currentCount + 1;
+        badge.style.display = 'block';
+    }
+    
+    // Play notification sound if available
+    playNotificationSound();
+}
+
+function showRecruiterNotification(notification) {
+    const title = notification.title || 'New Notification';
+    const message = notification.message || 'You have a new notification';
+    
+    showToast(title, message, 'info');
+    
+    // Update the notification badge if it exists
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        const currentCount = parseInt(badge.textContent) || 0;
+        badge.textContent = currentCount + 1;
+        badge.style.display = 'block';
+    }
+    
+    // Play notification sound if available
+    playNotificationSound();
+}
+
+function updateApplicationStatusUI(update) {
+    // Update status badge if we're on the application details page
+    const statusBadge = document.querySelector(`[data-application-id="${update.applicationId}"] .status-badge`);
+    if (statusBadge) {
+        const statusText = formatStatusText(update.newStatus);
+        statusBadge.textContent = statusText;
+        statusBadge.className = `status-badge status-${update.newStatus.toLowerCase().replace('_', '-')}`;
+    }
+    
+    // Update status history if we're on the application details page
+    updateStatusHistory(update);
+}
+
+function updateStatusHistory(update) {
+    const historyList = document.querySelector(`[data-application-id="${update.applicationId}"] .status-history`);
+    if (historyList) {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        const formattedDate = new Date(update.timestamp || new Date()).toLocaleString();
+        const statusText = formatStatusText(update.newStatus);
+        
+        historyItem.innerHTML = `
+            <span class="timestamp">${formattedDate}</span>
+            <span class="status ${update.newStatus.toLowerCase().replace('_', '-')}">
+                ${statusText}
+            </span>
+            ${update.notes ? `<div class="notes">${update.notes}</div>` : ''}
+            <div class="updated-by">Updated by: ${update.updatedBy || 'System'}</div>
+        `;
+        
+        // Insert at the beginning of the list
+        if (historyList.firstChild) {
+            historyList.insertBefore(historyItem, historyList.firstChild);
+        } else {
+            historyList.appendChild(historyItem);
+        }
+    }
+}
+
+function formatStatusText(status) {
+    if (!status) return '';
+    return status.toLowerCase()
+               .split('_')
+               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+               .join(' ');
+}
+
+function showToast(title, message, type = 'info') {
+    // Check if Toastr is available
+    if (window.toastr) {
+        toastr[type](message, title);
+    } 
+    // Fallback to browser notification if available
+    else if (window.Notification && Notification.permission === 'granted') {
+        new Notification(title, { body: message });
+    }
+    // Fallback to console
+    else {
+        console.log(`[${title}] ${message}`);
+    }
+}
+
+function playNotificationSound() {
+    // You can add a subtle notification sound here if desired
+    // Example: new Audio('/sounds/notification.mp3').play().catch(() => {});
+}

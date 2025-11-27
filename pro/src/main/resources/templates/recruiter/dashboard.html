@@ -283,7 +283,8 @@
                 </div>
             </div>
             <div class="d-flex align-items-center">
-                <div class="me-3">
+                <!-- Notification Bell -->
+                <div class="me-3" th:replace="fragments/notifications :: notification-bell">
                     <i class="bi bi-bell fs-5"></i>
                 </div>
                 <div class="d-flex align-items-center">
@@ -432,9 +433,9 @@
                                             <span th:unless="${job != null}" th:text="'N/A'"></span>
                                         </td>
                                         <td>
-                                            <span class="status-badge" 
-                                                  th:classappend="'status-' + ${app.status?.name()?.toLowerCase()}"
-                                                  th:text="${#strings.capitalizeWords(#strings.toLowerCase(#strings.replace(app.status?.name(), '_', ' ')))}">
+                                            <span class="status-badge"
+                                                  th:classappend="'status-' + ${#strings.toLowerCase(app.status?.name() ?: '')}"
+                                                  th:text="${app.status != null ? #strings.capitalizeWords(#strings.toLowerCase(#strings.replace(app.status.name(), '_', ' '))) : 'N/A'}">
                                                 Status
                                             </span>
                                         </td>
@@ -442,8 +443,9 @@
                                         <td>
                                             <a th:href="@{/recruiter/applications/} + ${app.id}" 
                                                class="btn btn-sm btn-outline-primary"
-                                               title="View Application">
-                                                <i class="bi bi-eye"></i> View
+                                               th:title="'View application from ' + ${app.candidate?.fullName ?: 'candidate'}"
+                                               th:with="candidateName=${app.candidate?.fullName ?: 'candidate'}">
+                                                <i class="bi bi-person-lines-fill me-1"></i> Details
                                             </a>
                                         </td>
                                     </tr>

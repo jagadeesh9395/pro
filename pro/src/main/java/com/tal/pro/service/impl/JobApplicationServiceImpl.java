@@ -7,9 +7,11 @@ import com.tal.pro.model.Job;
 import com.tal.pro.model.JobApplication;
 import com.tal.pro.repository.JobApplicationRepository;
 import com.tal.pro.event.ApplicationStatusEvent;
+import com.tal.pro.repository.RecruiterRepository;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.service.JobService;
 import com.tal.pro.service.KafkaProducerService;
+import com.tal.pro.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,13 +33,20 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     private final JobService jobService;
     private final KafkaProducerService kafkaProducerService;
 
+    private final NotificationService notificationService;
+    private final RecruiterRepository recruiterRepository;
+
     @Autowired
     public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository, 
                                    JobService jobService,
-                                   KafkaProducerService kafkaProducerService) {
+                                   KafkaProducerService kafkaProducerService,
+                                   NotificationService notificationService,
+                                     RecruiterRepository recruiterRepository) {
         this.jobApplicationRepository = jobApplicationRepository;
         this.jobService = jobService;
         this.kafkaProducerService = kafkaProducerService;
+        this.notificationService = notificationService;
+        this.recruiterRepository = recruiterRepository;
     }
 
     @Override
@@ -57,7 +66,41 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         addStatusHistory(application, JobApplication.ApplicationStatus.APPLIED, "Application submitted", candidate.getId());
 
         // Save the application
-        return jobApplicationRepository.save(application);
+        JobApplication savedApplication = jobApplicationRepository.save(application);
+        
+        // Send email notifications
+        try {
+            // Send confirmation email to candidate
+            notificationService.sendJobApplicationConfirmation(
+                candidate.getEmail(),
+                candidate.getFullName(),
+                job.getJobTitle(),
+                job.getCompanyName()
+            );
+            
+            // Send notification to recruiter
+            if (job.getPostedBy() != null) {
+                String recruiterEmail = job.getPostedBy().getEmail();
+                String recruiterName = job.getPostedBy().getFullName();
+                String candidateName = candidate.getFullName();
+                String jobTitle = job.getJobTitle();
+                
+                notificationService.notifyRecruiterNewApplication(
+                    recruiterEmail,
+                    recruiterName,
+                    candidateName,
+                    candidate.getEmail(),
+                    jobTitle,
+                    job.getId(),
+                    savedApplication.getId()
+                );
+            }
+        } catch (Exception e) {
+            // Log the error but don't fail the application submission
+            log.error("Failed to send email notifications for application {}", savedApplication.getId(), e);
+        }
+        
+        return savedApplication;
     }
 
     @Override
