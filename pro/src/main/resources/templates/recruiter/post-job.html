@@ -9,533 +9,395 @@
     <title th:text="${isEditMode ? 'Edit Job' : 'Post New Job'} + ' - TalentTrove'">Post New Job - TalentTrove</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #4a6fa5;
-            --primary-dark: #3a5a85;
             --primary-light: #e3f2fd;
-            --secondary-color: #6a8fc7;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --text-color: #1e293b;
-            --text-light: #64748b;
-            --border-color: #e2e8f0;
-            --bg-light: #f8fafc;
-            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --box-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #2c3e50;
+            --text-light: #6c757d;
+            --border-color: #e9ecef;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f8f9fa;
             min-height: 100vh;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-color);
-            padding: 2rem 0;
         }
         
         .register-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 24px;
-            box-shadow: var(--box-shadow-lg);
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 15px;
+            box-shadow: var(--box-shadow);
             overflow: hidden;
-            animation: slideUp 0.5s ease-out;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            min-height: 90vh;
         }
         
         .register-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 3rem 2rem;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .register-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 15s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            margin-bottom: 2rem;
+            padding-top: 1.5rem;
         }
         
         .register-header i {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
+            color: var(--primary-color);
             margin-bottom: 1rem;
             display: inline-block;
-            animation: float 3s ease-in-out infinite;
-            position: relative;
-            z-index: 1;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
         }
         
         .register-header h2 {
+            color: var(--dark-color);
             font-weight: 700;
-            font-size: 2.25rem;
             margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .register-header p {
-            font-size: 1.05rem;
-            opacity: 0.95;
-            position: relative;
-            z-index: 1;
+            font-size: 1.8rem;
         }
         
         .card {
             border: none;
-            margin-bottom: 0;
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
             background-color: white;
         }
         
         .card-header {
-            background: linear-gradient(to right, var(--primary-light), #ffffff);
-            border-bottom: 2px solid var(--primary-color);
-            padding: 1.5rem;
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
             font-weight: 600;
-            font-size: 1.1rem;
-            color: var(--primary-dark);
-        }
-        
-        .card-header i {
-            color: var(--primary-color);
-            margin-right: 0.5rem;
-        }
-        
-        .card-body {
-            padding: 2.5rem;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--text-color);
-            font-size: 0.95rem;
         }
         
         .form-control, .form-select {
-            padding: 0.875rem 1.125rem;
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e1e5ee;
+            transition: all 0.3s ease;
             font-size: 0.95rem;
-            background-color: var(--bg-light);
         }
         
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(74, 111, 165, 0.1);
-            background-color: white;
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 0.25rem rgba(74, 111, 165, 0.25);
         }
         
         .input-group-text {
-            background: linear-gradient(135deg, var(--primary-light), #ffffff);
-            border: 2px solid var(--border-color);
+            background-color: #f8f9fa;
+            border: 1px solid #e1e5ee;
             border-right: none;
-            border-radius: 12px 0 0 12px;
-            color: var(--primary-color);
-            font-weight: 500;
-            padding: 0.875rem 1rem;
-        }
-        
-        .input-group .form-control,
-        .input-group .form-select {
-            border-left: none;
-            border-radius: 0 12px 12px 0;
-        }
-        
-        .input-group .form-control:focus,
-        .input-group .form-select:focus {
-            border-left: 2px solid var(--primary-color);
-        }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 120px;
+            border-radius: 8px 0 0 8px !important;
+            color: #6c757d;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--primary-color);
             border: none;
-            padding: 0.875rem 2rem;
+            padding: 0.75rem 1.5rem;
             font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
-            font-size: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(74, 111, 165, 0.4);
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
+            background: #3a5a80;
         }
-        
-        .btn-primary:active {
-            transform: translateY(0);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
         }
         
         .btn-outline-secondary {
-            border: 2px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 12px;
-            padding: 0.875rem 2rem;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
         }
         
         .btn-outline-secondary:hover {
-            background-color: var(--bg-light);
-            border-color: var(--text-light);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #495057;
         }
         
         .form-text {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-light) !important;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .form-text::before {
-            content: "ℹ️";
-            margin-right: 0.5rem;
+        .badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .invalid-feedback {
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
         }
         
-        .invalid-feedback::before {
-            content: "⚠️";
-            margin-right: 0.5rem;
+        .cursor-pointer {
+            cursor: pointer;
         }
-        
-        .mb-4 {
-            margin-bottom: 2rem !important;
-        }
-        
-        .border-top {
-            border-top: 2px solid var(--border-color) !important;
-            margin-top: 2rem;
-            padding-top: 2rem;
-        }
-        
-        .badge {
-            font-weight: 600;
-            padding: 0.5em 1em;
-            border-radius: 8px;
-            font-size: 0.875rem;
-        }
-        
-        .bg-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
-        }
-        
-        /* Success Message Styling */
-        #successMessage {
-            animation: fadeIn 0.5s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        #successMessage .fa-check-circle {
-            animation: checkmark 0.6s ease-out;
-        }
-        
-        @keyframes checkmark {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-        
-        /* Responsive Design */
+
         @media (max-width: 991.98px) {
             .register-container {
-                margin: 0 1rem;
-                border-radius: 16px;
-            }
-            
-            .card-body {
-                padding: 1.5rem;
+                margin: 1rem;
+                max-width: 100%;
             }
         }
         
         @media (max-width: 767.98px) {
-            body {
-                padding: 1rem 0;
-            }
-            
-            .register-header {
-                padding: 2rem 1.5rem;
-            }
-            
             .register-header h2 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
             }
             
-            .register-header i {
-                font-size: 2.5rem;
+            .form-control, .form-select, .btn {
+                padding: 0.65rem 1rem;
             }
-            
-            .card-body {
-                padding: 1.25rem;
-            }
-            
-            .btn-primary,
-            .btn-outline-secondary {
-                padding: 0.75rem 1.5rem;
-                font-size: 0.95rem;
-            }
-        }
-        
-        /* Loading Spinner */
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-            border-width: 0.15em;
-        }
-        
-        /* Smooth transitions for all interactive elements */
-        * {
-            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="register-container">
-            <div class="register-header">
-                <i class="fas fa-briefcase"></i>
-                <h2 th:text="${isEditMode ? 'Edit Job Posting' : 'Post a New Job'}">Post a New Job</h2>
-                <p th:text="${isEditMode ? 'Update the job details below' : 'Fill in the job details to find the perfect candidate'}">
-                    Fill in the job details to find the perfect candidate
-                </p>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-file-alt"></i>Job Details
+            <div class="register-form">
+                <div class="register-header">
+                    <i class="fas fa-briefcase"></i>
+                    <h2 th:text="${isEditMode ? 'Edit Job' : 'Post a New Job'}">Post a New Job</h2>
+                    <p th:text="${isEditMode ? 'Update the job details below' : 'Fill in the job details to find the perfect candidate'}">
+                        Fill in the job details to find the perfect candidate
+                    </p>
                 </div>
-                <div class="card-body">
-                    <form id="jobPostForm" class="needs-validation" 
-                          th:action="@{/recruiter/jobs/post}" 
-                          th:data-edit-mode="${isEditMode}"
-                          th:object="${job}" 
-                          onsubmit="return handleFormSubmit(event);" 
-                          novalidate>
-                        <!-- CSRF Token -->
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <!-- Job ID for edit mode -->
-                        <input type="hidden" th:if="${isEditMode}" th:field="*{id}" name="id" id="jobId" />
-                        
-                        <div class="mb-4">
-                            <label for="jobTitle" class="form-label">Job Title *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
-                                <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}" 
-                                       placeholder="e.g., Senior Software Engineer, Product Manager" required>
-                            </div>
-                            <div class="form-text">Be specific and include the seniority level</div>
-                            <div class="invalid-feedback">Please enter a job title.</div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="companyName" class="form-label">Company Name *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-building"></i></span>
-                                <input type="text" class="form-control" id="companyName" th:field="*{companyName}" 
-                                       placeholder="Your company name" required>
-                            </div>
-                            <div class="form-text">Your company's official name</div>
-                            <div class="invalid-feedback">Please enter your company name.</div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label for="jobType" class="form-label">Job Type *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
-                                    <select class="form-select" id="jobType" th:field="*{jobType}" required>
-                                        <option value="">Select job type</option>
-                                        <option value="FULL_TIME">Full-time</option>
-                                        <option value="PART_TIME">Part-time</option>
-                                        <option value="CONTRACT">Contract</option>
-                                        <option value="INTERNSHIP">Internship</option>
-                                        <option value="TEMPORARY">Temporary</option>
-                                    </select>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Job Details</h5>
+                    </div>
+                        <div class="card-body">
+                            <form id="jobPostForm" class="needs-validation"
+                                  th:action="@{/recruiter/jobs/post}"
+                                  th:data-edit-mode="${isEditMode}"
+                                  th:object="${job}"
+                                  onsubmit="return handleFormSubmit(event);"
+                                  novalidate>
+                                <!-- CSRF Token -->
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <!-- Job ID for edit mode -->
+                                <input type="hidden" th:if="${isEditMode}" th:field="*{id}" name="id" id="jobId" />
+                                <div class="mb-4">
+                                    <label for="jobTitle" class="form-label">Job Title *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                        <input type="text" class="form-control" id="jobTitle" th:field="*{jobTitle}"
+                                               placeholder="e.g., Senior Software Engineer, Product Manager, Data Scientist" required>
+                                    </div>
+                                    <div class="form-text">Be specific and include the seniority level (e.g., Junior, Mid-level, Senior, Lead)</div>
+                                    <div class="invalid-feedback">Please enter a job title.</div>
                                 </div>
-                                <div class="invalid-feedback">Please select a job type.</div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-4">
-                                <label for="experience" class="form-label">Required Experience *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                                    <input type="text" class="form-control" id="experience" th:field="*{experience}" 
-                                           placeholder="e.g., 3+ years, Entry Level" required>
+
+                                <div class="mb-4">
+                                    <label for="companyName" class="form-label">Company Name *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" class="form-control" id="companyName" th:field="*{companyName}"
+                                               placeholder="Your company name" required>
+                                    </div>
+                                    <div class="form-text">Your company's official name as you want it to appear in the job posting</div>
+                                    <div class="invalid-feedback">Please enter your company name.</div>
                                 </div>
-                                <div class="form-text">Specify the required experience level</div>
-                                <div class="invalid-feedback">Please enter the required experience.</div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="location" class="form-label">Location *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                <input type="text" class="form-control" id="location" th:field="*{location}" 
-                                       placeholder="e.g., New York, Remote" required>
-                            </div>
-                            <div class="invalid-feedback">Please enter a location.</div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label for="minSalary" class="form-label">Minimum Salary (₹)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
-                                    <input type="text" inputmode="decimal" class="form-control" id="minSalary" th:field="*{minSalary}" 
-                                           placeholder="e.g. 5.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'minSalaryWords')">
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-4">
+                                        <label for="jobType" class="form-label">Job Type *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                            <select class="form-select" id="jobType" th:field="*{jobType}" required>
+                                                <option value="">Select job type</option>
+                                                <option value="FULL_TIME">Full-time</option>
+                                                <option value="PART_TIME">Part-time</option>
+                                                <option value="CONTRACT">Contract</option>
+                                                <option value="INTERNSHIP">Internship</option>
+                                                <option value="TEMPORARY">Temporary</option>
+                                            </select>
+                                        </div>
+                                        <div class="invalid-feedback">Please select a job type.</div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-4">
+                                        <label for="experience" class="form-label">Required Experience *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                            <input type="text" class="form-control" id="experience" th:field="*{experience}"
+                                                   placeholder="e.g., 3+ years, 5-7 years, Entry Level" required>
+                                        </div>
+                                        <div class="form-text">Specify the required experience level for this position</div>
+                                        <div class="invalid-feedback">Please enter the required experience.</div>
+                                    </div>
+                                    <div class="col-md-6 mb-4">
+                                        <label for="location" class="form-label">Location *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                            <input type="text" class="form-control" id="location" th:field="*{location}" placeholder="e.g., New York, Remote" required>
+                                        </div>
+                                        <div class="invalid-feedback">Please enter a location.</div>
+                                    </div>
                                 </div>
-                                <div id="minSalaryWords" class="form-text text-muted small mt-1"></div>
-                                <div class="form-text">Enter amount in Lakhs (e.g., 8.5 for ₹8,50,000/year)</div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-4">
-                                <label for="maxSalary" class="form-label">Maximum Salary (₹)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
-                                    <input type="text" inputmode="decimal" class="form-control" id="maxSalary" th:field="*{maxSalary}" 
-                                           placeholder="e.g. 10.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'maxSalaryWords')">
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-4">
+                                        <label for="minSalary" class="form-label">Minimum Salary (₹)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
+                                            <input type="text" inputmode="decimal" class="form-control" id="minSalary" th:field="*{minSalary}"
+                                                   placeholder="e.g. 5.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'minSalaryWords')">
+                                            <div id="minSalaryWords" class="form-text text-muted small mt-1 w-100"></div>
+                                        </div>
+                                        <div class="form-text">Enter amount in Lakhs (e.g., 8.5 for ₹8,50,000 per year)</div>
+                                    </div>
+                                    <div class="col-md-6 mb-4">
+                                        <label for="maxSalary" class="form-label">Maximum Salary (₹)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-indian-rupee-sign"></i></span>
+                                            <input type="text" inputmode="decimal" class="form-control" id="maxSalary" th:field="*{maxSalary}"
+                                                   placeholder="e.g. 10.5" pattern="[0-9]*[.,]?[0-9]*" oninput="formatAndUpdate(this, 'maxSalaryWords')">
+                                            <div id="maxSalaryWords" class="form-text text-muted small mt-1 w-100"></div>
+                                        </div>
+                                        <div class="form-text">Enter amount in Lakhs (e.g., 20 for ₹20,00,000 per year, 0 for 'Not Disclosed')</div>
+                                        <div id="salaryWarning" class="text-danger small mt-1 d-none"></div>
+                                    </div>
                                 </div>
-                                <div id="maxSalaryWords" class="form-text text-muted small mt-1"></div>
-                                <div class="form-text">Enter amount in Lakhs (e.g., 20 for ₹20,00,000/year)</div>
-                                <div id="salaryWarning" class="text-danger small mt-1 d-none"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="description" class="form-label">Job Description *</label>
-                            <div class="input-group">
-                                <span class="input-group-text align-items-start pt-3"><i class="fas fa-align-left"></i></span>
-                                <textarea class="form-control" id="description" rows="5" th:field="*{description}" required 
-                                          placeholder="Provide a detailed description of the job role, responsibilities, and expectations"></textarea>
-                            </div>
-                            <div class="invalid-feedback">Please provide a job description.</div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="requirements" class="form-label">Requirements *</label>
-                            <div class="input-group">
-                                <span class="input-group-text align-items-start pt-3"><i class="fas fa-list-check"></i></span>
-                                <textarea class="form-control" id="requirements" rows="3" th:field="*{requirements}" required
-                                          placeholder="List key requirements, one per line"></textarea>
-                            </div>
-                            <div class="form-text">List key requirements, one per line</div>
-                            <div class="invalid-feedback">Please provide job requirements.</div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="skills" class="form-label">Required Skills *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-code"></i></span>
-                                <input type="text" class="form-control" id="skills" th:field="*{skills}" 
-                                       placeholder="e.g., Java, Spring Boot, React, AWS, SQL" required>
-                            </div>
-                            <div class="form-text">List relevant skills, separated by commas</div>
-                            <div class="invalid-feedback">Please add required skills.</div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between border-top">
-                            <a href="/recruiter/dashboard" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                            </a>
-                            <div>
-                                <button type="reset" class="btn btn-outline-secondary me-2">
-                                    <i class="fas fa-undo me-2"></i>Reset
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas me-2" th:classappend="${isEditMode} ? 'fa-save' : 'fa-paper-plane'"></i>
-                                    <span th:text="${isEditMode} ? 'Update Job' : 'Post Job'">Post Job</span>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <!-- Success Message (initially hidden) -->
-                    <div id="successMessage" class="d-none">
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
-                                <h3 class="mt-4 fw-bold">Job Posted Successfully!</h3>
-                                <p class="text-muted fs-5">Your job listing is now live and visible to candidates.</p>
-                            </div>
-                            
-                            <div class="d-flex justify-content-center gap-3 mt-4">
-                                <a href="/recruiter/dashboard" class="btn btn-outline-primary btn-lg">
-                                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
-                                </a>
-                                <button type="button" class="btn btn-primary btn-lg" onclick="window.location.reload()">
-                                    <i class="fas fa-plus-circle me-2"></i>Post Another Job
-                                </button>
+
+                                <div class="mb-4">
+                                    <label for="description" class="form-label">Job Description *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text align-items-start pt-3"><i class="fas fa-align-left"></i></span>
+                                        <textarea class="form-control" id="description" rows="5" th:field="*{description}" required
+                                                  placeholder="Provide a detailed description of the job role, responsibilities, and expectations"></textarea>
+                                    </div>
+                                    <div class="invalid-feedback">Please provide a job description.</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="requirements" class="form-label">Requirements *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text align-items-start pt-3"><i class="fas fa-list-check"></i></span>
+                                        <textarea class="form-control" id="requirements" rows="3" th:field="*{requirements}" required
+                                                  placeholder="List key requirements, one per line"></textarea>
+                                    </div>
+                                    <div class="form-text">List key requirements, one per line</div>
+                                    <div class="invalid-feedback">Please provide job requirements.</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="skills" class="form-label">Required Skills *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-code"></i></span>
+                                        <input type="text" class="form-control" id="skills" th:field="*{skills}"
+                                               placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" required>
+                                    </div>
+                                    <div class="form-text">List relevant technical and soft skills, separated by commas. Include programming languages, frameworks, tools, and methodologies.</div>
+                                    <div class="invalid-feedback">Please add required skills.</div>
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+                                    <a href="/recruiter/dashboard" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                    </a>
+                                    <div>
+                                        <button type="reset" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-undo me-2"></i>Reset
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas me-2" th:classappend="${isEditMode} ? 'fa-save' : 'fa-paper-plane'"></i>
+                                            <span th:text="${isEditMode} ? 'Update Job' : 'Post Job'">Post Job</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Success Message (initially hidden) -->
+                            <div id="successMessage" class="d-none">
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                                        <h3 class="mt-3">Job Posted Successfully!</h3>
+                                        <p class="text-muted">Your job listing is now live and visible to candidates.</p>
+                                    </div>
+
+                                    <div class="card mt-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Job Details</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <h5 id="previewJobTitle"></h5>
+                                                    <h6 class="text-muted" id="previewCompany"></h6>
+                                                </div>
+                                                <div class="col-md-6 text-md-end">
+                                                    <span class="badge bg-primary" id="previewJobType"></span>
+                                                    <span class="badge bg-secondary ms-2" id="previewLocation"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="fas fa-indian-rupee-sign me-2"></i>
+                                                        <span id="previewSalary"></span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="far fa-calendar-alt me-2"></i>
+                                                        <span>Posted: <span id="postDate"></span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Required Skills:</h6>
+                                                    <div id="previewSkills" class="d-flex flex-wrap gap-2"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-4">
+                                                <h6><i class="fas fa-align-left me-2"></i>Job Description:</h6>
+                                                <div id="previewDescription" class="bg-light p-3 rounded"></div>
+                                            </div>
+
+                                            <div class="mt-4">
+                                                <h6><i class="fas fa-list-check me-2"></i>Requirements:</h6>
+                                                <ul id="previewRequirements" class="list-unstyled"></ul>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+                                                <a href="/recruiter/dashboard" class="btn btn-outline-primary">
+                                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                                </a>
+                                                <button type="button" class="btn btn-primary" onclick="window.location.reload()">
+                                                    <i class="fas fa-plus-circle me-2"></i>Post Another Job
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -606,7 +468,7 @@
             if (thousand > 0) result += (result ? ' ' : '') + convertLessThanThousand(thousand) + ' Thousand';
             if (remainder > 0) result += (result ? ' ' : '') + convertLessThanThousand(remainder);
             
-            return result + ' Rupees';
+            return result + (result.endsWith('s') ? ' Rupees' : ' Rupees');
         }
 
         // Function to validate salary range
@@ -639,6 +501,10 @@
         function formatAndUpdate(input, wordsId) {
             if (!input) return;
             
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
+
             // Get and clean the input value
             let value = input.value.replace(/[^\d.]/g, '');
             
@@ -657,31 +523,128 @@
                 }
             }
             
-            // Store raw value
+            // Store raw value and format display
             input.setAttribute('data-raw-value', value);
             
+            let displayValue = '';
+            if (value) {
+                const [whole, decimal] = value.split('.');
+                displayValue = formatNumber(whole) + (decimal !== undefined ? '.' + decimal.padEnd(2, '0').substring(0, 2) : '.00');
+            }
+
+            // Update input value if changed
+            if (input.value !== displayValue) {
+                input.value = displayValue;
+            }
+
             // Update amount in words
             const displayElement = document.getElementById(wordsId);
-            if (displayElement && value) {
-                const amountInRupees = Math.floor(parseFloat(value) * 100000);
-                const formattedNumber = new Intl.NumberFormat('en-IN').format(amountInRupees);
-                const words = numberToWords(amountInRupees);
-                displayElement.textContent = `${words} (₹${formattedNumber})`;
-                displayElement.style.fontWeight = '500';
-                displayElement.style.color = '#495057';
-            } else if (displayElement) {
-                displayElement.textContent = '';
+            if (displayElement) {
+                if (value) {
+                    const amountInRupees = Math.floor(parseFloat(value) * 100000);
+                    const formattedNumber = new Intl.NumberFormat('en-IN').format(amountInRupees);
+                    const words = numberToWords(amountInRupees);
+                    displayElement.textContent = `${words} (₹${formattedNumber})`;
+                    displayElement.style.fontWeight = '500';
+                    displayElement.style.color = '#495057';
+                } else {
+                    displayElement.textContent = '';
+                }
             }
             
+            // Store current values for next time
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+
+            // Update cursor position
+            const prevValue = input.getAttribute('data-prev-value') || '';
+            const lengthDiff = displayValue.length - prevValue.length;
+            const newCursorPos = isDeleting ? cursorPos : cursorPos + lengthDiff;
+
+            setTimeout(() => {
+                try {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                } catch (e) {
+                    // Ignore cursor position errors
+                }
+            }, 0);
+
             validateSalaryRange();
+            return true;
+        }
+
+        // Format salary input (LPA - Lakhs Per Annum)
+        function formatLPA(input) {
+            if (!input) return;
+
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
+
+            // Get and clean the input value
+            let value = input.value.replace(/[^\d.]/g, '');
+
+            // Handle multiple decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+
+            // Limit to 2 decimal places
+            const decimalIndex = value.indexOf('.');
+            if (decimalIndex !== -1) {
+                const decimalPart = value.substring(decimalIndex + 1);
+                if (decimalPart.length > 2) {
+                    value = value.substring(0, decimalIndex + 3);
+                }
+            }
+
+            // Store raw value
+            input.setAttribute('data-raw-value', value);
+
+            // Format display value with 2 decimal places
+            let displayValue = value;
+            if (value.includes('.')) {
+                const [whole, decimal] = value.split('.');
+                displayValue = whole + '.' + (decimal || '00').padEnd(2, '0').substring(0, 2);
+            } else if (value) {
+                displayValue = value + '.00';
+            }
+
+            // Only update if changed
+            if (input.value !== displayValue) {
+                input.value = displayValue;
+            }
+
+            // Update cursor position
+            const prevValue = input.getAttribute('data-prev-value') || '';
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+
+            const lengthDiff = displayValue.length - prevValue.length;
+            const newCursorPos = isDeleting ? cursorPos : cursorPos + lengthDiff;
+
+            setTimeout(() => {
+                try {
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                } catch (e) {
+                    // Ignore cursor position errors
+                }
+            }, 0);
+
+            validateSalaryRange();
+            return true;
         }
         
         // Handle form submission
         function handleFormSubmit(event) {
             event.preventDefault();
             
+            // Prevent multiple submissions
             const submitBtn = event.target.querySelector('button[type="submit"]');
-            if (submitBtn.disabled) return false;
+            if (submitBtn.disabled) {
+                return false; // Prevent multiple submissions
+            }
             
             const form = event.target;
             const isEditMode = form.getAttribute('data-edit-mode') === 'true';
@@ -689,20 +652,28 @@
             const formData = new FormData(form);
             const jobData = {};
             
+            // Convert FormData to object and handle special fields
             formData.forEach((value, key) => {
+                // Skip empty values
                 if (value === '') return;
+
+                // Handle salary fields - convert from LPA to paise
                 if ((key === 'minSalary' || key === 'maxSalary') && value) {
-                    jobData[key] = Math.round(parseFloat(value) * 100000);
+                    jobData[key] = Math.round(parseFloat(value) * 100000); // Convert LPA to paise
                 } else {
                     jobData[key] = value;
                 }
             });
             
+            // Add CSRF token to the request body if not already present
             if (!jobData._csrf) {
                 const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-                if (csrfToken) jobData._csrf = csrfToken;
+                if (csrfToken) {
+                    jobData._csrf = csrfToken;
+                }
             }
             
+            // Set the appropriate URL and method based on whether we're creating or updating
             let url, method;
             if (isEditMode && jobId) {
                 url = `/recruiter/jobs/${jobId}`;
@@ -712,43 +683,78 @@
                 method = 'POST';
             }
             
+            // Get CSRF token from the page's meta tags
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
             
+            // Prepare headers with proper content type and CSRF token
             const headers = new Headers();
             headers.append('Content-Type', 'application/json');
             headers.append('Accept', 'application/json');
             headers.append('X-Requested-With', 'XMLHttpRequest');
-            if (csrfToken && csrfHeader) headers.append(csrfHeader, csrfToken);
+
+            // Add CSRF token to headers
+            if (csrfToken && csrfHeader) {
+                headers.append(csrfHeader, csrfToken);
+            } else {
+                console.warn('CSRF token not found in meta tags');
+            }
             
+            // Log the headers for debugging
+            console.log('Request headers:', Object.fromEntries(headers.entries()));
+
+            // Disable the submit button to prevent multiple submissions
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             
+            // Log the request data for debugging
+            console.log('Sending request to:', url);
+            console.log('Request method:', method);
+            console.log('Request payload:', jobData);
+
+            // Submit the form data with credentials
             fetch(url, {
                 method: method,
                 headers: headers,
                 body: JSON.stringify(jobData),
-                credentials: 'include'
+                credentials: 'include'  // Include cookies, even for cross-origin requests
             })
             .then(async response => {
-                const responseData = await response.text();
-                if (!response.ok) {
-                    try {
-                        const errorData = JSON.parse(responseData);
-                        throw new Error(errorData.message || 'An error occurred');
-                    } catch (e) {
-                        throw new Error(`Server returned status ${response.status}: ${response.statusText}`);
+                console.log('Response status:', response.status, response.statusText);
+                const contentType = response.headers.get('content-type');
+
+                try {
+                    const responseData = await response.text();
+                    console.log('Raw response:', responseData);
+
+                    if (!response.ok) {
+                        try {
+                            // Try to parse as JSON first
+                            const errorData = JSON.parse(responseData);
+                            throw new Error(errorData.message || 'An error occurred');
+                        } catch (e) {
+                            // If not JSON, handle as HTML/plain text
+                            console.error('Error parsing error response:', e);
+                            throw new Error(`Server returned status ${response.status}: ${response.statusText}`);
+                        }
                     }
+
+                    // If we get here, the response is OK
+                    return JSON.parse(responseData);
+                } catch (error) {
+                    console.error('Error processing response:', error);
+                    throw error;
                 }
-                return JSON.parse(responseData);
             })
             .then(data => {
                 if (data.redirectUrl) {
                     window.location.href = data.redirectUrl;
                 } else if (data.success) {
+                    // Show success message
                     const successMessage = document.getElementById('successMessage');
                     const jobForm = document.getElementById('jobPostForm');
+
                     if (successMessage && jobForm) {
                         jobForm.classList.add('d-none');
                         successMessage.classList.remove('d-none');
@@ -765,12 +771,13 @@
                 alert(error.message || 'An error occurred while saving the job. Please try again.');
             })
             .finally(() => {
+                // Reset button state
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
             });
         }
         
-        // Initialize form
+        // Initialize form with data if in edit mode
         document.addEventListener('DOMContentLoaded', function() {
             const formElement = document.getElementById('jobPostForm');
             if (!formElement) return;
@@ -778,6 +785,7 @@
             const isEditMode = formElement.getAttribute('data-edit-mode') === 'true';
             
             if (isEditMode) {
+                // Format salary values from paise to LPA
                 const minSalary = document.getElementById('minSalary');
                 const maxSalary = document.getElementById('maxSalary');
                 
@@ -787,10 +795,25 @@
                 if (maxSalary && maxSalary.value) {
                     maxSalary.value = (parseFloat(maxSalary.value) / 100000).toFixed(2);
                 }
-            }
+
+                // Update the form title and button text
+                const titleElement = document.querySelector('h2');
+                if (titleElement) {
+                    titleElement.textContent = 'Edit Job Posting';
+                }
+                const submitButton = document.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Update Job';
+                }
+            } // Close the edit mode check
             
+            // Initialize form validation and event listeners
             const form = document.getElementById('jobPostForm');
+            const minSalary = document.getElementById('minSalary');
+            const maxSalary = document.getElementById('maxSalary');
+
             if (form) {
+                // Add Bootstrap validation
                 form.addEventListener('submit', function(event) {
                     event.preventDefault();
                     
@@ -805,21 +828,47 @@
                         return false;
                     }
                     
+                    // Get the raw values from data attributes if they exist
                     const minSalary = document.getElementById('minSalary');
                     const maxSalary = document.getElementById('maxSalary');
                     
+                    // Convert formatted values back to raw numbers for submission
                     if (minSalary) {
                         const rawValue = minSalary.getAttribute('data-raw-value');
-                        minSalary.value = rawValue || minSalary.value.replace(/[^\d.]/g, '');
+                        if (rawValue) {
+                            minSalary.value = rawValue;
+                        } else {
+                            // Fallback to removing non-numeric characters
+                            minSalary.value = minSalary.value.replace(/[^\d.]/g, '');
+                        }
                     }
                     
                     if (maxSalary) {
                         const rawValue = maxSalary.getAttribute('data-raw-value');
-                        maxSalary.value = rawValue || maxSalary.value.replace(/[^\d.]/g, '');
+                        if (rawValue) {
+                            maxSalary.value = rawValue;
+                        } else {
+                            // Fallback to removing non-numeric characters
+                            maxSalary.value = maxSalary.value.replace(/[^\d.]/g, '');
+                        }
                     }
                     
+                    // If we get here, form is valid - handle submission
                     handleFormSubmit(event);
                     return false;
+                });
+            }
+
+            // Add real-time validation for salary fields
+            if (minSalary && maxSalary) {
+                minSalary.addEventListener('input', function() {
+                    formatLPA(this);
+                    validateSalaryRange();
+                });
+
+                maxSalary.addEventListener('input', function() {
+                    formatLPA(this);
+                    validateSalaryRange();
                 });
             }
         });

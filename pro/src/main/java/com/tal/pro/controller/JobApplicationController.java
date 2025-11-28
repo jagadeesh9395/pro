@@ -1,21 +1,20 @@
 package com.tal.pro.controller;
 
-import com.tal.pro.dto.ApplicationDetailsDto;
-import com.tal.pro.dto.JobApplicationDto;
-import com.tal.pro.event.ApplicationStatusEvent;
-import com.tal.pro.exception.ResourceNotFoundException;
-import com.tal.pro.model.*;
-import com.tal.pro.model.JobApplication.ApplicationStatus;
-import com.tal.pro.repository.CandidateRepository;
-import com.tal.pro.repository.RecruiterRepository;
-import com.tal.pro.security.services.UserDetailsImpl;
-import com.tal.pro.service.*;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -23,6 +22,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,19 +33,36 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.tal.pro.dto.ApplicationDetailsDto;
+import com.tal.pro.dto.JobApplicationDto;
+import com.tal.pro.exception.ResourceNotFoundException;
+import com.tal.pro.model.ApplicationStatusHistory;
+import com.tal.pro.model.Candidate;
+import com.tal.pro.model.Job;
+import com.tal.pro.model.JobApplication;
+import com.tal.pro.model.JobApplication.ApplicationStatus;
+import com.tal.pro.repository.CandidateRepository;
+import com.tal.pro.repository.RecruiterRepository;
+import com.tal.pro.security.services.UserDetailsImpl;
+import com.tal.pro.service.CandidateService;
+import com.tal.pro.service.JobApplicationService;
+import com.tal.pro.service.JobService;
+import com.tal.pro.service.KafkaProducerService;
+import com.tal.pro.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequestMapping("/jobs")
@@ -64,14 +82,14 @@ public class JobApplicationController {
     private String uploadDir;
 
     @Autowired
-    public JobApplicationController(CandidateRepository candidateRepository, 
-                                  RecruiterRepository recruiterRepository, 
-                                  CandidateService candidateService, 
-                                  JobApplicationService jobApplicationService, 
-                                  JobService jobService,
-                                  KafkaProducerService kafkaProducerService,
-                                  SimpMessagingTemplate messagingTemplate,
-                                  UserService userService) {
+    public JobApplicationController(CandidateRepository candidateRepository,
+            RecruiterRepository recruiterRepository,
+            CandidateService candidateService,
+            JobApplicationService jobApplicationService,
+            JobService jobService,
+            KafkaProducerService kafkaProducerService,
+            SimpMessagingTemplate messagingTemplate,
+            UserService userService) {
         this.candidateRepository = candidateRepository;
         this.recruiterRepository = recruiterRepository;
         this.candidateService = candidateService;
@@ -81,8 +99,6 @@ public class JobApplicationController {
         this.messagingTemplate = messagingTemplate;
         this.userService = userService;
     }
-
-
 
     /**
      * REST endpoint to update application status
@@ -97,10 +113,11 @@ public class JobApplicationController {
 
         try {
             String updatedBy = authentication.getName();
-            JobApplication application = jobApplicationService.updateApplicationStatus(applicationId, status, notes, updatedBy);
-            
+            JobApplication application = jobApplicationService.updateApplicationStatus(applicationId, status, notes,
+                    updatedBy);
+
             // The Kafka event will be published by the service layer
-            
+
             redirectAttributes.addFlashAttribute("success", "Application status updated successfully!");
             return "redirect:/recruiter/applications/" + application.getId();
         } catch (ResourceNotFoundException e) {
@@ -111,10 +128,10 @@ public class JobApplicationController {
             return "redirect:/recruiter/dashboard";
         }
     }
-    
+
     /**
-    
-    /**
+     * 
+     * /**
      * REST endpoint to get application status history
      */
     @GetMapping("/applications/{id}/history")
@@ -129,7 +146,7 @@ public class JobApplicationController {
             return ResponseEntity.status(500).body("Error retrieving status history: " + e.getMessage());
         }
     }
-    
+
     /**
      * WebSocket endpoint to subscribe to application status updates
      */
@@ -164,7 +181,7 @@ public class JobApplicationController {
         return JobApplication.ApplicationStatus.values();
     }
 
-    @GetMapping({"/view/{id}", "/jobs/view/{id}"})
+    @GetMapping({ "/view/{id}", "/jobs/view/{id}" })
     public String viewJob(@PathVariable String id, Model model, @AuthenticationPrincipal Object principal) {
         try {
             Job job = jobService.getJobById(id)
@@ -173,30 +190,31 @@ public class JobApplicationController {
             boolean isAuthenticated = false;
             boolean isCandidate = false;
             boolean isRecruiter = false;
-            final boolean[] hasApplied = {false};
+            final boolean[] hasApplied = { false };
             String dashboardType = "guest";
 
             if (principal instanceof UserDetails userDetails) {
                 isAuthenticated = true;
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                
+
                 if (authentication != null && authentication.isAuthenticated()) {
                     Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
                     boolean hasRecruiterRole = authorities.stream()
-                        .anyMatch(auth -> "ROLE_RECRUITER".equals(auth.getAuthority()));
+                            .anyMatch(auth -> "ROLE_RECRUITER".equals(auth.getAuthority()));
                     boolean hasCandidateRole = authorities.stream()
-                        .anyMatch(auth -> "ROLE_CANDIDATE".equals(auth.getAuthority()));
+                            .anyMatch(auth -> "ROLE_CANDIDATE".equals(auth.getAuthority()));
 
                     if (hasRecruiterRole) {
                         isRecruiter = true;
                         dashboardType = "recruiter";
-                    } 
-                    
+                    }
+
                     if (hasCandidateRole) {
                         isCandidate = true;
                         dashboardType = "candidate";
                         candidateRepository.findByUsername(userDetails.getUsername())
-                            .ifPresent(candidate -> hasApplied[0] = jobApplicationService.hasApplied(candidate, job));
+                                .ifPresent(
+                                        candidate -> hasApplied[0] = jobApplicationService.hasApplied(candidate, job));
                     }
                 }
             }
@@ -204,30 +222,28 @@ public class JobApplicationController {
             // Get application status and notes if user has applied
             String applicationStatus = "";
             String applicationNotes = "";
-            
+
             if (hasApplied[0] && isCandidate) {
                 Optional<JobApplication> applicationOpt = jobApplicationService.findByCandidateAndJob(
-                    candidateRepository.findByUsername(((UserDetails) principal).getUsername()).get(),
-                    job
-                );
-                
+                        candidateRepository.findByUsername(((UserDetails) principal).getUsername()).get(),
+                        job);
+
                 if (applicationOpt.isPresent()) {
                     JobApplication application = applicationOpt.get();
                     applicationStatus = application.getStatus() != null ? application.getStatus().name() : "";
                     applicationNotes = application.getNotes() != null ? application.getNotes() : "";
                 }
             }
-            
+
             model.addAllAttributes(Map.of(
-                "isAuthenticated", isAuthenticated,
-                "isCandidate", isCandidate,
-                "isRecruiter", isRecruiter,
-                "hasApplied", hasApplied[0],
-                "dashboardType", dashboardType,
-                "job", job,
-                "applicationStatus", applicationStatus,
-                "applicationNotes", applicationNotes
-            ));
+                    "isAuthenticated", isAuthenticated,
+                    "isCandidate", isCandidate,
+                    "isRecruiter", isRecruiter,
+                    "hasApplied", hasApplied[0],
+                    "dashboardType", dashboardType,
+                    "job", job,
+                    "applicationStatus", applicationStatus,
+                    "applicationNotes", applicationNotes));
 
             return "candidate/job-details";
         } catch (ResourceNotFoundException e) {
@@ -242,41 +258,41 @@ public class JobApplicationController {
             @PathVariable String jobId,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             Model model) {
-        
+
         // Initialize candidate as null
         Candidate candidate = null;
-        
+
         // If user is authenticated and has candidate role, get the candidate
         if (userDetails != null && userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_CANDIDATE"))) {
             candidate = candidateRepository.findByUsername(userDetails.getUsername())
-                .orElse(null);
+                    .orElse(null);
         }
         // Get the job or return 404 if not found
         Optional<Job> jobOpt = jobService.getJobById(jobId);
         if (jobOpt.isEmpty()) {
             return "redirect:/jobs?error=not_found";
         }
-        
+
         // Check if the current user has applied for this job and get application status
         boolean hasApplied = false;
         String applicationStatus = null;
-        
+
         if (candidate != null && candidate.getId() != null) {
             hasApplied = jobApplicationService.hasCandidateApplied(jobId, candidate.getId());
             if (hasApplied) {
                 // Get the application status if the candidate has applied
                 applicationStatus = jobApplicationService.findByJobIdAndCandidateId(jobId, candidate.getId())
-                    .map(app -> app.getStatus().name())
-                    .orElse(null);
+                        .map(app -> app.getStatus().name())
+                        .orElse(null);
             }
         }
-        
+
         model.addAttribute("job", jobOpt.get());
         model.addAttribute("hasApplied", hasApplied);
         model.addAttribute("applicationStatus", applicationStatus);
         model.addAttribute("isAuthenticated", candidate != null);
-        
+
         return "candidate/job-details";
     }
 
@@ -325,7 +341,8 @@ public class JobApplicationController {
                     }
 
                     // Log for debugging
-                    System.out.println("Pre-filled application data for " + candidate.getEmail() + ": " + applicationDto);
+                    System.out
+                            .println("Pre-filled application data for " + candidate.getEmail() + ": " + applicationDto);
 
                     // Add to model
                     model.addAttribute("applicationDto", applicationDto);
@@ -353,15 +370,14 @@ public class JobApplicationController {
         System.out.println("Job ID: " + jobId);
         System.out.println("User: " + (userDetails != null ? userDetails.getUsername() : "null"));
         System.out.println("New resume file present: " + (resumeFile != null && !resumeFile.isEmpty()));
-        System.out.println("Using existing resume: " + ("true".equalsIgnoreCase(request.getParameter("useExistingResume"))));
+        System.out.println(
+                "Using existing resume: " + ("true".equalsIgnoreCase(request.getParameter("useExistingResume"))));
         System.out.println("Application DTO: " + applicationDto);
 
         // Log form data for debugging
         if (result.hasErrors()) {
             System.err.println("\n=== FORM VALIDATION ERRORS ===");
-            result.getAllErrors().forEach(error ->
-                    System.err.println(" - " + error.getDefaultMessage())
-            );
+            result.getAllErrors().forEach(error -> System.err.println(" - " + error.getDefaultMessage()));
             model.addAttribute("org.springframework.validation.BindingResult.applicationDto", result);
             model.addAttribute("error", "Please correct the following errors:");
 
@@ -405,14 +421,16 @@ public class JobApplicationController {
             }
 
             // Debug log
-            System.out.println("useExistingResume parameter type: " + (useExistingResumeObj != null ? useExistingResumeObj.getClass().getName() : "null"));
+            System.out.println("useExistingResume parameter type: "
+                    + (useExistingResumeObj != null ? useExistingResumeObj.getClass().getName() : "null"));
             System.out.println("useExistingResume parameter value: " + useExistingResumeObj);
             System.out.println("Parsed useExistingResume: " + useExistingResume);
             System.out.println("Resume file: " + (resumeFile != null ? "provided" : "not provided"));
 
             // If not using existing resume and no file is provided, show error
             if (!useExistingResume && (resumeFile == null || resumeFile.isEmpty())) {
-                result.rejectValue("resumeFile", "file.required", "Please upload your resume or select to use your existing resume");
+                result.rejectValue("resumeFile", "file.required",
+                        "Please upload your resume or select to use your existing resume");
                 model.addAttribute("job", job);
                 return "candidate/apply-job";
             }
@@ -426,7 +444,8 @@ public class JobApplicationController {
                 System.out.println("Using existing resume: " + resumeFilename);
 
                 if (resumeFilename == null || resumeFilename.isEmpty()) {
-                    result.rejectValue("resumeFile", "file.missing", "No existing resume found. Please upload a new resume.");
+                    result.rejectValue("resumeFile", "file.missing",
+                            "No existing resume found. Please upload a new resume.");
                     model.addAttribute("job", job);
                     return "candidate/apply-job";
                 }
@@ -471,7 +490,8 @@ public class JobApplicationController {
             // 1. Update phone number if provided and different
             if (applicationDto.getPhone() != null && !applicationDto.getPhone().trim().isEmpty() &&
                     !applicationDto.getPhone().trim().equals(candidate.getPhoneNumber())) {
-                System.out.println("Updating candidate's phone number from '" + candidate.getPhoneNumber() + "' to '" + applicationDto.getPhone().trim() + "'");
+                System.out.println("Updating candidate's phone number from '" + candidate.getPhoneNumber() + "' to '"
+                        + applicationDto.getPhone().trim() + "'");
                 try {
                     candidate.setPhoneNumber(applicationDto.getPhone().trim());
                     candidateUpdated = true;
@@ -484,7 +504,8 @@ public class JobApplicationController {
             // 2. Update current company if provided and different
             if (applicationDto.getCurrentCompany() != null && !applicationDto.getCurrentCompany().trim().isEmpty() &&
                     !applicationDto.getCurrentCompany().trim().equals(candidate.getCurrentCompany())) {
-                System.out.println("Updating candidate's current company from '" + candidate.getCurrentCompany() + "' to '" + applicationDto.getCurrentCompany().trim() + "'");
+                System.out.println("Updating candidate's current company from '" + candidate.getCurrentCompany()
+                        + "' to '" + applicationDto.getCurrentCompany().trim() + "'");
                 try {
                     candidate.setCurrentCompany(applicationDto.getCurrentCompany().trim());
                     candidateUpdated = true;
@@ -522,25 +543,35 @@ public class JobApplicationController {
             // Create the application with the resume path
             JobApplication application = new JobApplication();
 
-            // Set personal information - use DTO values if provided, otherwise fall back to candidate profile
-            application.setFullName(applicationDto.getFullName() != null && !applicationDto.getFullName().trim().isEmpty() ?
-                    applicationDto.getFullName().trim() : candidate.getFullName());
+            // Set personal information - use DTO values if provided, otherwise fall back to
+            // candidate profile
+            application
+                    .setFullName(applicationDto.getFullName() != null && !applicationDto.getFullName().trim().isEmpty()
+                            ? applicationDto.getFullName().trim()
+                            : candidate.getFullName());
 
-            application.setEmail(applicationDto.getEmail() != null && !applicationDto.getEmail().trim().isEmpty() ?
-                    applicationDto.getEmail().trim() : candidate.getEmail());
+            application.setEmail(applicationDto.getEmail() != null && !applicationDto.getEmail().trim().isEmpty()
+                    ? applicationDto.getEmail().trim()
+                    : candidate.getEmail());
 
-            application.setPhone(applicationDto.getPhone() != null && !applicationDto.getPhone().trim().isEmpty() ?
-                    applicationDto.getPhone().trim() : candidate.getPhoneNumber());
+            application.setPhone(applicationDto.getPhone() != null && !applicationDto.getPhone().trim().isEmpty()
+                    ? applicationDto.getPhone().trim()
+                    : candidate.getPhoneNumber());
 
-            application.setCurrentCompany(applicationDto.getCurrentCompany() != null && !applicationDto.getCurrentCompany().trim().isEmpty() ?
-                    applicationDto.getCurrentCompany().trim() : candidate.getCurrentCompany());
+            application.setCurrentCompany(
+                    applicationDto.getCurrentCompany() != null && !applicationDto.getCurrentCompany().trim().isEmpty()
+                            ? applicationDto.getCurrentCompany().trim()
+                            : candidate.getCurrentCompany());
 
             // Set application-specific fields
             application.setResumePath(resumeFilename != null ? resumeFilename : candidate.getResumeUrl());
             application.setCoverLetter(applicationDto.getCoverLetter() != null ? applicationDto.getCoverLetter() : "");
-            application.setNoticePeriod(applicationDto.getNoticePeriod() != null ? applicationDto.getNoticePeriod() : 0);
-            application.setExpectedSalary(applicationDto.getExpectedSalary() != null ? applicationDto.getExpectedSalary() : 0.0);
-            application.setAdditionalInfo(applicationDto.getAdditionalInfo() != null ? applicationDto.getAdditionalInfo().trim() : "");
+            application
+                    .setNoticePeriod(applicationDto.getNoticePeriod() != null ? applicationDto.getNoticePeriod() : 0);
+            application.setExpectedSalary(
+                    applicationDto.getExpectedSalary() != null ? applicationDto.getExpectedSalary() : 0.0);
+            application.setAdditionalInfo(
+                    applicationDto.getAdditionalInfo() != null ? applicationDto.getAdditionalInfo().trim() : "");
 
             // Set application metadata
             application.setStatus(JobApplication.ApplicationStatus.APPLIED);
@@ -558,7 +589,8 @@ public class JobApplicationController {
 
             // Save the application
             try {
-                JobApplication savedApplication = jobApplicationService.submitApplication(jobId, candidate, application);
+                JobApplication savedApplication = jobApplicationService.submitApplication(jobId, candidate,
+                        application);
 
                 if (savedApplication == null || savedApplication.getId() == null) {
                     throw new RuntimeException("Failed to save application - no ID returned");
@@ -607,7 +639,6 @@ public class JobApplicationController {
         return result;
     }
 
-
     @GetMapping("/applications/{applicationId}")
     public String viewApplicationDetails(
             @PathVariable String applicationId,
@@ -616,19 +647,18 @@ public class JobApplicationController {
             RedirectAttributes redirectAttributes,
             HttpServletRequest request,
             CsrfToken csrfToken) {
-        
+
         // Add CSRF token to model
         if (csrfToken != null) {
             model.addAttribute("_csrf", csrfToken);
         }
-        
+
         // Create a map of status display names
         Map<String, String> statusDisplayNames = new HashMap<>();
         for (JobApplication.ApplicationStatus status : JobApplication.ApplicationStatus.values()) {
             statusDisplayNames.put(status.name(), status.getDisplayName());
         }
         model.addAttribute("statusDisplayNames", statusDisplayNames);
-        
 
         System.out.println("Viewing application details for ID: " + applicationId);
 
@@ -649,7 +679,8 @@ public class JobApplicationController {
             }
 
             if (!application.getCandidate().getId().equals(userDetails.getId())) {
-                System.err.println("Unauthorized access attempt for application: " + applicationId + " by user: " + userDetails.getId());
+                System.err.println("Unauthorized access attempt for application: " + applicationId + " by user: "
+                        + userDetails.getId());
                 return "redirect:/candidate/dashboard?error=unauthorized";
             }
 
@@ -671,20 +702,20 @@ public class JobApplicationController {
             System.out.println("Found job: " + job);
 
             // Get application status history
-            List<ApplicationStatusHistory> statusHistory =
-                    jobApplicationService.getApplicationStatusHistory(applicationId);
-            
+            List<ApplicationStatusHistory> statusHistory = jobApplicationService
+                    .getApplicationStatusHistory(applicationId);
+
             // Create a map of user IDs to usernames for status history
             Map<String, String> userIdToUsername = new HashMap<>();
-            
+
             // Add system user
             userIdToUsername.put("system", "System");
-            
+
             // Add current user
             if (userDetails != null) {
                 userIdToUsername.put(userDetails.getId(), userDetails.getUsername());
             }
-            
+
             // Add all unique user IDs from status history
             if (statusHistory != null) {
                 for (ApplicationStatusHistory history : statusHistory) {
@@ -710,54 +741,61 @@ public class JobApplicationController {
 
             // Get the candidate details
             Candidate candidate = candidateService.getCandidateById(application.getCandidate().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Candidate not found with id: " + application.getCandidate().getId()));
-            
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Candidate not found with id: " + application.getCandidate().getId()));
+
             // Add the candidate's username if available
             if (candidate != null && candidate.getId() != null) {
-                userIdToUsername.put(candidate.getId(), candidate.getFullName() != null ? 
-                    candidate.getFullName() : candidate.getEmail());
+                userIdToUsername.put(candidate.getId(),
+                        candidate.getFullName() != null ? candidate.getFullName() : candidate.getEmail());
             }
 
-            // Ensure application has all required fields, fallback to candidate data if needed
-            if ((application.getFullName() == null || application.getFullName().isEmpty()) && candidate.getFullName() != null) {
+            // Ensure application has all required fields, fallback to candidate data if
+            // needed
+            if ((application.getFullName() == null || application.getFullName().isEmpty())
+                    && candidate.getFullName() != null) {
                 application.setFullName(candidate.getFullName());
             }
             if ((application.getEmail() == null || application.getEmail().isEmpty()) && candidate.getEmail() != null) {
                 application.setEmail(candidate.getEmail());
             }
-            if ((application.getPhone() == null || application.getPhone().isEmpty()) && candidate.getPhoneNumber() != null) {
+            if ((application.getPhone() == null || application.getPhone().isEmpty())
+                    && candidate.getPhoneNumber() != null) {
                 application.setPhone(candidate.getPhoneNumber());
             }
-            if ((application.getCurrentCompany() == null || application.getCurrentCompany().isEmpty()) && candidate.getCurrentCompany() != null) {
+            if ((application.getCurrentCompany() == null || application.getCurrentCompany().isEmpty())
+                    && candidate.getCurrentCompany() != null) {
                 application.setCurrentCompany(candidate.getCurrentCompany());
             }
-            if ((application.getResumePath() == null || application.getResumePath().isEmpty()) && candidate.getResumeUrl() != null) {
+            if ((application.getResumePath() == null || application.getResumePath().isEmpty())
+                    && candidate.getResumeUrl() != null) {
                 application.setResumePath(candidate.getResumeUrl());
             }
 
             // Create and populate DTO
             ApplicationDetailsDto appDetails = ApplicationDetailsDto.fromJobApplication(application);
-            
+
             // Add attributes to the model
             // Add WebSocket connection details
             String serverName = request.getServerName();
             int serverPort = request.getServerPort();
             String wsProtocol = request.isSecure() ? "wss" : "ws";
             String wsEndpoint = String.format("%s://%s:%d/ws", wsProtocol, serverName, serverPort);
-            
+
             // Add model attributes
             model.addAttribute("appDetails", appDetails);
             model.addAttribute("application", application);
             model.addAttribute("job", job);
             model.addAttribute("candidate", candidate);
-            model.addAttribute("statusHistory", statusHistory != null ? statusHistory : new ArrayList<ApplicationStatusHistory>());
+            model.addAttribute("statusHistory",
+                    statusHistory != null ? statusHistory : new ArrayList<ApplicationStatusHistory>());
             model.addAttribute("currentPath", "/candidate/applications/" + applicationId);
             model.addAttribute("wsEndpoint", wsEndpoint);
             model.addAttribute("applicationId", applicationId);
-            
+
             // Add user role for WebSocket subscriptions
             boolean isRecruiter = userDetails.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_RECRUITER"));
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_RECRUITER"));
             model.addAttribute("isRecruiter", isRecruiter);
             model.addAttribute("userId", userDetails.getId());
 
@@ -804,4 +842,3 @@ public class JobApplicationController {
         }
     }
 }
-

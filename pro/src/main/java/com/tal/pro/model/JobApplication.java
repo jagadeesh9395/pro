@@ -1,19 +1,20 @@
 package com.tal.pro.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Document(collection = "job_applications")
 @Data
@@ -31,7 +32,7 @@ public class JobApplication {
 
     @DBRef(lazy = true)
     private Candidate candidate;
-    
+
     private String candidateId; // Store candidate ID separately for easier access
 
     private String fullName;
@@ -48,19 +49,19 @@ public class JobApplication {
     private LocalDateTime updatedAt = LocalDateTime.now();
     private String updatedBy;
     private String notes; // For internal recruiter notes
-    
+
     private List<ApplicationStatusHistory> statusHistory = new ArrayList<>();
-    
+
     // Helper method to safely get candidate ID
     public String getCandidateId() {
         return candidate != null ? candidate.getId() : candidateId;
     }
-    
+
     // Helper method to check if application can be withdrawn
     public boolean canWithdraw() {
-        return status != ApplicationStatus.WITHDRAWN && 
-               status != ApplicationStatus.REJECTED &&
-               status != ApplicationStatus.HIRED;
+        return status != ApplicationStatus.WITHDRAWN &&
+                status != ApplicationStatus.REJECTED &&
+                status != ApplicationStatus.HIRED;
     }
 
     // Enums with display names
@@ -85,7 +86,7 @@ public class JobApplication {
             return displayName;
         }
     }
-    
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -94,7 +95,7 @@ public class JobApplication {
         private String notes;
         private String updatedBy;
         private LocalDateTime updatedAt = LocalDateTime.now();
-        
+
         // Custom constructor without updatedAt parameter - will use current time
         public ApplicationStatusHistory(ApplicationStatus status, String notes, String updatedBy) {
             this.status = status;
@@ -102,7 +103,7 @@ public class JobApplication {
             this.updatedBy = updatedBy;
             // updatedAt is automatically set to now
         }
-        
+
         // Ensure updatedAt is never null
         public LocalDateTime getUpdatedAt() {
             return updatedAt != null ? updatedAt : LocalDateTime.now();
