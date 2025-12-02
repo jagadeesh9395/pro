@@ -8,29 +8,65 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #4a6fa5;
-            --primary-light: #e3f2fd;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --text-color: #2c3e50;
-            --text-light: #6c757d;
-            --border-color: #e9ecef;
-            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            /* Primary Colors from Logo */
+            --primary-dark-blue: #1F468C;     /* Dark blue from "Talent" */
+            --primary-blue: #3765A7;          /* Lighter blue from gradient */
+            --primary-teal: #00A78F;          /* Teal from "Trove" */
+            --primary-light-teal: #46CF9B;    /* Lighter teal from gradient */
+            
+            /* Derived Colors */
+            --primary-color: var(--primary-blue);
+            --primary-light: #e6f0f9;         /* Very light blue for backgrounds */
+            --primary-dark: #1a3a6e;          /* Darker blue for hover states */
+            --secondary-color: var(--primary-teal);
+            --secondary-light: #e6f5f2;       /* Very light teal for accents */
+            
+            /* Status Colors */
+            --success-color: #10b981;         /* Green for success states */
+            --warning-color: #f59e0b;         /* Amber for warnings */
+            --danger-color: #ef4444;          /* Red for errors */
+            
+            /* Neutral Colors */
+            --text-color: #1f2937;            /* Dark gray for text */
+            --text-light: #6b7280;            /* Lighter gray for secondary text */
+            --border-color: #e5e7eb;          /* Light gray for borders */
+            --card-bg: #ffffff;               /* White for cards */
+            --body-bg: #f8fafc;               /* Very light gray for page background */
+            
+            /* Shadows */
+            --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --nav-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         body {
-            background-color: #f8f9fa;
+            background-color: var(--body-bg);
             color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
         }
         
         .sidebar {
             min-height: 100vh;
             background: white;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--nav-shadow);
             position: fixed;
             width: 250px;
             padding: 20px 0;
+            z-index: 100;
+        }
+        
+        .sidebar .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar .logo img {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar .logo img:hover {
+            transform: scale(1.05);
         }
         
         .main-content {
@@ -49,10 +85,26 @@
         
         .card {
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: var(--box-shadow);
             margin-bottom: 20px;
-            transition: transform 0.3s;
+            border-left: 4px solid var(--primary-teal);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
         }
         
         .card:hover {
@@ -66,42 +118,143 @@
         }
         
         .welcome-banner {
-            background: linear-gradient(135deg, var(--primary-color), #6a8fc7);
+            background: linear-gradient(135deg, var(--primary-teal), var(--primary-blue));
             color: white;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 30px;
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(31, 70, 140, 0.2), 0 2px 4px -1px rgba(55, 101, 167, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .welcome-banner h2 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .welcome-banner p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+        
+        .welcome-banner .btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+        
+        .welcome-banner .btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
         }
         
         .profile-img {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: var(--primary-light);
-            color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-teal));
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
+            box-shadow: 0 2px 4px rgba(31, 70, 140, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .profile-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(31, 70, 140, 0.3);
         }
         
         .nav-link {
             color: var(--text-color);
             padding: 10px 20px;
-            margin: 5px 0;
-            border-radius: 5px;
-            transition: all 0.3s;
+            border-radius: 6px;
+            margin: 2px 15px;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
         
-        .nav-link:hover, .nav-link.active {
-            background: var(--primary-light);
-            color: var(--primary-color);
+        .nav-link:hover, .nav-link:focus {
+            background-color: var(--primary-blue);
+            color: white !important;
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(to right, var(--primary-blue), var(--primary-teal));
+            color: white !important;
+            box-shadow: 0 2px 4px -1px rgba(31, 70, 140, 0.2);
+        }
+        
+        /* Ensure logout link has proper hover state */
+        .nav-link.text-danger:hover {
+            color: white !important;
+            background-color: #dc3545;
         }
         
         .nav-link i {
-            margin-right: 10px;
+            margin-right: 8px;
             width: 20px;
             text-align: center;
+            transition: color 0.2s ease;
+        }
+        
+        /* Ensure icons are white on hover/active */
+        .nav-link:hover i,
+        .nav-link:focus i,
+        .nav-link.active i {
+            color: white !important;
+        }
+        
+        /* Specific style for logout icon */
+        .nav-link.text-danger:hover i {
+            color: white !important;
+        }
+        
+        .nav-link:hover, .nav-link        .btn-primary {
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+            font-weight: 500;
+            padding: 0.6rem 1.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-dark-blue);
+            border-color: var(--primary-dark-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(31, 70, 140, 0.2), 0 2px 4px -1px rgba(55, 101, 167, 0.1);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-teal);
+            border-color: var(--primary-teal);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: var(--secondary-light);
+            color: var(--primary-teal);
+            border-color: var(--primary-teal);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px -1px rgba(0, 167, 143, 0.1);
         }
         
         .logo {
@@ -203,8 +356,8 @@
 <body>
 <!-- Sidebar -->
 <div class="sidebar">
-    <div class="logo">
-        <h4>TalentTrove</h4>
+    <div class="logo text-center py-3">
+        <img src="/images/TalentTrove.jpeg" alt="TalentTrove Logo" style="max-width: 180px; height: auto;">
     </div>
 
     <ul class="nav flex-column">
