@@ -15,4 +15,8 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     Page<Notification> findByRecipientIdOrderByCreatedAtDesc(String recipientId, Pageable pageable);
 
     long countByRecipientIdAndReadFalse(String recipientId);
+
+    List<Notification> findByRecipientIdAndReadFalse(String recipientId);
+
+    Page<Notification> findByRecipientIdAndReadFalseOrderByCreatedAtDesc(String recipientId, Pageable pageable);
 }

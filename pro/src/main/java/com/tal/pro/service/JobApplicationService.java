@@ -7,6 +7,7 @@ import com.tal.pro.model.JobApplication;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,16 @@ public interface JobApplicationService {
     Optional<JobApplication> findByCandidateId(String candidateId);
 
     List<JobApplication> getApplicationsByJobId(String jobId);
+
+    /**
+     * Find all job applications for a recruiter with interview dates between the given range
+     * @param recruiterEmail Email of the recruiter
+     * @param startDate Start date of the range (inclusive)
+     * @param endDate End date of the range (inclusive)
+     * @return List of job applications matching the criteria
+     */
+    List<JobApplication> findByRecruiterAndInterviewDateBetween(
+        String recruiterEmail, LocalDateTime startDate, LocalDateTime endDate);
 
     JobApplication updateApplicationStatus(String applicationId, JobApplication.ApplicationStatus status, String updatedBy);
     
@@ -136,5 +147,23 @@ public interface JobApplicationService {
      * @return Optional containing the application if found
      */
     Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId);
+    
+    /**
+     * Find upcoming interviews for a recruiter within a date range
+     * @param recruiterId ID of the recruiter
+     * @param startDate Start date of the range
+     * @param endDate End date of the range
+     * @return List of job applications with scheduled interviews
+     */
+    List<JobApplication> findUpcomingInterviewsForRecruiter(String recruiterId, LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Find upcoming interviews for a candidate within a date range
+     * @param candidateId ID of the candidate
+     * @param startDate Start date of the range
+     * @param endDate End date of the range
+     * @return List of job applications with scheduled interviews
+     */
+    List<JobApplication> findUpcomingInterviewsForCandidate(String candidateId, LocalDateTime startDate, LocalDateTime endDate);
 
 }

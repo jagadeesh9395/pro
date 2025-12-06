@@ -551,7 +551,6 @@
                     </div>
                 </div>
 
-                <!-- Upcoming Interviews -->
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -559,53 +558,59 @@
                             <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <div class="interview-time">Today, 10:00 AM</div>
+                            <div th:if="${upcomingInterviews == null || upcomingInterviews.empty}" class="text-center py-3 text-muted">
+                                <small>No upcoming interviews scheduled.</small>
+                            </div>
+                            <div th:each="interview : ${upcomingInterviews}" class="mb-3 border-bottom pb-3">
+                                <div class="interview-time" th:text="${#temporals.format(interview.interviewDate, 'MMM d, hh:mm a')}">Today, 10:00 AM</div>
                                 <div class="d-flex align-items-center">
-                                    <div class="applicant-avatar">JS</div>
+                                    <div class="applicant-avatar" 
+                                         th:with="fullName=${interview.candidate?.fullName ?: ''},
+                                                  nameParts=${#strings.arraySplit(fullName, ' ')}"
+                                         th:text="${nameParts.length > 0 ? #strings.substring(nameParts[0], 0, 1) + (nameParts.length > 1 ? #strings.substring(nameParts[1], 0, 1) : '') : 'NA'}">
+                                        JS
+                                    </div>
                                     <div>
-                                        <div class="fw-medium">Jane Smith</div>
-                                        <div class="text-muted small">Frontend Developer</div>
-                                        <div class="small"><i class="bi bi-camera-video"></i> <a href="#">Join Video Call</a></div>
+                                        <div class="fw-medium" th:text="${interview.candidate?.fullName}">Jane Smith</div>
+                                        <div class="text-muted small" th:text="${interview.job?.jobTitle}">Frontend Developer</div>
+                                        <div class="small">
+                                            <i th:class="${interview.interviewType == 'VIDEO' ? 'bi bi-camera-video' : (interview.interviewType == 'PHONE' ? 'bi bi-telephone' : 'bi bi-geo-alt')}"></i>
+                                            <span th:if="${interview.interviewType == 'VIDEO' || interview.interviewType == 'PHONE'}">
+                                                <a th:if="${interview.interviewLocation != null && interview.interviewLocation.startsWith('http')}" 
+                                                   th:href="${interview.interviewLocation}" target="_blank">Join Call</a>
+                                                <span th:unless="${interview.interviewLocation != null && interview.interviewLocation.startsWith('http')}" 
+                                                      th:text="${interview.interviewLocation}">Link/Number</span>
+                                            </span>
+                                            <span th:if="${interview.interviewType == 'ONSITE'}" th:text="${interview.interviewLocation}">Conference Room A</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <hr>
-                            <div class="mb-3">
-                                <div class="interview-time">Today, 2:30 PM</div>
-                                <div class="d-flex align-items-center">
-                                    <div class="applicant-avatar">MJ</div>
-                                    <div>
-                                        <div class="fw-medium">Mike Johnson</div>
-                                        <div class="text-muted small">DevOps Engineer</div>
-                                        <div class="small"><i class="bi bi-geo-alt"></i> Conference Room A</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
                             <div class="text-center">
-                                <a href="#" class="btn btn-sm btn-outline-primary">Schedule New Interview</a>
                             </div>
                         </div>
+                        <div class="card-footer bg-transparent" th:if="${!upcomingInterviews.isEmpty()}">
+                            <a href="/recruiter/applications?status=INTERVIEW_SCHEDULED" class="btn btn-sm btn-outline-primary w-100">
+                                View All Interviews
+                            </a>
+                        </div>
                     </div>
-
+                    
                     <!-- Quick Actions -->
-                    <div class="card mt-4">
-                        <div class="card-header">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Quick Actions</h5>
                         </div>
                         <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Post New Job
-                                </button>
-                                <button class="btn btn-outline-primary">
-                                    <i class="bi bi-search"></i> Find Candidates
-                                </button>
-                                <button class="btn btn-outline-primary">
-                                    <i class="bi bi-envelope"></i> Send Bulk Email
-                                </button>
-                            </div>
+                            <a href="/recruiter/jobs/new" class="btn btn-primary w-100 mb-3">
+                                <i class="bi bi-plus-lg me-2"></i> Post New Job
+                            </a>
+                            <a href="/recruiter/applications" class="btn btn-outline-secondary w-100 mb-3">
+                                <i class="bi bi-people me-2"></i> View All Applications
+                            </a>
+                            <a href="/recruiter/candidates" class="btn btn-outline-secondary w-100 mb-3">
+                                <i class="bi bi-search me-2"></i> Search Candidates
+                            </a>
                         </div>
                     </div>
                 </div>

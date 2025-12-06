@@ -16,10 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -57,10 +55,10 @@ public class CandidateController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
-                            @RequestParam(defaultValue = "0") int page,
-                            @RequestParam(defaultValue = "10") int size,
-                            @RequestParam(required = false) String query,
-                            @RequestParam(required = false) String location) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String location) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -81,8 +79,7 @@ public class CandidateController {
                         query != null ? query : "",
                         location != null ? location : "",
                         null, // jobType is null for now, can be added later
-                        pageable
-                );
+                        pageable);
             } else {
                 // Get all active jobs if no search criteria
                 jobsPage = jobService.getAllActiveJobs(pageable);
@@ -91,8 +88,23 @@ public class CandidateController {
             // Get candidate's applications with job details and status history
             List<JobApplication> applications = jobApplicationService.getApplicationsByCandidateId(candidate.getId());
 
+            // Get upcoming interviews for the next 7 days
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime weekFromNow = now.plusDays(7);
+            List<JobApplication> upcomingInterviews = jobApplicationService
+                    .findUpcomingInterviewsForCandidate(
+                            candidate.getId(),
+                            now,
+                            weekFromNow)
+                    .stream()
+                    .sorted(Comparator.comparing(JobApplication::getInterviewDate))
+                    .collect(Collectors.toList());
+
             // Log the number of applications found for debugging
             System.out.println("Found " + applications.size() + " applications for candidate: " + candidate.getId());
+            System.out.println(
+                    "Found " + upcomingInterviews.size() + " upcoming interviews for candidate: " + candidate.getId());
+
             applications.forEach(app -> {
                 System.out.println("Application ID: " + app.getId() +
                         ", Job: " + (app.getJob() != null ? app.getJob().getJobTitle() : "No Job") +
@@ -103,21 +115,28 @@ public class CandidateController {
                     try {
                         app.getStatusHistory().sort((h1, h2) -> {
                             // Handle null history items
-                            if (h1 == null && h2 == null) return 0;
-                            if (h1 == null) return 1;  // nulls last
-                            if (h2 == null) return -1;  // nulls last
-                            
+                            if (h1 == null && h2 == null)
+                                return 0;
+                            if (h1 == null)
+                                return 1; // nulls last
+                            if (h2 == null)
+                                return -1; // nulls last
+
                             // Handle null timestamps
-                            if (h1.getUpdatedAt() == null && h2.getUpdatedAt() == null) return 0;
-                            if (h1.getUpdatedAt() == null) return 1;  // nulls last
-                            if (h2.getUpdatedAt() == null) return -1;  // nulls last
-                            
+                            if (h1.getUpdatedAt() == null && h2.getUpdatedAt() == null)
+                                return 0;
+                            if (h1.getUpdatedAt() == null)
+                                return 1; // nulls last
+                            if (h2.getUpdatedAt() == null)
+                                return -1; // nulls last
+
                             // Safe to compare since we've handled null cases
                             return h2.getUpdatedAt().compareTo(h1.getUpdatedAt());
                         });
                         System.out.println("Successfully sorted status history for application: " + app.getId());
                     } catch (Exception e) {
-                        System.err.println("Error sorting status history for application " + app.getId() + ": " + e.getMessage());
+                        System.err.println(
+                                "Error sorting status history for application " + app.getId() + ": " + e.getMessage());
                         e.printStackTrace();
                         // Continue with unsorted list if there's an error
                     }
@@ -133,7 +152,8 @@ public class CandidateController {
 
             // Log if any applications were filtered out
             if (recentApplications.size() < Math.min(5, applications.size())) {
-                System.out.println("Filtered out " + (applications.size() - recentApplications.size()) + " applications with null appliedAt");
+                System.out.println("Filtered out " + (applications.size() - recentApplications.size())
+                        + " applications with null appliedAt");
             }
 
             // Add status display names to model
@@ -145,16 +165,21 @@ public class CandidateController {
             String statusDisplayJson = "{" + statusDisplayMap.entrySet().stream()
                     .map(e -> String.format("\"%s\":\"%s\"", e.getKey(), e.getValue()))
                     .collect(Collectors.joining(",")) + "}";
-            
+
             model.addAttribute("statusDisplayNames", statusDisplayJson);
+            model.addAttribute("fullName", candidate.getFullName());
 
             // Add candidate and user info to model
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
-            model.addAttribute("username", username);
-            model.addAttribute("fullName", candidate.getFullName());
-            model.addAttribute("email", candidate.getEmail());
-            model.addAttribute("isCandidate", true);
+            model.addAttribute("applications", applications);
+            model.addAttribute("upcomingInterviews", upcomingInterviews);
+            model.addAttribute("totalPages", jobsPage.getTotalPages());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("pageSize", size);
+            model.addAttribute("query", query);
+            model.addAttribute("location", location);
+            model.addAttribute("now", now);
 
             // Add applications data
             model.addAttribute("recentApplications", recentApplications);
@@ -163,7 +188,6 @@ public class CandidateController {
             // Add job search results with pagination
             model.addAttribute("jobs", jobsPage.getContent());
             model.addAttribute("currentPage", jobsPage.getNumber());
-            model.addAttribute("totalPages", jobsPage.getTotalPages());
             model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("pageSize", size);
 
@@ -177,13 +201,25 @@ public class CandidateController {
                 model.addAttribute("locationParam", location);
             }
 
+            // Find upcoming interview
+            JobApplication nextInterview = applications.stream()
+                    .filter(app -> app.getStatus() == JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED
+                            && app.getInterviewDate() != null
+                            && app.getInterviewDate().isAfter(java.time.LocalDateTime.now()))
+                    .sorted((a1, a2) -> a1.getInterviewDate().compareTo(a2.getInterviewDate()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (nextInterview != null) {
+                model.addAttribute("upcomingInterview", nextInterview);
+            }
+
             return "candidate/dashboard";
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/auth/login?error=access_denied";
         }
     }
-
 
     @GetMapping("/profile")
     public String profile(Model model, Principal principal) {
@@ -214,12 +250,12 @@ public class CandidateController {
 
     @PostMapping("/profile/update-personal")
     public String updatePersonalInfo(@RequestParam("fullName") String fullName,
-                                     @RequestParam("email") String email,
-                                     @RequestParam("phoneNumber") String phoneNumber,
-                                     @RequestParam("location") String location,
-                                     @RequestParam("experience") String experience,
-                                     Principal principal,
-                                     RedirectAttributes redirectAttributes) {
+            @RequestParam("email") String email,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam("location") String location,
+            @RequestParam("experience") String experience,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
@@ -245,8 +281,8 @@ public class CandidateController {
 
     @PostMapping("/profile/update-skills")
     public String updateSkills(@RequestParam("skills") String skills,
-                               Principal principal,
-                               RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             String username = principal.getName();
             Candidate candidate = candidateRepository.findByUsername(username)
@@ -275,10 +311,10 @@ public class CandidateController {
 
     @PostMapping("/profile/change-password")
     public String changePassword(@RequestParam("currentPassword") String currentPassword,
-                                 @RequestParam("newPassword") String newPassword,
-                                 @RequestParam("confirmPassword") String confirmPassword,
-                                 Principal principal,
-                                 RedirectAttributes redirectAttributes) {
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             // TODO: Implement password change logic
             // 1. Verify current password
@@ -296,8 +332,8 @@ public class CandidateController {
 
     @PostMapping("/applications/{id}/withdraw")
     public String withdrawApplication(@PathVariable("id") String applicationId,
-                                      Principal principal,
-                                      RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             // Get the candidate to verify ownership
             String username = principal.getName();

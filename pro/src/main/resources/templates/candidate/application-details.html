@@ -518,11 +518,7 @@
             });
         }
         
-        // Initialize WebSocket connection
-        let stompClient = null;
-        let reconnectAttempts = 0;
-        const MAX_RECONNECT_ATTEMPTS = 5;
-        
+
         // Connect to WebSocket server
         function connect() {
             if (!applicationId) {
@@ -609,19 +605,7 @@
                 }
             );
         }    
-                        // Store subscriptions for cleanup
-                        window.appSocket.subscriptions = {
-                            appStatus: appStatusSubscription,
-                            userUpdates: userUpdatesSubscription
-                        };
-                    }
-                    
-                }, function(error) {
-                    updateConnectionStatus(false);
-                    attemptReconnect();
-                });
-            }
-        }
+
         
         // Handle status update message from WebSocket
         function handleStatusUpdateMessage(update) {
@@ -922,7 +906,7 @@
                             <p class="mb-2"><strong>Expected Salary:</strong>
                                 <span th:if="${appDetails.expectedSalary != null}">
                                     <span th:if="${T(org.apache.commons.lang3.math.NumberUtils).isCreatable(#strings.toString(appDetails.expectedSalary))}">
-                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.expectedSalary/100000, 1, 1, 'COMMA')}"></span> LPA
+                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.expectedSalary/100000.0, 1, 2, 'POINT')}"></span> LPA
                                     </span>
                                     <span th:unless="${T(org.apache.commons.lang3.math.NumberUtils).isCreatable(#strings.toString(appDetails.expectedSalary))}" 
                                           th:text="${appDetails.expectedSalary}">
@@ -962,8 +946,8 @@
                             </p>
                             <p class="mb-2"><strong>Salary Range:</strong>
                                 <span th:if="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
-                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.job.minSalary/100000, 1, 1, 'COMMA')}"></span> - ₹<span
-                                        th:text="${#numbers.formatDecimal(appDetails.job.maxSalary/100000, 1, 1, 'COMMA')}"></span> LPA
+                                        ₹<span th:text="${#numbers.formatDecimal(appDetails.job.minSalary/100000.0, 1, 2, 'POINT')}"></span> - ₹<span
+                                        th:text="${#numbers.formatDecimal(appDetails.job.maxSalary/100000.0, 1, 2, 'POINT')}"></span> LPA
                                     </span>
                                 <span th:unless="${appDetails.job.minSalary != null and appDetails.job.maxSalary != null}">
                                         Not specified

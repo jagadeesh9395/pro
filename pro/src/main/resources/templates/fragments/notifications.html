@@ -15,7 +15,9 @@
                     <span class="fw-bold">Notifications</span>
                     <div>
                         <small class="text-muted me-2" id="mark-all-read" style="cursor: pointer;">Mark all read</small>
-                        <small class="text-muted" id="refresh-notifications" style="cursor: pointer;"><i class="bi bi-arrow-clockwise"></i></small>
+                        <small class="text-muted" id="refresh-notifications" style="cursor: pointer;">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </small>
                     </div>
                 </li>
                 <div id="notification-list">
@@ -23,112 +25,6 @@
                 </div>
             </ul>
         </div>
-
-        <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
-        <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                loadUnreadCount();
-                loadNotifications();
-                connectWebSocket();
-
-                // Poll for unread count every minute
-                setInterval(loadUnreadCount, 60000);
-            });
-
-            function loadUnreadCount() {
-                fetch('/api/notifications/unread-count')
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        const badge = document.getElementById('notification-badge');
-                        if (data.count > 0) {
-                            badge.innerText = data.count;
-                            badge.style.display = 'block';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    })
-                    .catch(error => console.error('Error loading unread count:', error));
-            }
-
-            function loadNotifications() {
-                fetch('/api/notifications?size=5')
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        const list = document.getElementById('notification-list');
-                        list.innerHTML = '';
-                        
-                        if (data.content && data.content.length > 0) {
-                            data.content.forEach(notification => {
-                                const item = document.createElement('li');
-                                item.className = `dropdown-item p-2 border-bottom ${notification.read ? '' : 'bg-light'}`;
-                                item.innerHTML = `
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="small">${notification.title}</strong>
-                                        <small class="text-muted" style="font-size: 0.7rem;">${new Date(notification.createdAt).toLocaleDateString()}</small>
-                                    </div>
-                                    <p class="mb-1 small text-truncate" style="max-width: 300px;">${notification.message}</p>
-                                `;
-                                item.onclick = (e) => {
-                                    e.stopPropagation(); // Prevent dropdown from closing immediately
-                                    markAsRead(notification.id);
-                                    // Navigate if needed, e.g., to application details
-                                };
-                                list.appendChild(item);
-                            });
-                        } else {
-                            list.innerHTML = '<li class="p-3 text-center text-muted">No notifications</li>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading notifications:', error);
-                        const list = document.getElementById('notification-list');
-                        list.innerHTML = '<li class="p-3 text-center text-danger">Error loading notifications</li>';
-                    });
-            }
-
-            function markAsRead(id) {
-                fetch(`/api/notifications/${id}/read`, { method: 'POST' })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        loadUnreadCount();
-                        loadNotifications();
-                    })
-                    .catch(error => console.error('Error marking notification as read:', error));
-            }
-
-            function connectWebSocket() {
-                const socket = new SockJS('/ws');
-                const stompClient = Stomp.over(socket);
-                stompClient.debug = null; // Disable debug logs
-
-                stompClient.connect({}, function(frame) {
-                    // Subscribe to user-specific notifications
-                    stompClient.subscribe('/user/queue/notifications', function(notification) {
-                        loadUnreadCount();
-                        loadNotifications();
-                        
-                        // Optional: Show toast
-                        try {
-                            const body = JSON.parse(notification.body);
-                            // showToast(body.title, body.message);
-                        } catch (e) {
-                            console.error('Error parsing notification body:', e);
-                        }
-                    });
-                }, function(error) {
-                    console.error('WebSocket connection error:', error);
-                    // Retry connection after 5 seconds
-                    setTimeout(connectWebSocket, 5000);
-                });
-            }
-        </script>
         <style>
             .notification-container .dropdown-menu {
                 box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);

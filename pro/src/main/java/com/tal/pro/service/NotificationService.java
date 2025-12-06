@@ -11,6 +11,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Service
@@ -162,5 +163,13 @@ public class NotificationService {
             notification.setRead(true);
             notificationRepository.save(notification);
         });
+    }
+
+    public void markAllAsRead(String recipientId) {
+        List<Notification> unreadNotifications = notificationRepository.findByRecipientIdAndReadFalse(recipientId);
+        if (!unreadNotifications.isEmpty()) {
+            unreadNotifications.forEach(n -> n.setRead(true));
+            notificationRepository.saveAll(unreadNotifications);
+        }
     }
 }

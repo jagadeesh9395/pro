@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Dashboard - TalentTrove</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
@@ -402,7 +404,7 @@
             <h5 class="mb-0">Dashboard</h5>
             <div class="d-flex align-items-center">
                 <!-- Notification Bell -->
-                <div class="me-3" th:replace="fragments/notifications :: notification-bell">
+                <div class="me-3" th:replace="~{fragments/notifications :: notification-bell}">
                     <i class="bi bi-bell fs-5"></i>
                 </div>
                 <div class="d-flex align-items-center">
@@ -528,13 +530,13 @@
                                     <span th:text="${job.jobType}"></span> •
                                     <i class="bi bi-currency-rupee ms-2 me-1"></i>
                                     <span th:if="${job.minSalary != null && job.maxSalary != null}"
-                                          th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000, 1, 2)} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000, 1, 2)} + ' LPA'">
+                                          th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
                                         </span>
                                     <span th:if="${job.minSalary != null && job.maxSalary == null}"
-                                          th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000, 1, 2)} + ' LPA'">
+                                          th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
                                         </span>
                                     <span th:if="${job.minSalary == null && job.maxSalary != null}"
-                                          th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000, 1, 2)} + ' LPA'">
+                                          th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
                                         </span>
                                 </div>
                                 <a th:href="@{/jobs/view/} + ${job.id}" class="btn btn-outline-primary btn-sm">View Details</a>
@@ -651,16 +653,6 @@
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
                                                 
-                                                <!-- Withdraw Button (Non-functional) -->
-                                                <a href="#" 
-                                                   class="btn btn-sm btn-outline-danger"
-                                                   title="Withdraw Application"
-                                                   data-bs-toggle="tooltip"
-                                                   data-bs-placement="top"
-                                                   onclick="return false;">
-                                                    <i class="bi bi-x-circle"></i> Withdraw
-                                                </a>
-                                                
                                                 <!-- Status Indicator for non-withdrawable applications -->
                                                 <span th:if="${!app.canWithdraw() and (app.status?.name() == 'WITHDRAWN' or app.status?.name() == 'REJECTED' or app.status?.name() == 'HIRED')}" 
                                                       class="text-muted small align-self-center"
@@ -668,28 +660,6 @@
                                                 </span>
                                             </div>
                                         </td>
-                                        <!-- Withdraw Application Modal -->
-                                        <div class="modal fade" th:id="'withdrawModal' + ${app.id}" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header bg-warning text-white">
-                                                        <h5 class="modal-title" id="withdrawModalLabel">Withdraw Application</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p>Are you sure you want to withdraw this application? This action cannot be undone.</p>
-                                                        <form th:id="'withdrawForm' + ${app.id}" th:action="@{/candidate/applications/__${app.id}__/withdraw}" method="post">
-                                                            <input type="hidden" name="_method" value="PUT">
-                                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                                        </form>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="button" class="btn btn-danger" th:onclick="document.getElementById('withdrawForm' + '${app.id}').submit();">Yes, Withdraw</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </tr>
                                     
                                     <!-- Fallback dummy data when no applications exist -->
@@ -752,6 +722,70 @@
 
             <!-- Sidebar -->
             <div class="col-lg-4">
+                <!-- Upcoming Interviews -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Upcoming Interviews</h5>
+                        <span class="badge bg-primary rounded-pill" th:text="${upcomingInterviews.size()}"></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" th:if="${!upcomingInterviews.isEmpty()}">
+                            <div class="list-group-item border-0 py-3" th:each="app : ${upcomingInterviews}">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-calendar-check text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1" th:text="${app.job.jobTitle}">Job Title</h6>
+                                        <p class="text-muted small mb-2" th:text="${app.job.companyName}">Company Name</p>
+                                        <div class="d-flex align-items-center text-muted small mb-1">
+                                            <i class="bi bi-calendar3 me-2"></i>
+                                            <span th:text="${#temporals.format(app.interviewDate, 'EEE, MMM d, yyyy')}">Date</span>
+                                            <span class="mx-2">•</span>
+                                            <i class="bi bi-clock me-1"></i>
+                                            <span th:text="${#temporals.format(app.interviewDate, 'h:mm a')}">Time</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="badge bg-soft-primary text-primary" 
+                                                  th:with="today=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}, interviewDay=${#temporals.format(app.interviewDate, 'yyyy-MM-dd')}"
+                                                  th:classappend="${today == interviewDay} ? 'bg-soft-warning text-warning' : ''"
+                                                  th:text="${today == interviewDay ? 'Today' : app.interviewType}">
+                                                Interview Type
+                                            </span>
+                                            <a th:if="${app.interviewLocation != null && app.interviewLocation.startsWith('http')}" 
+                                               th:href="${app.interviewLocation}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline-primary ms-2">
+                                                <i class="bi bi-camera-video me-1"></i> Join
+                                            </a>
+                                            <span th:if="${app.interviewLocation != null && !app.interviewLocation.startsWith('http')}" 
+                                                  class="ms-2 small text-muted" 
+                                                  th:text="${app.interviewLocation}">
+                                                Location details
+                                            </span>
+                                        </div>
+                                        <div class="mt-2" th:if="${app.interviewNotes != null && !app.interviewNotes.isEmpty()}">
+                                            <p class="small text-muted mb-0" th:text="'Note: ' + ${app.interviewNotes}"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center p-4" th:if="${upcomingInterviews.isEmpty()}">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No upcoming interviews</p>
+                            <small class="text-muted">Your scheduled interviews will appear here</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent" th:if="${!upcomingInterviews.isEmpty()}">
+                        <a th:href="@{/candidate/applications?status=INTERVIEW_SCHEDULED}" class="btn btn-sm btn-outline-primary w-100">
+                            View All Interviews
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Resume Status -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -816,34 +850,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Upcoming Interviews -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Upcoming Interviews</h5>
-                        <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <div class="me-3 text-center">
-                                <div class="bg-light rounded p-2">
-                                    <div class="fw-bold">NOV</div>
-                                    <div class="h4 mb-0">15</div>
-                                </div>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">Frontend Developer</h6>
-                                <p class="text-muted small mb-1">Web Solutions</p>
-                                <p class="small"><i class="bi bi-clock"></i> 10:00 AM - 11:00 AM</p>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Join Meeting</a>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="text-center">
-                            <a href="#" class="btn btn-sm btn-link">View Calendar</a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -855,6 +861,16 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Add SockJS and STOMP for WebSocket support -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    // Make Stomp available globally (stomp.js v2 exports 'Stomp')
+    window.StompJs = Stomp;
+    console.log('STOMP client loaded:', !!window.StompJs);
+</script>
+<!-- Load notifications script -->
+<script th:src="@{/js/notifications.js}" defer></script>
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize tooltips

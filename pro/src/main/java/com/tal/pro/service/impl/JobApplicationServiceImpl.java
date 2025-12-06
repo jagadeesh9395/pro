@@ -190,6 +190,13 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
     @Override
+    public List<JobApplication> findByRecruiterAndInterviewDateBetween(
+            String recruiterEmail, LocalDateTime startDate, LocalDateTime endDate) {
+        return jobApplicationRepository.findByRecruiterEmailAndInterviewDateBetween(
+                recruiterEmail, startDate, endDate);
+    }
+
+    @Override
     public Optional<JobApplication> findByCandidateId(String candidateId) {
         if (candidateId == null || candidateId.trim().isEmpty()) {
             return Optional.empty();
@@ -614,5 +621,15 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     @Override
     public Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId) {
         return jobApplicationRepository.findByJobIdAndCandidateId(jobId, candidateId);
+    }
+    
+    @Override
+    public List<JobApplication> findUpcomingInterviewsForRecruiter(String recruiterId, LocalDateTime startDate, LocalDateTime endDate) {
+        return jobApplicationRepository.findUpcomingInterviewsByRecruiterId(recruiterId, startDate, endDate);
+    }
+    
+    @Override
+    public List<JobApplication> findUpcomingInterviewsForCandidate(String candidateId, LocalDateTime startDate, LocalDateTime endDate) {
+        return jobApplicationRepository.findUpcomingInterviewsByCandidateId(candidateId, startDate, endDate);
     }
 }

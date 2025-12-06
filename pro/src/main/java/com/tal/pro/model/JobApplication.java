@@ -50,6 +50,12 @@ public class JobApplication {
     private String updatedBy;
     private String notes; // For internal recruiter notes
 
+    // Interview Details
+    private LocalDateTime interviewDate;
+    private String interviewType; // PHONE, VIDEO, ONSITE
+    private String interviewLocation; // Link or physical address
+    private String interviewNotes; // Instructions for candidate
+
     private List<ApplicationStatusHistory> statusHistory = new ArrayList<>();
 
     // Helper method to safely get candidate ID

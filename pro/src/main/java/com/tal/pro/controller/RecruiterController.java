@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -48,6 +49,18 @@ public class RecruiterController {
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @GetMapping("/upcoming-interviews")
+    @ResponseBody
+    public List<JobApplication> getUpcomingInterviews(Principal principal) {
+        String recruiterEmail = principal.getName();
+        // Get interviews scheduled for the next 7 days
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime weekFromNow = now.plusDays(7);
+
+        return jobApplicationService.findByRecruiterAndInterviewDateBetween(
+                recruiterEmail, now, weekFromNow);
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal,
@@ -108,6 +121,19 @@ public class RecruiterController {
             model.addAttribute("interviewScheduled",
                     allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED, 0L));
             model.addAttribute("hiredCount", allStatusCounts.getOrDefault(JobApplication.ApplicationStatus.HIRED, 0L));
+
+            // Get upcoming interviews for the next 7 days
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime weekFromNow = now.plusDays(7);
+            List<JobApplication> upcomingInterviews = jobApplicationService
+                    .findUpcomingInterviewsForRecruiter(
+                            recruiter.getId(),
+                            now,
+                            weekFromNow)
+                    .stream()
+                    .sorted(Comparator.comparing(JobApplication::getInterviewDate))
+                    .collect(Collectors.toList());
+            model.addAttribute("upcomingInterviews", upcomingInterviews);
 
             return "recruiter/dashboard";
         } catch (Exception e) {
@@ -228,17 +254,23 @@ public class RecruiterController {
 
             if (application.getJob().getPostedBy() == null) {
                 // Try to fix missing postedBy if the current recruiter is the owner (fallback)
-                // This handles the case where postedBy might be missing in legacy data
                 log.warn("Job postedBy is null for job ID: {}. Checking if current recruiter owns it.",
                         application.getJob().getId());
-                // We can't verify ownership easily if postedBy is null, but we can check if the
-                // job exists in recruiter's jobs
-                // For now, we'll redirect with error to be safe, or we could allow view if we
-                // trust the link
                 return "redirect:/recruiter/applications?error=Invalid+job+poster+data";
             }
 
-            String jobPosterId = application.getJob().getPostedBy().getId();
+            String jobPosterId;
+            try {
+                // Safe access to ID which might trigger lazy loading validation
+                jobPosterId = application.getJob().getPostedBy().getId();
+            } catch (IllegalArgumentException e) {
+                log.error("Invalid recruiter ID format in job reference: {}", e.getMessage());
+                return "redirect:/recruiter/applications?error=Invalid+recruiter+ID+format";
+            } catch (Exception e) {
+                log.error("Error accessing job poster ID: {}", e.getMessage());
+                return "redirect:/recruiter/applications?error=Error+validating+access";
+            }
+
             if (jobPosterId == null || !jobPosterId.equals(recruiter.getId())) {
                 return "redirect:/recruiter/applications?error=Unauthorized+access";
             }
@@ -592,14 +624,72 @@ public class RecruiterController {
             return "redirect:/recruiter/applications/" + id;
 
         } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", "Error adding note: " + e.getMessage());
+            log.error("Error adding note to application - ID: {}, Error: {}", id, e.getMessage(), e);
+            String errorMessage = "Error adding note: " +
+                    (e.getMessage() != null ? e.getMessage() : "Unknown error occurred");
+            redirectAttributes.addFlashAttribute("error", errorMessage);
             return "redirect:/recruiter/applications/" + id;
         }
     }
 
-    // @Autowired
-    // private SearchService searchService;
+    @PostMapping("/applications/{id}/schedule-interview")
+    public String scheduleInterview(
+            @PathVariable String id,
+            @RequestParam("interviewDate") @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime interviewDate,
+            @RequestParam("interviewType") String interviewType,
+            @RequestParam("location") String location,
+            @RequestParam(value = "instructions", required = false) String instructions,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            log.info("Scheduling interview for application {} with date {}", id, interviewDate);
+
+            if (principal == null) {
+                return "redirect:/auth/login?error=not_authenticated";
+            }
+
+            String username = principal.getName();
+            Recruiter recruiter = recruiterRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+
+            // Find the application
+            JobApplication application = jobApplicationService.getApplicationById(id)
+                    .orElseThrow(() -> new RuntimeException("Application not found"));
+
+            // Update application with interview details
+            application.setInterviewDate(interviewDate);
+            application.setInterviewType(interviewType);
+            application.setInterviewLocation(location);
+            application.setInterviewNotes(instructions);
+
+            // Update status to INTERVIEW_SCHEDULED
+            application.setStatus(JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED);
+            application.setUpdatedAt(LocalDateTime.now());
+            application.setUpdatedBy(recruiter.getId());
+
+            // Add to status history
+            if (application.getStatusHistory() == null) {
+                application.setStatusHistory(new ArrayList<>());
+            }
+            application.getStatusHistory().add(new JobApplication.ApplicationStatusHistory(
+                    JobApplication.ApplicationStatus.INTERVIEW_SCHEDULED,
+                    "Interview scheduled for " + interviewDate,
+                    recruiter.getId(),
+                    LocalDateTime.now()));
+
+            jobApplicationRepository.save(application);
+            log.info("Interview scheduled successfully for application {}", id);
+
+            redirectAttributes.addFlashAttribute("success", "Interview scheduled successfully!");
+            return "redirect:/recruiter/applications/" + id;
+
+        } catch (Exception e) {
+            log.error("Error scheduling interview for application {}", id, e);
+            redirectAttributes.addFlashAttribute("error", "Error scheduling interview: " + e.getMessage());
+            return "redirect:/recruiter/applications/" + id;
+        }
+    }
 
     @GetMapping("/search-candidates")
     public String searchCandidates(

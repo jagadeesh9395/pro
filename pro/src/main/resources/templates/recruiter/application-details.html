@@ -437,14 +437,14 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-cash-stack text-muted me-2"></i>
                                 <span th:if="${minSalary != null and maxSalary != null}">
-                                    ₹<span th:text="${#numbers.formatDecimal(minSalary/100000, 1, 'POINT', 1, 'POINT')}">0</span> - 
-                                    ₹<span th:text="${#numbers.formatDecimal(maxSalary/100000, 1, 'POINT', 1, 'POINT')}">0</span> LPA
+                                    ₹<span th:text="${#numbers.formatDecimal(minSalary/100000.0, 1, 2, 'POINT')}">0</span> - 
+                                    ₹<span th:text="${#numbers.formatDecimal(maxSalary/100000.0, 1, 2, 'POINT')}">0</span> LPA
                                 </span>
                                 <span th:if="${minSalary != null and maxSalary == null}">
-                                    From ₹<span th:text="${#numbers.formatDecimal(minSalary/100000, 1, 'POINT', 1, 'POINT')}">0</span> LPA
+                                    From ₹<span th:text="${#numbers.formatDecimal(minSalary/100000.0, 1, 2, 'POINT')}">0</span> LPA
                                 </span>
                                 <span th:if="${minSalary == null and maxSalary != null}">
-                                    Up to ₹<span th:text="${#numbers.formatDecimal(maxSalary/100000, 1, 'POINT', 1, 'POINT')}">0</span> LPA
+                                    Up to ₹<span th:text="${#numbers.formatDecimal(maxSalary/100000.0, 1, 2, 'POINT')}">0</span> LPA
                                 </span>
                                 <span th:if="${minSalary == null and maxSalary == null}" class="text-muted">
                                     Salary not specified
@@ -605,7 +605,7 @@
                 <h5 class="modal-title">Schedule Interview</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{'/recruiter/applications/' + application.id + '/schedule-interview'}" method="post">
+            <form th:action="@{'/recruiter/applications/' + ${applicationId} + '/schedule-interview'}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -646,7 +646,7 @@
                 <h5 class="modal-title">Shortlist Candidate</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{'/recruiter/applications/' + application.id + '/status'}" method="post">
+            <form th:action="@{'/recruiter/applications/' + ${applicationId} + '/status'}" method="post">
                 <input type="hidden" name="status" value="SHORTLISTED">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="modal-body">
@@ -673,7 +673,7 @@
                 <h5 class="modal-title">Reject Application</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form th:action="@{'/recruiter/applications/' + application.id + '/status'}" method="post">
+            <form th:action="@{'/recruiter/applications/' + ${applicationId} + '/status'}" method="post">
                 <input type="hidden" name="status" value="REJECTED">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="modal-body">

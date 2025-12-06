@@ -17,37 +17,43 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApplicationDetailsDto {
-    private String applicationId;
-    private String status;
-    private String statusDisplayName;
-    private String appliedDate;
-    private String lastUpdated;
-    private String noticePeriod;
-    private String expectedSalary;
-    private Job job;
-    private List<ApplicationStatusHistory> statusHistory;
+        private String applicationId;
+        private String status;
+        private String statusDisplayName;
+        private String appliedDate;
+        private String lastUpdated;
+        private String noticePeriod;
+        private String expectedSalary;
+        private Job job;
+        private List<ApplicationStatusHistory> statusHistory;
 
-    public static ApplicationDetailsDto fromJobApplication(JobApplication application) {
-        if (application == null) {
-            return null;
+        public static ApplicationDetailsDto fromJobApplication(JobApplication application) {
+                if (application == null) {
+                        return null;
+                }
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy hh:mm a");
+
+                return ApplicationDetailsDto.builder()
+                                .applicationId(application.getId())
+                                .status(application.getStatus() != null ? application.getStatus().name() : "UNKNOWN")
+                                .statusDisplayName(application.getStatus() != null
+                                                ? application.getStatus().getDisplayName()
+                                                : "Unknown")
+                                .appliedDate(application.getAppliedAt() != null
+                                                ? application.getAppliedAt().format(formatter)
+                                                : "Not available")
+                                .lastUpdated(application.getUpdatedAt() != null
+                                                ? application.getUpdatedAt().format(formatter)
+                                                : "Not available")
+                                .noticePeriod(application.getNoticePeriod() != null
+                                                ? application.getNoticePeriod() + " days"
+                                                : "Not specified")
+                                .expectedSalary(application.getExpectedSalary() != null
+                                                ? String.format("₹%.2f LPA", application.getExpectedSalary() / 100000.0)
+                                                : "Not specified")
+                                .job(application.getJob())
+                                .statusHistory(application.getStatusHistory())
+                                .build();
         }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy hh:mm a");
-        
-        return ApplicationDetailsDto.builder()
-                .applicationId(application.getId())
-                .status(application.getStatus() != null ? application.getStatus().name() : "UNKNOWN")
-                .statusDisplayName(application.getStatus() != null ? application.getStatus().getDisplayName() : "Unknown")
-                .appliedDate(application.getAppliedAt() != null ? 
-                        application.getAppliedAt().format(formatter) : "Not available")
-                .lastUpdated(application.getUpdatedAt() != null ? 
-                        application.getUpdatedAt().format(formatter) : "Not available")
-                .noticePeriod(application.getNoticePeriod() != null ? 
-                        application.getNoticePeriod() + " days" : "Not specified")
-                .expectedSalary(application.getExpectedSalary() != null ? 
-                        String.format("$%,.2f", application.getExpectedSalary()) : "Not specified")
-                .job(application.getJob())
-                .statusHistory(application.getStatusHistory())
-                .build();
-    }
 }

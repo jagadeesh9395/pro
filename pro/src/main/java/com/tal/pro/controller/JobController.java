@@ -36,14 +36,14 @@ public class JobController {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(JobController.class);
 
     @Autowired
-    public JobController(JobService jobService, 
-                       JobApplicationService jobApplicationService,
-                       RecruiterRepository recruiterRepository) {
+    public JobController(JobService jobService,
+            JobApplicationService jobApplicationService,
+            RecruiterRepository recruiterRepository) {
         this.jobService = jobService;
         this.jobApplicationService = jobApplicationService;
         this.recruiterRepository = recruiterRepository;
     }
-    
+
     @GetMapping("/{jobId}/applications")
     public String viewJobApplications(
             @PathVariable String jobId,
@@ -52,11 +52,11 @@ public class JobController {
         // Verify the job exists and belongs to the recruiter
         Job job = jobService.getJobById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
-        
+
         if (!job.getPostedBy().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("You don't have permission to view these applications");
         }
-        
+
         model.addAttribute("job", job);
         model.addAttribute("applications", jobApplicationService.getApplicationsByJobId(jobId));
         return "recruiter/job-applications";
@@ -75,34 +75,36 @@ public class JobController {
     public ResponseEntity<?> postJob(
             @Valid @RequestBody JobDto jobDto,
             BindingResult result,
-            @AuthenticationPrincipal Recruiter recruiter) {
+            @AuthenticationPrincipal UserDetails principal) {
 
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "Validation error",
-                "errors", result.getFieldErrors().stream()
-                    .collect(Collectors.toMap(
-                        FieldError::getField,
-                        FieldError::getDefaultMessage,
-                        (existing, replacement) -> existing + ", " + replacement
-                    ))
-            ));
+                    "success", false,
+                    "message", "Validation error",
+                    "errors", result.getFieldErrors().stream()
+                            .collect(Collectors.toMap(
+                                    FieldError::getField,
+                                    FieldError::getDefaultMessage,
+                                    (existing, replacement) -> existing + ", " + replacement))));
         }
 
         try {
+            // Re-fetch recruiter to ensure we have a valid entity with ID
+            // The Principal object from session might be incomplete or detached
+            String username = principal.getUsername();
+            Recruiter recruiter = recruiterRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+
             Job createdJob = jobService.postNewJob(jobDto, recruiter);
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Job posted successfully!",
-                "redirectUrl", "/recruiter/jobs/success/" + createdJob.getId()
-            ));
+                    "success", true,
+                    "message", "Job posted successfully!",
+                    "redirectUrl", "/recruiter/jobs/success/" + createdJob.getId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "success", false,
-                    "message", "Error posting job: " + e.getMessage()
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Error posting job: " + e.getMessage()));
         }
     }
 
@@ -113,18 +115,18 @@ public class JobController {
         model.addAttribute("job", job);
         return "recruiter/job-success";
     }
-    
+
     @GetMapping("/{id}/edit")
-    public String editJobForm(@PathVariable String id, Model model, 
-                            @AuthenticationPrincipal Object principal,
-                            RedirectAttributes redirectAttributes) {
-        
+    public String editJobForm(@PathVariable String id, Model model,
+            @AuthenticationPrincipal Object principal,
+            RedirectAttributes redirectAttributes) {
+
         // Check if user is authenticated
         if (principal == null) {
             redirectAttributes.addFlashAttribute("error", "You must be logged in to edit a job");
             return "redirect:/login";
         }
-        
+
         // Get the recruiter from the principal
         Recruiter recruiter;
         if (principal instanceof Recruiter) {
@@ -144,20 +146,21 @@ public class JobController {
 
         // Create final copy of redirectAttributes for use in lambda
         final RedirectAttributes finalRedirectAttributes = redirectAttributes;
-        
+
         return jobService.getJobById(id)
                 .map(job -> {
                     // If job doesn't have a postedBy, assign it to the current recruiter
                     if (job.getPostedBy() == null) {
                         job.setPostedBy(recruiter);
                         jobService.saveJob(job);
-                    } 
+                    }
                     // Check if the current user is the owner of the job
                     else if (job.getPostedBy() != null && !job.getPostedBy().getId().equals(recruiter.getId())) {
-                        finalRedirectAttributes.addFlashAttribute("error", "You don't have permission to edit this job");
+                        finalRedirectAttributes.addFlashAttribute("error",
+                                "You don't have permission to edit this job");
                         return "redirect:/access-denied";
                     }
-                    
+
                     model.addAttribute("job", JobDto.fromJob(job));
                     model.addAttribute("jobTypes", Job.JobType.values());
                     model.addAttribute("isEditMode", true);
@@ -176,19 +179,18 @@ public class JobController {
             @Valid @RequestBody JobDto jobDto,
             BindingResult result,
             @AuthenticationPrincipal Object principal) {
-        
+
         System.out.println("Received update request for job: " + id);
         System.out.println("Principal class: " + (principal != null ? principal.getClass().getName() : "null"));
-        
+
         if (principal == null) {
             System.out.println("No authentication found. User not logged in.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                    "success", false,
-                    "message", "You must be logged in to perform this action"
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "You must be logged in to perform this action"));
         }
-        
+
         // Get the authenticated user's email from UserDetails
         String userEmail;
         if (principal instanceof UserDetails) {
@@ -196,99 +198,91 @@ public class JobController {
             System.out.println("Authenticated user email: " + userEmail);
         } else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of(
-                    "success", false,
-                    "message", "Invalid user session"
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Invalid user session"));
         }
-        
+
         // Find the recruiter by email
         Optional<Recruiter> recruiterOpt = recruiterRepository.findByUsername(userEmail);
         if (recruiterOpt.isEmpty()) {
             System.out.println("No recruiter found with email: " + userEmail);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of(
-                    "success", false,
-                    "message", "You must be logged in as a recruiter to update a job"
-                ));
+                    .body(Map.of(
+                            "success", false,
+                            "message", "You must be logged in as a recruiter to update a job"));
         }
         Recruiter recruiter = recruiterOpt.get();
-        
+
         System.out.println("Authenticated as recruiter: " + recruiter.getEmail());
 
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "Validation error",
-                "errors", result.getFieldErrors().stream()
-                    .collect(Collectors.toMap(
-                        FieldError::getField,
-                        FieldError::getDefaultMessage,
-                        (existing, replacement) -> existing + ", " + replacement
-                    ))
-            ));
+                    "success", false,
+                    "message", "Validation error",
+                    "errors", result.getFieldErrors().stream()
+                            .collect(Collectors.toMap(
+                                    FieldError::getField,
+                                    FieldError::getDefaultMessage,
+                                    (existing, replacement) -> existing + ", " + replacement))));
         }
 
         try {
             // First, check if the job exists and the recruiter has permission
             Job existingJob = jobService.getJobById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + id));
-                
+                    .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + id));
+
             // If the job doesn't have a postedBy, assign it to the current recruiter
             if (existingJob.getPostedBy() == null) {
                 existingJob.setPostedBy(recruiter);
                 jobService.saveJob(existingJob);
-            } 
+            }
             // Check if the current user is the owner of the job
             else if (!existingJob.getPostedBy().getId().equals(recruiter.getId())) {
                 throw new SecurityException("You are not authorized to update this job");
             }
-            
+
             // Proceed with the update
             Job updatedJob = jobService.updateJob(id, jobDto, recruiter);
             return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Job updated successfully!",
-                "redirectUrl", "/recruiter/jobs/success/" + id
-            ));
-            
+                    "success", true,
+                    "message", "Job updated successfully!",
+                    "redirectUrl", "/recruiter/jobs/success/" + id));
+
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
+                    "success", false,
+                    "message", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
+                    "success", false,
+                    "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "Error updating job: " + e.getMessage()
-            ));
+                    "success", false,
+                    "message", "Error updating job: " + e.getMessage()));
         }
     }
 
     @GetMapping("/view/{id}")
     public String viewJob(
-            @PathVariable String id, 
-            Model model, 
+            @PathVariable String id,
+            Model model,
             @AuthenticationPrincipal Object principal,
             RedirectAttributes redirectAttributes) {
-        
+
         // Basic validation for MongoDB ObjectId format (24 hex chars)
         if (id == null || id.trim().isEmpty() || id.length() != 24 || !id.matches("^[a-fA-F0-9]+$")) {
             redirectAttributes.addFlashAttribute("error", "Invalid job ID format");
             return "redirect:/recruiter/dashboard";
         }
-        
+
         try {
             Job job = jobService.getJobById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + id));
-            
+
             model.addAttribute("job", job);
-            
+
             // Check if the current user is a candidate
             if (principal != null && principal instanceof Candidate) {
                 model.addAttribute("isCandidate", true);
@@ -296,7 +290,7 @@ public class JobController {
             } else {
                 model.addAttribute("isCandidate", false);
             }
-            
+
             return "recruiter/job-details";
         } catch (ResourceNotFoundException e) {
             redirectAttributes.addFlashAttribute("error", "Job not found");

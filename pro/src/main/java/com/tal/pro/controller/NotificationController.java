@@ -65,7 +65,8 @@ public class NotificationController {
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Notification> notifications = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(userId,
+        Page<Notification> notifications = notificationRepository.findByRecipientIdAndReadFalseOrderByCreatedAtDesc(
+                userId,
                 pageable);
 
         return ResponseEntity.ok(notifications);
@@ -106,5 +107,32 @@ public class NotificationController {
 
         long count = notificationRepository.countByRecipientIdAndReadFalse(userId);
         return ResponseEntity.ok(Map.of("count", count));
+    }
+
+    @PostMapping("/mark-all-read")
+    @ResponseBody
+    public ResponseEntity<?> markAllAsRead(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String username = principal.getName();
+        String userId = null;
+
+        var candidate = candidateRepository.findByUsername(username);
+        if (candidate.isPresent()) {
+            userId = candidate.get().getId();
+        } else {
+            var recruiter = recruiterRepository.findByUsername(username);
+            if (recruiter.isPresent()) {
+                userId = recruiter.get().getId();
+            }
+        }
+
+        if (userId != null) {
+            notificationService.markAllAsRead(userId);
+        }
+
+        return ResponseEntity.ok(Map.of("message", "All marked as read"));
     }
 }
