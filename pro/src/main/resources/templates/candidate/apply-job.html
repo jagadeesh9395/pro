@@ -8,44 +8,137 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #4a6fa5;
-            --primary-light: #e3f2fd;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --text-color: #2c3e50;
-            --text-light: #6c757d;
-            --border-color: #e9ecef;
+            /* Primary Colors from Logo */
+            --primary-dark-blue: #1F468C;
+            --primary-blue: #3765A7;
+            --primary-teal: #00A78F;
+            --primary-light-teal: #46CF9B;
+            
+            /* Derived Colors */
+            --primary-color: var(--primary-blue);
+            --primary-light: #e6f0f9;
+            --primary-dark: #1a3a6e;
+            --secondary-color: var(--primary-teal);
+            --secondary-light: #e6f5f2;
+            
+            /* Status Colors */
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            
+            /* Neutral Colors */
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --card-bg: #ffffff;
+            --body-bg: #f8fafc;
+            
+            /* Shadows */
+            --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --nav-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         body {
-            background-color: #f8f9fa;
+            background-color: var(--body-bg);
             color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
         }
         
-        .job-header {
+        .sidebar {
+            min-height: 100vh;
             background: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
+            box-shadow: var(--nav-shadow);
+            position: fixed;
+            width: 250px;
+            padding: 20px 0;
+            z-index: 100;
+        }
+        
+        .sidebar .logo {
+            padding: 0 20px 20px;
             border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
         }
         
-        .job-title {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
+        .sidebar .logo img {
+            max-width: 180px;
+            height: auto;
+            transition: transform 0.3s ease;
         }
         
-        .company-name {
-            color: var(--text-light);
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
+        .sidebar .logo img:hover {
+            transform: scale(1.05);
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: var(--box-shadow);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            margin-bottom: 20px;
+        }
+        
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-teal));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(31, 70, 140, 0.2);
+            transition: transform 0.2s ease;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 2px 15px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover, .nav-link:focus {
+            background-color: var(--primary-blue);
+            color: white !important;
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(to right, var(--primary-blue), var(--primary-teal));
+            color: white !important;
+            box-shadow: 0 2px 4px -1px rgba(31, 70, 140, 0.2);
+        }
+        
+        .nav-link i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
         }
         
         .card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-teal);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--card-bg);
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         
         .card-header {
@@ -61,9 +154,17 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 0.5rem 1.5rem;
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+            padding: 0.6rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark-blue);
+            border-color: var(--primary-dark-blue);
+            transform: translateY(-1px);
         }
         
         .btn-outline-secondary {
@@ -112,84 +213,81 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
-        <div class="container">
-            <a class="navbar-brand" href="/">TalentTrove</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/dashboard}" 
-                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/dashboard')) ? 'active' : ''}">
-                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/applications}" 
-                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/applications')) ? 'active' : ''}">
-                            <i class="bi bi-briefcase me-1"></i> My Applications
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/candidate/profile}" 
-                           th:classappend="${(currentPath != null and #strings.startsWith(currentPath, '/candidate/profile')) ? 'active' : ''}">
-                            <i class="bi bi-person me-1"></i> My Profile
-                        </a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <div class="dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-2"></i>
-                            <span th:text="${candidate != null ? candidate.username : 'User'}">User</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" th:href="@{/candidate/dashboard}">
-                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" th:href="@{/candidate/profile}">
-                                    <i class="bi bi-person me-2"></i> My Profile
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form th:action="@{/logout}" method="post" class="d-inline w-100">
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo text-center py-3">
+            <img src="/images/TalentTrove.jpeg" alt="TalentTrove Logo">
         </div>
-    </nav>
 
-    <!-- Job Header -->
-    <div class="container mt-4">
-        <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a th:href="@{/candidate/dashboard}">Home</a></li>
-                <li class="breadcrumb-item"><a th:href="@{/candidate/jobs}">Jobs</a></li>
-                <li class="breadcrumb-item"><a th:href="@{/candidate/jobs/view/} + ${job.id}" th:text="${job.jobTitle}"></a></li>
-                <li class="breadcrumb-item active" aria-current="page">Apply</li>
-            </ol>
-        </nav>
-        <h1 class="job-title mb-3" th:text="'Apply for ' + ${job.jobTitle}"></h1>
-        <p class="h5 text-muted mb-4" th:if="${job.companyName}" th:text="${job.companyName} + (${job.location != null && !job.location.isEmpty()} ? ' • ' + ${job.location} : '')">Company • Location</p>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/candidate/dashboard}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/candidate/profile}">
+                    <i class="bi bi-person"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/candidate/applications}">
+                    <i class="bi bi-briefcase"></i> My Applications
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                    <button type="submit" class="nav-link text-danger w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
     </div>
 
     <!-- Main Content -->
-    <div class="container mb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <div class="d-flex w-100 align-items-center justify-content-between">
+                    <h5 class="mb-0">Apply for Job</h5>
+                    <div class="d-flex align-items-center">
+                        <a th:href="@{/candidate/profile}" class="text-decoration-none text-dark">
+                            <div class="profile-img me-2 d-inline-block"
+                                 th:with="nameParts=${candidate != null and candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
+                                             firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
+                                             lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
+                                             initials=${#strings.toUpperCase(
+                                                 #strings.length(firstName) > 0 ? 
+                                                     (#strings.length(lastName) > 0 ? 
+                                                         #strings.substring(firstName, 0, 1) + #strings.substring(lastName, 0, 1) : 
+                                                         #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
+                                                     ) : 'U'
+                                             )}"
+                                 th:text="${initials}">U</div>
+                            <span th:text="${candidate != null ? candidate.fullName : 'User'}" class="me-2">User</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="container-fluid">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/candidate/dashboard}">Home</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/candidate/jobs}">Jobs</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/candidate/jobs/view/} + ${job.id}" th:text="${job.jobTitle}"></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Apply</li>
+                </ol>
+            </nav>
+            
+            <div class="row">
+                <!-- Left Column: Application Form -->
+                <div class="col-lg-8">
                 <!-- Success/Error Messages -->
                 <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
                     <span th:text="${param.success}">Application submitted successfully!</span>
@@ -376,66 +474,79 @@
                             </div>
                         </div> <!-- Close card-body -->
                     </div> <!-- Close card -->
-                </form>
+                </div>
+                <!-- End: Application Form Column -->
                 
-                <!-- Job Summary Card -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Job Summary</h5>
-                    </div>
-                    <div class="card-body">
-                        <h6 class="card-title" th:text="${job.jobTitle}">Job Title</h6>
-                        <p class="text-muted" th:text="${job.companyName}">Company Name</p>
-                        
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-geo-alt me-2"></i>
-                            <span th:if="${job.location != null and !job.location.isEmpty()}" th:text="${job.location}">Location</span>
-                            <span th:if="${job.location == null or job.location.isEmpty()}">Location not specified</span>
+                <!-- Right Column: Job Summary -->
+                <div class="col-lg-4">
+                    <!-- Job Summary Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Job Summary</h5>
                         </div>
-                        
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-briefcase me-2"></i>
-                            <span th:text="${job.jobType ?: 'Full-time'}">Job Type</span>
-                        </div>
-                        
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-currency-rupee me-2"></i>
-                            <span th:if="${job.minSalary != null and job.maxSalary != null}" 
-                                  th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                Salary Range
-                            </span>
-                            <span th:if="${job.minSalary != null and job.maxSalary == null}" 
-                                  th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                Minimum Salary
-                            </span>
-                            <span th:if="${job.minSalary == null and job.maxSalary != null}" 
-                                  th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                Maximum Salary
-                            </span>
-                            <span th:if="${job.minSalary == null and job.maxSalary == null}" class="text-muted">
-                                Not specified
-                            </span>
-                        </div>
-                        
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-calendar-check me-2"></i>
-                            <span th:text="'Posted on ' + ${#temporals.format(job.postedAt, 'MMM d, yyyy')}">Posted date</span>
-                        </div>
-                        
-                        <hr>
-                        
-                        <h6 class="mt-3">Job Description</h6>
-                        <div class="job-description" th:utext="${job.description}">
-                            <!-- Job description will be rendered here -->
+                        <div class="card-body">
+                            <h6 class="card-title" th:text="${job.jobTitle}">Job Title</h6>
+                            <p class="text-muted" th:text="${job.companyName}">Company Name</p>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-geo-alt me-2"></i>
+                                <span th:if="${job.location != null and !job.location.isEmpty()}" th:text="${job.location}">Location</span>
+                                <span th:if="${job.location == null or job.location.isEmpty()}">Location not specified</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-briefcase me-2"></i>
+                                <span th:text="${job.jobType ?: 'Full-time'}">Job Type</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-currency-rupee me-2"></i>
+                                <span th:if="${job.minSalary != null and job.maxSalary != null}" 
+                                      th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
+                                    Salary Range
+                                </span>
+                                <span th:if="${job.minSalary != null and job.maxSalary == null}" 
+                                      th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
+                                    Minimum Salary
+                                </span>
+                                <span th:if="${job.minSalary == null and job.maxSalary != null}" 
+                                      th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
+                                    Maximum Salary
+                                </span>
+                                <span th:if="${job.minSalary == null and job.maxSalary == null}" class="text-muted">
+                                    Not specified
+                                </span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                <span th:text="'Posted on ' + ${#temporals.format(job.postedAt, 'MMM d, yyyy')}">Posted date</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mt-2">
+                                <i class="bi bi-briefcase me-2"></i>
+                                <span>Job Status: 
+                                    <span th:if="${job.active}" class="badge bg-success">Open</span>
+                                    <span th:unless="${job.active}" class="badge bg-secondary">Closed</span>
+                                </span>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="mt-3">Job Description</h6>
+                            <div class="job-description" th:utext="${job.description}">
+                                <!-- Job description will be rendered here -->
+                            </div>
                         </div>
                     </div>
                 </div>
+                <!-- End: Job Summary Column -->
             </div>
+            <!-- End: Row -->
         </div>
-                </div>
-            </div>
-        </div>
+        <!-- End: Container-fluid -->
     </div>
+    <!-- End: Main-content -->
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
