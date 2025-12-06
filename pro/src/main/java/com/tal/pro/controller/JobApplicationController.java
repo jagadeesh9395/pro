@@ -543,8 +543,13 @@ public class JobApplicationController {
             // Create the application with the resume path
             JobApplication application = new JobApplication();
 
-            // Set personal information - use DTO values if provided, otherwise fall back to
-            // candidate profile
+            // Set the expected salary from DTO
+            if (applicationDto.getExpectedSalary() != null) {
+                System.out.println("Setting expected salary: " + applicationDto.getExpectedSalary());
+                application.setExpectedSalary(applicationDto.getExpectedSalary());
+            }
+
+            // Set personal information - use DTO values if provided, otherwise fall back to candidate profile
             application
                     .setFullName(applicationDto.getFullName() != null && !applicationDto.getFullName().trim().isEmpty()
                             ? applicationDto.getFullName().trim()

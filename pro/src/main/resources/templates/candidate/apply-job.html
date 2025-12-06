@@ -329,10 +329,18 @@
                                         <input type="text" class="form-control" id="expectedSalaryLPA" 
                                                placeholder="e.g. 12.5" 
                                                th:value="${applicationDto.expectedSalary != null ? applicationDto.expectedSalary / 100000 : ''}"
-                                               oninput="formatAndUpdate(this, 'salaryWords')">
+                                               oninput="window.formatAndUpdate(this, 'salaryWords')">
                                         <input type="hidden" id="expectedSalary" name="expectedSalary" th:value="${applicationDto.expectedSalary}">
+                                        <input type="hidden" id="minSalary" th:value="${job.minSalary ?: 0}">
+                                        <input type="hidden" id="maxSalary" th:value="${job.maxSalary ?: ''}">
                                     </div>
-                                    <div id="salaryWords" class="form-text text-muted small mt-1"></div>
+                                    <div id="salaryRangeInfo" class="form-text text-muted small mt-1" th:if="${job.minSalary != null or job.maxSalary != null}">
+                                        Job Salary Range: 
+                                        <span th:if="${job.minSalary != null}">₹<span th:text="${#numbers.formatDecimal(job.minSalary/100000, 1, 2)}"></span> LPA</span>
+                                        <span th:if="${job.minSalary != null and job.maxSalary != null}"> - </span>
+                                        <span th:if="${job.maxSalary != null}">₹<span th:text="${#numbers.formatDecimal(job.maxSalary/100000, 1, 2)}"></span> LPA</span>
+                                    </div>
+                                    <div id="salaryWords" class="form-text small mt-1"></div>
                                 </div>
                             </div>
                             
@@ -429,7 +437,155 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:inline="javascript">
+        // Function to format number with commas
+        function formatNumber(num) {
+            if (!num) return '';
+            const [whole, decimal] = String(num).split('.');
+            const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return formatted + (decimal !== undefined ? '.' + decimal : '');
+        }
+
+        // Function to convert number to Indian currency words
+        function numberToWords(num) {
+            if (isNaN(num) || !num) return '';
+            
+            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            
+            function convertLessThanThousand(n) {
+                if (n === 0) return '';
+                
+                let word = '';
+                const hundreds = Math.floor(n / 100);
+                const remainder = n % 100;
+                
+                if (hundreds > 0) {
+                    word += single[hundreds] + ' Hundred';
+                }
+                
+                if (remainder > 0) {
+                    if (hundreds > 0) word += ' ';
+                    
+                    if (remainder < 10) {
+                        word += single[remainder];
+                    } else if (remainder < 20) {
+                        word += double[remainder - 10];
+                    } else {
+                        const ten = Math.floor(remainder / 10);
+                        const unit = remainder % 10;
+                        word += tens[ten];
+                        if (unit > 0) {
+                            word += ' ' + single[unit];
+                        }
+                    }
+                }
+                return word;
+            }
+            
+            if (num === 0) return 'Zero Rupees';
+            
+            let result = '';
+            const crore = Math.floor(num / 10000000);
+            const lakh = Math.floor((num % 10000000) / 100000);
+            const thousand = Math.floor((num % 100000) / 1000);
+            const remainder = num % 1000;
+            
+            if (crore > 0) result += convertLessThanThousand(crore) + ' Crore';
+            if (lakh > 0) result += (result ? ' ' : '') + convertLessThanThousand(lakh) + ' Lakh';
+            if (thousand > 0) result += (result ? ' ' : '') + convertLessThanThousand(thousand) + ' Thousand';
+            if (remainder > 0) result += (result ? ' ' : '') + convertLessThanThousand(remainder);
+            
+            return result + (result.endsWith('s') ? ' Rupees' : ' Rupees');
+        }
+
+        // Format and update salary logic with range validation
+        function formatAndUpdate(input, outputId) {
+            if (!input) return;
+            
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
+
+            // Get and clean the input value
+            let value = input.value.replace(/[^\d.]/g, '');
+            
+            // Handle multiple decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // Limit to 2 decimal places
+            const decimalIndex = value.indexOf('.');
+            if (decimalIndex !== -1) {
+                const decimalPart = value.substring(decimalIndex + 1);
+                if (decimalPart.length > 2) {
+                    value = value.substring(0, decimalIndex + 3);
+                }
+            }
+            
+            // Store raw value and format display
+            input.setAttribute('data-raw-value', value);
+            
+            let displayValue = '';
+            if (value) {
+                const [whole, decimal] = value.split('.');
+                displayValue = formatNumber(whole) + (decimal !== undefined ? '.' + decimal.padEnd(2, '0').substring(0, 2) : '');
+            }
+
+            // Update input value if changed
+            if (input.value !== displayValue && displayValue !== '') {
+                input.value = displayValue;
+            }
+
+            const hiddenInput = document.getElementById('expectedSalary');
+            const outputDiv = document.getElementById(outputId);
+            
+            if (!value || isNaN(parseFloat(value))) {
+                if(hiddenInput) hiddenInput.value = '';
+                if(outputDiv) outputDiv.textContent = '';
+                return;
+            }
+            
+            // Get min and max salary from hidden fields
+            const minSalary = parseFloat(document.getElementById('minSalary')?.value) || 0;
+            const maxSalary = parseFloat(document.getElementById('maxSalary')?.value) || Infinity;
+            
+            // Convert LPA to full number (1 LPA = 100,000)
+            const fullSalary = parseFloat(value) * 100000;
+            
+            if(hiddenInput) hiddenInput.value = fullSalary;
+            
+            // Format to words and check against range
+            if(outputDiv) {
+                const words = numberToWords(fullSalary);
+                const formattedNumber = new Intl.NumberFormat('en-IN').format(fullSalary);
+                
+                // Check if salary is within range
+                if (fullSalary < minSalary) {
+                    outputDiv.innerHTML = `<span class="text-warning">${words} (₹${formattedNumber}) - Below job's minimum salary range</span>`;
+                } else if (fullSalary > maxSalary) {
+                    outputDiv.innerHTML = `<span class="text-warning">${words} (₹${formattedNumber}) - Above job's maximum salary range</span>`;
+                } else {
+                    outputDiv.innerHTML = `<span class="text-success">${words} (₹${formattedNumber})</span>`;
+                }
+            }
+            
+            // Store current values for next time
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+            
+            // Ensure cursor stays in the right position after formatting
+            if (!isDeleting) {
+                input.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('jobApplicationForm');
@@ -677,148 +833,37 @@
                 alert(message);
             }
         });
-
-        // Function to format number with commas
-        function formatNumber(num) {
-            if (!num) return '';
-            const [whole, decimal] = String(num).split('.');
-            const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            return decimal ? `${formatted}.${decimal}` : formatted;
-        }
-
-        // Function to convert number to Indian currency words
-        function numberToWords(num) {
-            if (isNaN(num) || !num) return '';
-            
-            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-            const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-            
-            function convertLessThanThousand(n) {
-                if (n === 0) return '';
-                
-                let word = '';
-                const hundreds = Math.floor(n / 100);
-                const remainder = n % 100;
-                
-                if (hundreds > 0) {
-                    word += single[hundreds] + ' Hundred';
-                }
-                
-                if (remainder > 0) {
-                    if (hundreds > 0) word += ' ';
-                    
-                    if (remainder < 10) {
-                        word += single[remainder];
-                    } else if (remainder < 20) {
-                        word += double[remainder - 10];
-                    } else {
-                        const ten = Math.floor(remainder / 10);
-                        const unit = remainder % 10;
-                        word += tens[ten];
-                        if (unit > 0) {
-                            word += ' ' + single[unit];
-                        }
-                    }
-                }
-                return word;
-            }
-            
-            if (num === 0) return 'Zero Rupees';
-            
-            let result = '';
-            const crore = Math.floor(num / 10000000);
-            const lakh = Math.floor((num % 10000000) / 100000);
-            const thousand = Math.floor((num % 100000) / 1000);
-            const remainder = num % 1000;
-            
-            if (crore > 0) result += convertLessThanThousand(crore) + ' Crore';
-            if (lakh > 0) result += (result ? ' ' : '') + convertLessThanThousand(lakh) + ' Lakh';
-            if (thousand > 0) result += (result ? ' ' : '') + convertLessThanThousand(thousand) + ' Thousand';
-            if (remainder > 0) result += (result ? ' ' : '') + convertLessThanThousand(remainder);
-            
-            return result + (result.endsWith('s') ? ' Rupees' : ' Rupees');
-        }
-
-        // Format and update salary logic - Adapted for apply-job.html
-        function formatAndUpdate(input, outputId) {
-            if (!input) return;
-            
-            // Store cursor position
-            const cursorPos = input.selectionStart;
-            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
-
-            // Get and clean the input value
-            let value = input.value.replace(/[^\d.]/g, '');
-            
-            // Handle multiple decimal points
-            const parts = value.split('.');
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
-            }
-            
-            // Limit to 2 decimal places
-            const decimalIndex = value.indexOf('.');
-            if (decimalIndex !== -1) {
-                const decimalPart = value.substring(decimalIndex + 1);
-                if (decimalPart.length > 2) {
-                    value = value.substring(0, decimalIndex + 3);
-                }
-            }
-            
-            // Store raw value and format display
-            input.setAttribute('data-raw-value', value);
-            
-            let displayValue = '';
-            if (value) {
-                const [whole, decimal] = value.split('.');
-                displayValue = formatNumber(whole) + (decimal !== undefined ? '.' + decimal.padEnd(2, '0').substring(0, 2) : ''); // Don't enforce .00 while typing
-            }
-
-            // Update input value if changed (only if not empty to allow deleting)
-            if (value && input.value !== displayValue) {
-                // Only update if the formatted value is different to avoid cursor jumps
-                // But we need to be careful not to prevent typing
-                 // For now, let's just update if it's a significant change or on blur
-            }
-            // Actually, simpler approach for apply-job: just format on blur or let user type.
-            // But post-job does it on input. Let's stick to post-job logic but simplified for cursor safety if needed.
-            // Post-job logic:
-            if (input.value !== displayValue && displayValue !== '') {
-                 input.value = displayValue;
-            }
-
-            const hiddenInput = document.getElementById('expectedSalary');
-            const outputDiv = document.getElementById(outputId);
-            
-            if (!value || isNaN(parseFloat(value))) {
-                if(hiddenInput) hiddenInput.value = '';
-                if(outputDiv) outputDiv.textContent = '';
-                return;
-            }
-            
-            // Convert LPA to full number (1 LPA = 100,000)
-            const fullSalary = parseFloat(value) * 100000;
-            
-            if(hiddenInput) hiddenInput.value = fullSalary;
-            
-            // Format to words
-            if(outputDiv) {
-                const words = numberToWords(fullSalary);
-                const formattedNumber = new Intl.NumberFormat('en-IN').format(fullSalary);
-                outputDiv.textContent = `${words} (₹${formattedNumber})`;
-            }
-            
-             // Store current values for next time
-            input.setAttribute('data-prev-value', displayValue);
-            input.setAttribute('data-prev-length', displayValue.length);
-        }
     </script>
+    <style>
+        .text-warning {
+            color: #ffc107 !important;
+            font-weight: 500;
+        }
+        .text-success {
+            color: #28a745 !important;
+        }
+        .text-danger {
+            color: #dc3545 !important;
+        }
+    </style>
     <script>
         // Form validation
         function validateForm() {
             console.log('Validating form...');
             const form = document.getElementById('jobApplicationForm');
+            
+            // Debug: Log the expected salary value before form submission
+            const expectedSalaryInput = document.getElementById('expectedSalary');
+            const expectedSalaryLPA = document.getElementById('expectedSalaryLPA');
+            console.log('Expected Salary (LPA):', expectedSalaryLPA.value);
+            console.log('Expected Salary (stored):', expectedSalaryInput.value);
+            
+            // Ensure the hidden field has a value if the LPA field is filled
+            if (expectedSalaryLPA.value && !expectedSalaryInput.value) {
+                const fullSalary = parseFloat(expectedSalaryLPA.value) * 100000;
+                expectedSalaryInput.value = fullSalary;
+                console.log('Updated expected salary to:', fullSalary);
+            }
             const fileInput = document.getElementById('resumeFile');
             const useExistingResume = document.getElementById('useExistingResume');
             const errorDiv = document.getElementById('formError');
@@ -828,6 +873,26 @@
             if (errorDiv) {
                 errorDiv.textContent = '';
                 errorDiv.style.display = 'none';
+            }
+            
+            // Validate salary range
+            const expectedSalary = parseFloat(document.getElementById('expectedSalary')?.value);
+            const minSalary = parseFloat(document.getElementById('minSalary')?.value) || 0;
+            const maxSalary = parseFloat(document.getElementById('maxSalary')?.value) || Infinity;
+            
+            if (isNaN(expectedSalary)) {
+                showError('Please enter a valid expected salary');
+                return false;
+            }
+            
+            if (expectedSalary < minSalary) {
+                if (!confirm('Your expected salary is below the job\'s minimum range. Are you sure you want to proceed?')) {
+                    return false;
+                }
+            } else if (expectedSalary > maxSalary) {
+                if (!confirm('Your expected salary is above the job\'s maximum range. Are you sure you want to proceed?')) {
+                    return false;
+                }
             }
             
             // Check required fields
@@ -890,11 +955,43 @@
             }
         }
         
-        // Initialize salary field on load
+        // Initialize form when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize salary field
             const salaryInput = document.getElementById('expectedSalaryLPA');
-            if (salaryInput && salaryInput.value) {
-                formatAndUpdate(salaryInput, 'salaryWords');
+            if (salaryInput) {
+                // Format on page load if value exists
+                if (salaryInput.value) {
+                    formatAndUpdate(salaryInput, 'salaryWords');
+                }
+                
+                // Add event listeners for better UX
+                salaryInput.addEventListener('input', function() {
+                    formatAndUpdate(this, 'salaryWords');
+                });
+                
+                salaryInput.addEventListener('blur', function() {
+                    formatAndUpdate(this, 'salaryWords');
+                });
+                
+                // Handle paste event
+                salaryInput.addEventListener('paste', function(e) {
+                    setTimeout(() => formatAndUpdate(this, 'salaryWords'), 0);
+                });
+            }
+            
+            // Rest of your existing DOMContentLoaded code
+            const form = document.getElementById('jobApplicationForm');
+            const useExistingResume = document.getElementById('useExistingResume');
+            const resumeUploadSection = document.getElementById('resumeUploadSection');
+            
+            if (form) {
+                // Form validation
+                form.addEventListener('submit', function(event) {
+                    // Your existing form validation code
+                });
+                
+                // Rest of your existing code...
             }
         });
     </script>
