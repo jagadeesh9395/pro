@@ -454,6 +454,15 @@
                                 <span class="badge bg-primary" th:text="${job?.jobType ?: 'Not specified'}">FULL_TIME</span>
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Status</small>
+                            <div class="d-flex align-items-center">
+                                <i th:class="${job?.active ? 'bi bi-check-circle-fill me-2 text-success' : 'bi bi-x-circle-fill me-2 text-danger'}"></i>
+                                <span th:if="${job?.active}" class="text-success fw-bold">Open</span>
+                                <span th:unless="${job?.active}" class="text-danger fw-bold">Closed</span>
+                            </div>
+                        </div>
                         
                         <div class="mb-3">
                             <small class="text-muted d-block">Location</small>

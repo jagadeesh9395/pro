@@ -276,6 +276,20 @@
                                 <span th:if="${candidateLocation == null or candidateLocation.isEmpty()}"
                                       class="text-muted ms-2">Not provided</span>
                             </div>
+
+                            <!-- Notice Period -->
+                            <div class="mb-2">
+                                <strong>Notice Period:</strong>
+                                <span th:if="${appDetails.noticePeriod != null}" th:text="${appDetails.noticePeriod}" class="ms-2"></span>
+                                <span th:unless="${appDetails.noticePeriod != null}" class="text-muted ms-2">Not specified</span>
+                            </div>
+
+                            <!-- Expected Salary -->
+                            <div class="mb-2">
+                                <strong>Expected Salary:</strong>
+                                <span th:if="${appDetails.expectedSalary != null}" th:text="${appDetails.expectedSalary}" class="ms-2"></span>
+                                <span th:unless="${appDetails.expectedSalary != null}" class="text-muted ms-2">Not specified</span>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <h6>Resume</h6>
@@ -428,6 +442,11 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-briefcase text-muted me-2"></i>
                                 <span th:text="${jobType}">Job Type</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-info-circle text-muted me-2"></i>
+                                <span th:if="${job.active}" class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Open</span>
+                                <span th:unless="${job.active}" class="badge bg-danger"><i class="bi bi-x-circle me-1"></i> Closed</span>
                             </div>
                         </div>
 

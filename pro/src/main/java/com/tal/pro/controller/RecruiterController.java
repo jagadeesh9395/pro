@@ -1,6 +1,7 @@
 package com.tal.pro.controller;
 
 import com.tal.pro.criteria.ResumeSearchCriteria;
+import com.tal.pro.dto.ApplicationDetailsDto;
 import com.tal.pro.event.ApplicationStatusEvent;
 import com.tal.pro.model.*;
 import com.tal.pro.repository.JobApplicationRepository;
@@ -443,6 +444,10 @@ public class RecruiterController {
                 e.printStackTrace();
                 modelMap.put("jobError", "Error loading job details: " + e.getMessage());
             }
+
+            // Create and populate appDetails DTO
+            ApplicationDetailsDto appDetails = ApplicationDetailsDto.fromJobApplication(application);
+            modelMap.put("appDetails", appDetails);
 
             // Add the map to the model
             model.addAllAttributes(modelMap);

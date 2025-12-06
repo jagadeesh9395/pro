@@ -677,6 +677,142 @@
                 alert(message);
             }
         });
+
+        // Function to format number with commas
+        function formatNumber(num) {
+            if (!num) return '';
+            const [whole, decimal] = String(num).split('.');
+            const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return decimal ? `${formatted}.${decimal}` : formatted;
+        }
+
+        // Function to convert number to Indian currency words
+        function numberToWords(num) {
+            if (isNaN(num) || !num) return '';
+            
+            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            
+            function convertLessThanThousand(n) {
+                if (n === 0) return '';
+                
+                let word = '';
+                const hundreds = Math.floor(n / 100);
+                const remainder = n % 100;
+                
+                if (hundreds > 0) {
+                    word += single[hundreds] + ' Hundred';
+                }
+                
+                if (remainder > 0) {
+                    if (hundreds > 0) word += ' ';
+                    
+                    if (remainder < 10) {
+                        word += single[remainder];
+                    } else if (remainder < 20) {
+                        word += double[remainder - 10];
+                    } else {
+                        const ten = Math.floor(remainder / 10);
+                        const unit = remainder % 10;
+                        word += tens[ten];
+                        if (unit > 0) {
+                            word += ' ' + single[unit];
+                        }
+                    }
+                }
+                return word;
+            }
+            
+            if (num === 0) return 'Zero Rupees';
+            
+            let result = '';
+            const crore = Math.floor(num / 10000000);
+            const lakh = Math.floor((num % 10000000) / 100000);
+            const thousand = Math.floor((num % 100000) / 1000);
+            const remainder = num % 1000;
+            
+            if (crore > 0) result += convertLessThanThousand(crore) + ' Crore';
+            if (lakh > 0) result += (result ? ' ' : '') + convertLessThanThousand(lakh) + ' Lakh';
+            if (thousand > 0) result += (result ? ' ' : '') + convertLessThanThousand(thousand) + ' Thousand';
+            if (remainder > 0) result += (result ? ' ' : '') + convertLessThanThousand(remainder);
+            
+            return result + (result.endsWith('s') ? ' Rupees' : ' Rupees');
+        }
+
+        // Format and update salary logic - Adapted for apply-job.html
+        function formatAndUpdate(input, outputId) {
+            if (!input) return;
+            
+            // Store cursor position
+            const cursorPos = input.selectionStart;
+            const isDeleting = input.value.length < (input.getAttribute('data-prev-length') || 0);
+
+            // Get and clean the input value
+            let value = input.value.replace(/[^\d.]/g, '');
+            
+            // Handle multiple decimal points
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            // Limit to 2 decimal places
+            const decimalIndex = value.indexOf('.');
+            if (decimalIndex !== -1) {
+                const decimalPart = value.substring(decimalIndex + 1);
+                if (decimalPart.length > 2) {
+                    value = value.substring(0, decimalIndex + 3);
+                }
+            }
+            
+            // Store raw value and format display
+            input.setAttribute('data-raw-value', value);
+            
+            let displayValue = '';
+            if (value) {
+                const [whole, decimal] = value.split('.');
+                displayValue = formatNumber(whole) + (decimal !== undefined ? '.' + decimal.padEnd(2, '0').substring(0, 2) : ''); // Don't enforce .00 while typing
+            }
+
+            // Update input value if changed (only if not empty to allow deleting)
+            if (value && input.value !== displayValue) {
+                // Only update if the formatted value is different to avoid cursor jumps
+                // But we need to be careful not to prevent typing
+                 // For now, let's just update if it's a significant change or on blur
+            }
+            // Actually, simpler approach for apply-job: just format on blur or let user type.
+            // But post-job does it on input. Let's stick to post-job logic but simplified for cursor safety if needed.
+            // Post-job logic:
+            if (input.value !== displayValue && displayValue !== '') {
+                 input.value = displayValue;
+            }
+
+            const hiddenInput = document.getElementById('expectedSalary');
+            const outputDiv = document.getElementById(outputId);
+            
+            if (!value || isNaN(parseFloat(value))) {
+                if(hiddenInput) hiddenInput.value = '';
+                if(outputDiv) outputDiv.textContent = '';
+                return;
+            }
+            
+            // Convert LPA to full number (1 LPA = 100,000)
+            const fullSalary = parseFloat(value) * 100000;
+            
+            if(hiddenInput) hiddenInput.value = fullSalary;
+            
+            // Format to words
+            if(outputDiv) {
+                const words = numberToWords(fullSalary);
+                const formattedNumber = new Intl.NumberFormat('en-IN').format(fullSalary);
+                outputDiv.textContent = `${words} (₹${formattedNumber})`;
+            }
+            
+             // Store current values for next time
+            input.setAttribute('data-prev-value', displayValue);
+            input.setAttribute('data-prev-length', displayValue.length);
+        }
     </script>
     <script>
         // Form validation
@@ -754,108 +890,13 @@
             }
         }
         
-        (function () {
-            'use strict'
-            
-            // Fetch the form we want to apply custom Bootstrap validation styles to
-            const form = document.querySelector('.needs-validation')
-            const resumeFileInput = document.getElementById('resumeFile')
-            const fileNameElement = document.getElementById('fileName')
-            const noFileElement = document.getElementById('noFile')
-            
-            // Update file name display when a file is selected
-            if (resumeFileInput) {
-                resumeFileInput.addEventListener('change', function(e) {
-                    if (this.files.length > 0) {
-                        const fileName = this.files[0].name;
-                        if (fileNameElement) {
-                            fileNameElement.textContent = 'Selected file: ' + fileName;
-                            fileNameElement.style.display = 'block';
-                        }
-                        if (noFileElement) {
-                            noFileElement.style.display = 'none';
-                        }
-                    }
-                });
+        // Initialize salary field on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const salaryInput = document.getElementById('expectedSalaryLPA');
+            if (salaryInput && salaryInput.value) {
+                formatAndUpdate(salaryInput, 'salaryWords');
             }
-
-            // Form submission handler
-            if (form) {
-                form.addEventListener('submit', function (event) {
-                    // Check if form is valid
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    
-                    // Additional custom validation can be added here
-                    
-                    form.classList.add('was-validated')
-                }, false)
-            }
-            
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
-        })()
-        
-        // Show loading state on form submission
-        const form = document.querySelector('form.needs-validation');
-        if (form) {
-            form.addEventListener('submit', function() {
-                const submitBtn = this.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
-                }
-            });
-        }
-    </script>
-    <script>
-        // File upload preview
-        const resumeInput = document.getElementById('resume');
-        if (resumeInput) {
-            resumeInput.addEventListener('change', function(e) {
-                const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
-                const fileNameElement = document.getElementById('fileName');
-                if (fileNameElement) {
-                    fileNameElement.textContent = fileName;
-                }
-            
-                // Validate file size (5MB max)
-                const fileSize = e.target.files[0] ? e.target.files[0].size / 1024 / 1024 : 0; // in MB
-                if (fileSize > 5) {
-                    alert('File size exceeds 5MB. Please choose a smaller file.');
-                    e.target.value = '';
-                    const fileNameDisplay = document.getElementById('fileName');
-                    if (fileNameDisplay) {
-                        fileNameDisplay.textContent = 'No file chosen';
-                    }
-                }
-            });
-        }
-        
-        // Form validation
-        (function() {
-            'use strict';
-            
-            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-            var forms = document.querySelectorAll('.needs-validation');
-            
-            // Loop over them and prevent submission
-            Array.prototype.slice.call(forms).forEach(function(form) {
-                form.addEventListener('submit', function(event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    
-                    form.classList.add('was-validated');
-                }, false);
-            });
-        })();
+        });
     </script>
 </body>
 </html>
