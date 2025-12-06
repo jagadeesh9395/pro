@@ -374,12 +374,14 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#">
+            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/applications')} ? 'active' : ''" 
+               th:href="@{/candidate/applications}">
                 <i class="bi bi-briefcase"></i> My Applications
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#">
+            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/interviews')} ? 'active' : ''" 
+               th:href="@{/candidate/interviews}">
                 <i class="bi bi-calendar-check"></i> Interviews
             </a>
         </li>
@@ -780,7 +782,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-transparent" th:if="${!upcomingInterviews.isEmpty()}">
-                        <a th:href="@{/candidate/applications?status=INTERVIEW_SCHEDULED}" class="btn btn-sm btn-outline-primary w-100">
+                        <a th:href="@{/candidate/interviews}" class="btn btn-sm btn-outline-primary w-100">
                             View All Interviews
                         </a>
                     </div>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Interviews - Candidate Dashboard</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            /* Primary Colors from Logo */
+            --primary-dark-blue: #1F468C;     /* Dark blue from "Talent" */
+            --primary-blue: #3765A7;          /* Lighter blue from gradient */
+            --primary-teal: #00A78F;          /* Teal from "Trove" */
+            --primary-light-teal: #46CF9B;    /* Lighter teal from gradient */
+            
+            /* Derived Colors */
+            --primary-color: var(--primary-blue);
+            --primary-light: #e6f0f9;         /* Very light blue for backgrounds */
+            --primary-dark: #1a3a6e;          /* Darker blue for hover states */
+            --secondary-color: var(--primary-teal);
+            --secondary-light: #e6f5f2;       /* Very light teal for accents */
+            
+            /* Status Colors */
+            --success-color: #10b981;         /* Green for success states */
+            --warning-color: #f59e0b;         /* Amber for warnings */
+            --danger-color: #ef4444;          /* Red for errors */
+            
+            /* Neutral Colors */
+            --text-color: #1f2937;            /* Dark gray for text */
+            --text-light: #6b7280;            /* Lighter gray for secondary text */
+            --border-color: #e5e7eb;          /* Light gray for borders */
+            --card-bg: #ffffff;               /* White for cards */
+            --body-bg: #f8fafc;               /* Very light gray for page background */
+            
+            /* Shadows */
+            --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --nav-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        body {
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: white;
+            box-shadow: var(--nav-shadow);
+            position: fixed;
+            width: 250px;
+            padding: 20px 0;
+            z-index: 100;
+        }
+        
+        .sidebar .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar .logo img {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar .logo img:hover {
+            transform: scale(1.05);
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: var(--box-shadow);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-teal);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .interview-card {
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: white;
+            overflow: hidden;
+        }
+        
+        .interview-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border-color: rgba(55, 101, 167, 0.3);
+        }
+        
+        .interview-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .interview-card .card-title {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .interview-card .card-subtitle {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .interview-type {
+            font-weight: 600;
+            text-transform: capitalize;
+            color: var(--primary-color);
+        }
+        
+        .interview-time {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .company-name {
+            font-weight: 600;
+            color: var(--primary-dark-blue);
+        }
+        
+        .job-title {
+            color: var(--text-color);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-scheduled {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .status-pending {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+        
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .avatar-sm:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px rgba(31, 70, 140, 0.15);
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 2px 15px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        
+        .nav-link:hover, .nav-link:focus {
+            background-color: var(--primary-light);
+            color: var(--primary-color) !important;
+            transform: translateX(5px);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-teal));
+            color: white !important;
+            box-shadow: 0 4px 6px -1px rgba(31, 70, 140, 0.2);
+            position: relative;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: var(--primary-color);
+            border-radius: 2px 0 0 2px;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.2s ease;
+            font-weight: 500;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(31, 70, 140, 0.15);
+        }
+        
+        .btn-outline-primary i {
+            margin-right: 5px;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.8em;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge.rounded-pill {
+            padding: 0.35em 0.8em;
+        }
+        
+        .badge.bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .badge.bg-success {
+            background-color: var(--success-color) !important;
+        }
+        
+        .badge.bg-warning {
+            background-color: var(--warning-color) !important;
+        }
+        
+        .badge.bg-danger {
+            background-color: var(--danger-color) !important;
+        }
+        
+        .bg-soft-primary {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        
+        .bg-soft-warning {
+            background-color: #fffbeb;
+            color: #d97706;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo text-center py-3">
+            <img src="/images/TalentTrove.jpeg" alt="TalentTrove Logo" style="max-width: 180px; height: auto;">
+        </div>
+
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/dashboard')} ? 'active' : ''" 
+                   th:href="@{/candidate/dashboard}">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/profile')} ? 'active' : ''" 
+                   th:href="@{/candidate/profile}">
+                    <i class="bi bi-person"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/applications')} ? 'active' : ''" 
+                   th:href="@{/candidate/applications}">
+                    <i class="bi bi-briefcase"></i> My Applications
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" th:classappend="${#strings.startsWith(currentPath, '/candidate/interviews')} ? 'active' : ''" 
+                   th:href="@{/candidate/interviews}">
+                    <i class="bi bi-calendar-check"></i> Interviews
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-bell"></i> Notifications
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a class="nav-link text-danger" th:href="@{/logout}">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <h5 class="mb-0">My Interviews</h5>
+                <div class="d-flex align-items-center">
+                    <div class="me-3" th:replace="fragments/notifications :: notification-bell">
+                        <i class="bi bi-bell fs-5"></i>
+                    </div>
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" 
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-img me-2" th:if="${currentUser != null}">
+                                <span th:with="firstInitial=${currentUser.firstName != null ? #strings.substring(currentUser.firstName, 0, 1) : ''},
+                                             lastInitial=${currentUser.lastName != null ? #strings.substring(currentUser.lastName, 0, 1) : ''}"
+                                      th:text="${#strings.toUpperCase(firstInitial + lastInitial)}">
+                                    UD
+                                </span>
+                            </div>
+                            <span th:if="${currentUser != null}" th:text="${currentUser.firstName} + ' ' + ${currentUser.lastName}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/candidate/dashboard}">
+                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/candidate/profile}">
+                                    <i class="bi bi-person me-2"></i> My Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" th:href="@{/logout}">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid py-4">
+        <div class="mb-4">
+            <h2>My Interviews</h2>
+        </div>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Upcoming Interviews</h5>
+                        <span class="badge bg-primary rounded-pill" th:text="${upcomingInterviews.size()}"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3" th:if="${!upcomingInterviews.isEmpty()}">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item border-0 py-3" th:each="app : ${upcomingInterviews}">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-calendar-check text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1" th:text="${app.job.jobTitle}">Job Title</h6>
+                                            <p class="text-muted small mb-2" th:text="${app.job.companyName}">Company Name</p>
+                                            <div class="d-flex align-items-center text-muted small mb-1">
+                                                <i class="bi bi-calendar3 me-2"></i>
+                                                <span th:text="${#temporals.format(app.interviewDate, 'EEE, MMM d, yyyy')}">Date</span>
+                                                <span class="mx-2">•</span>
+                                                <i class="bi bi-clock me-1"></i>
+                                                <span th:text="${#temporals.format(app.interviewDate, 'h:mm a')}">Time</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="badge bg-soft-primary text-primary" 
+                                                      th:with="today=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}, interviewDay=${#temporals.format(app.interviewDate, 'yyyy-MM-dd')}"
+                                                      th:classappend="${today == interviewDay} ? 'bg-soft-warning text-warning' : ''"
+                                                      th:text="${today == interviewDay ? 'Today' : app.interviewType}">
+                                                    Interview Type
+                                                </span>
+                                                <a th:if="${app.interviewLocation != null && app.interviewLocation.startsWith('http')}" 
+                                                   th:href="${app.interviewLocation}" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-primary ms-2">
+                                                    <i class="bi bi-camera-video me-1"></i> Join
+                                                </a>
+                                                <span th:if="${app.interviewLocation != null && !app.interviewLocation.startsWith('http')}" 
+                                                      class="ms-2 small text-muted" 
+                                                      th:text="${app.interviewLocation}">
+                                                    Location details
+                                                </span>
+                                            </div>
+                                            <div class="mt-2" th:if="${app.interviewNotes != null && !app.interviewNotes.isEmpty()}">
+                                                <p class="small text-muted mb-0" th:text="'Note: ' + ${app.interviewNotes}"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="dropdown ms-2">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" th:href="@{/candidate/applications/{id}(id=${app.id})}">
+                                                        <i class="bi bi-eye me-2"></i>View Application
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" th:if="${app.interviewType == 'VIDEO'}" href="#" data-bs-toggle="modal" data-bs-target="#joinMeetingModal" 
+                                                       th:attr="data-meeting-link=${app.interviewLocation}">
+                                                        <i class="bi bi-camera-video me-2"></i>Join Meeting
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#rescheduleRequestModal" 
+                                                       th:attr="data-application-id=${app.id}">
+                                                        <i class="bi bi-calendar-plus me-2"></i>Request Reschedule
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#cancelRequestModal" 
+                                                       th:attr="data-application-id=${app.id}">
+                                                        <i class="bi bi-x-circle me-2"></i>Request Cancellation
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                        <div class="small text-muted">
+                                            <i class="bi bi-person me-1"></i> 
+                                            <span th:text="${app.job.postedBy.fullName}">Recruiter Name</span>
+                                            <span th:if="${app.job.postedBy.phoneNumber != null}" class="ms-2">
+                                                <i class="bi bi-telephone me-1"></i>
+                                                <span th:text="${app.job.postedBy.phoneNumber}">Phone</span>
+                                            </span>
+                                            <a th:if="${app.job.postedBy.email != null}" 
+                                               th:href="'mailto:' + ${app.job.postedBy.email}" 
+                                               class="text-decoration-none ms-2">
+                                                <i class="bi bi-envelope me-1"></i>
+                                                <span th:text="${app.job.postedBy.email}">Email</span>
+                                            </a>
+                                        </div>
+                                        <a th:href="@{/jobs/ + ${app.job.id}}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-briefcase me-1"></i>View Job
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center p-4" th:if="${upcomingInterviews.isEmpty()}">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No upcoming interviews</p>
+                            <small class="text-muted">Your scheduled interviews will appear here</small>
+                            <div class="mt-3">
+                                <a th:href="@{/jobs}" class="btn btn-primary">
+                                    <i class="bi bi-search me-1"></i>Browse Jobs
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Interview Tips -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Interview Tips</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-laptop text-primary"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Test Your Tech</h6>
+                                <p class="small text-muted mb-0">Ensure your camera, microphone, and internet connection are working before the interview.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-lightning text-primary"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be Prepared</h6>
+                                <p class="small text-muted mb-0">Research the company and prepare questions to ask the interviewer.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-clock text-primary"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be On Time</h6>
+                                <p class="small text-muted mb-0">Join the meeting 5-10 minutes early to avoid any last-minute technical issues.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Events -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Upcoming Events</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-4">
+                            <i class="bi bi-calendar2-event text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No upcoming events</p>
+                            <small class="text-muted">Your scheduled events will appear here</small>
+                                            <p class="small text-muted mb-0">Dress as you would for an in-person interview, even for video calls.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Handle join meeting modal
+        document.addEventListener('DOMContentLoaded', function() {
+            var joinMeetingModal = document.getElementById('joinMeetingModal');
+            if (joinMeetingModal) {
+                joinMeetingModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var meetingLink = button.getAttribute('data-meeting-link');
+                    var modalLink = joinMeetingModal.querySelector('#joinMeetingLink');
+                    if (meetingLink && modalLink) {
+                        modalLink.href = meetingLink;
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Join Meeting Modal -->
+    <div class="modal fade" id="joinMeetingModal" tabindex="-1" aria-labelledby="joinMeetingModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="joinMeetingModalLabel">Join Interview Meeting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You're about to join your interview meeting. Make sure you have:</p>
+                    <ul>
+                        <li>A stable internet connection</li>
+                        <li>Your camera and microphone ready</li>
+                        <li>A quiet, well-lit environment</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        The meeting will open in a new tab. If it doesn't, check your browser's pop-up settings.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="#" id="joinMeetingLink" class="btn btn-primary" target="_blank">
+                        <i class="bi bi-camera-video me-2"></i>Join Meeting
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Request Modal -->
+    <div class="modal fade" id="rescheduleRequestModal" tabindex="-1" aria-labelledby="rescheduleRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/candidate/applications/{id}/request-reschedule(id=${application.id})}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rescheduleRequestModalLabel">Request Interview Reschedule</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">Please provide your availability and reason for requesting a reschedule.</p>
+                        <div class="mb-3">
+                            <label for="preferredDate1" class="form-label">Preferred Date & Time 1</label>
+                            <input type="datetime-local" class="form-control" id="preferredDate1" name="preferredDate1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="preferredDate2" class="form-label">Preferred Date & Time 2</label>
+                            <input type="datetime-local" class="form-control" id="preferredDate2" name="preferredDate2" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rescheduleReason" class="form-label">Reason for Reschedule</label>
+                            <textarea class="form-control" id="rescheduleReason" name="rescheduleReason" rows="3" 
+                                     placeholder="Please explain why you need to reschedule" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Request Modal -->
+    <div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/candidate/applications/{id}/request-cancellation(id=${application.id})}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cancelRequestModalLabel">Request Interview Cancellation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Please note that canceling an interview may affect your application. Consider rescheduling instead if possible.
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancellationReason" class="form-label">Reason for Cancellation</label>
+                            <textarea class="form-control" id="cancellationReason" name="cancellationReason" rows="3" 
+                                     placeholder="Please explain why you need to cancel this interview" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Send Cancellation Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up the join meeting link
+            const joinMeetingModal = document.getElementById('joinMeetingModal');
+            if (joinMeetingModal) {
+                joinMeetingModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const meetingLink = button.getAttribute('data-meeting-link');
+                    document.getElementById('joinMeetingLink').href = meetingLink;
+                });
+            }
+            
+            // Set up the reschedule request modal
+            const rescheduleModal = document.getElementById('rescheduleRequestModal');
+            if (rescheduleModal) {
+                rescheduleModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const applicationId = button.getAttribute('data-application-id');
+                    const form = this.querySelector('form');
+                    form.action = `/candidate/applications/${applicationId}/request-reschedule`;
+                    
+                    // Set minimum datetime for the date pickers to current time
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    this.querySelectorAll('input[type="datetime-local"]').forEach(input => {
+                        input.min = now.toISOString().slice(0, 16);
+                    });
+                });
+            }
+            
+            // Set up the cancel request modal
+            const cancelModal = document.getElementById('cancelRequestModal');
+            if (cancelModal) {
+                cancelModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const applicationId = button.getAttribute('data-application-id');
+                    const form = this.querySelector('form');
+                    form.action = `/candidate/applications/${applicationId}/request-cancellation`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

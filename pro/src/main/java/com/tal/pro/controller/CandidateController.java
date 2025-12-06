@@ -6,6 +6,7 @@ import com.tal.pro.model.JobApplication;
 import com.tal.pro.repository.CandidateRepository;
 import com.tal.pro.service.JobApplicationService;
 import com.tal.pro.service.JobService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,7 +55,7 @@ public class CandidateController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, Principal principal,
+    public String dashboard(Model model, Principal principal, HttpServletRequest request,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String query,
@@ -169,17 +170,21 @@ public class CandidateController {
             model.addAttribute("statusDisplayNames", statusDisplayJson);
             model.addAttribute("fullName", candidate.getFullName());
 
-            // Add candidate and user info to model
+            // Get the current request path for navigation highlighting
+            String currentPath = request.getRequestURI();
+            
+            // Add data to the model
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
-            model.addAttribute("applications", applications);
-            model.addAttribute("upcomingInterviews", upcomingInterviews);
-            model.addAttribute("totalPages", jobsPage.getTotalPages());
+            model.addAttribute("jobs", jobsPage.getContent());
             model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", jobsPage.getTotalPages());
+            model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("pageSize", size);
-            model.addAttribute("query", query);
-            model.addAttribute("location", location);
+            model.addAttribute("recentApplications", applications);
+            model.addAttribute("upcomingInterviews", upcomingInterviews);
             model.addAttribute("now", now);
+            model.addAttribute("currentPath", currentPath);
 
             // Add applications data
             model.addAttribute("recentApplications", recentApplications);
@@ -327,6 +332,47 @@ public class CandidateController {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Failed to update password: " + e.getMessage());
             return "redirect:/candidate/profile#change-password";
+        }
+    }
+
+    @GetMapping("/interviews")
+    public String viewInterviews(Model model, Principal principal, HttpServletRequest request) {
+        try {
+            if (principal == null) {
+                return "redirect:/auth/login?error=not_authenticated";
+            }
+
+            String username = principal.getName();
+            Candidate candidate = candidateRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+            // Get all upcoming interviews
+            LocalDateTime now = LocalDateTime.now();
+            List<JobApplication> upcomingInterviews = jobApplicationService
+                    .findUpcomingInterviewsForCandidate(
+                            candidate.getId(),
+                            now,
+                            now.plusMonths(3)) // Show next 3 months of interviews
+                    .stream()
+                    .sorted(Comparator.comparing(JobApplication::getInterviewDate))
+                    .collect(Collectors.toList());
+
+            // Get the current request path for navigation highlighting
+            String currentPath = request.getRequestURI();
+            
+            model.addAttribute("candidate", candidate);
+            model.addAttribute("currentUser", candidate);
+            model.addAttribute("upcomingInterviews", upcomingInterviews);
+            model.addAttribute("now", now);
+            model.addAttribute("currentPath", currentPath);
+            
+            // Add interview count for the notification badge
+            model.addAttribute("upcomingInterviewCount", upcomingInterviews.size());
+
+            return "candidate/interviews";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/candidate/dashboard?error=error_loading_interviews";
         }
     }
 

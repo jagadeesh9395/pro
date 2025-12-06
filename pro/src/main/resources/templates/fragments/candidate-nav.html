@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <!-- Navigation Fragment for Candidate -->
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-color);">
+        <div class="container">
+            <a class="navbar-brand" href="/">TalentTrove</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/candidate/dashboard}"
+                           th:classappend="${#strings.startsWith(currentPath, '/candidate/dashboard') ? 'active' : ''}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/candidate/jobs}"
+                           th:classappend="${#strings.startsWith(currentPath, '/candidate/jobs') ? 'active' : ''}">
+                            <i class="bi bi-search me-1"></i> Find Jobs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/candidate/applications}"
+                           th:classappend="${#strings.startsWith(currentPath, '/candidate/applications') ? 'active' : ''}">
+                            <i class="bi bi-briefcase me-1"></i> My Applications
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/candidate/interviews}"
+                           th:classappend="${#strings.startsWith(currentPath, '/candidate/interviews') ? 'active' : ''}">
+                            <i class="bi bi-calendar-check me-1"></i> My Interviews
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  th:if="${upcomingInterviewCount != null && upcomingInterviewCount > 0}" 
+                                  th:text="${upcomingInterviewCount}">
+                            </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/candidate/profile}"
+                           th:classappend="${#strings.startsWith(currentPath, '/candidate/profile') ? 'active' : ''}">
+                            <i class="bi bi-person me-1"></i> My Profile
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <!-- Notification Bell -->
+                    <div class="me-3" th:replace="fragments/notifications :: notification-bell">
+                        <i class="bi bi-bell fs-5 text-white"></i>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" 
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="profile-img me-2" th:if="${currentUser != null}">
+                                <span th:with="firstInitial=${currentUser.firstName != null ? #strings.substring(currentUser.firstName, 0, 1) : ''},
+                                             lastInitial=${currentUser.lastName != null ? #strings.substring(currentUser.lastName, 0, 1) : ''}"
+                                      th:text="${#strings.toUpperCase(firstInitial + lastInitial)}">
+                                    UD
+                                </span>
+                            </div>
+                            <span th:if="${currentUser != null}" th:text="${currentUser.firstName} + ' ' + ${currentUser.lastName}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/candidate/dashboard}">
+                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/candidate/profile}">
+                                    <i class="bi bi-person me-2"></i> My Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <style>
+        .profile-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1F468C;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .navbar {
+            --primary-color: #1F468C;
+            --primary-light: #e6f0f9;
+            --primary-dark: #1a3a6e;
+            --secondary-color: #00A78F;
+            --secondary-light: #e6f5f2;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            position: relative;
+            padding: 0.5rem 1rem;
+        }
+        .nav-link:hover {
+            color: white;
+        }
+        .nav-link.active {
+            color: white;
+            font-weight: 500;
+        }
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+        .badge {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+        }
+    </style>
+</body>
+</html>
