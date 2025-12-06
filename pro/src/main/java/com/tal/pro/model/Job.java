@@ -48,7 +48,7 @@ public class Job {
     @Field
     @NotNull
     private LocalDateTime postedAt = LocalDateTime.now();
-    
+
     @Field
     private LocalDateTime lastModifiedAt = LocalDateTime.now();
 
@@ -58,6 +58,8 @@ public class Job {
     private Set<JobApplication> applications = new HashSet<>();
 
     private String experience; // e.g., "3+ years", "Entry Level", "5-7 years"
+
+    private boolean deleted = false;
 
     // Enums
     public enum JobType {

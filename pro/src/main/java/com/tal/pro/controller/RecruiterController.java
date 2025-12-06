@@ -774,8 +774,29 @@ public class RecruiterController {
     }
 
     @GetMapping("/jobs")
-    public String jobs() {
-        return "recruiter/jobs";
+    public String jobs(Model model, Principal principal) {
+        try {
+            if (principal == null) {
+                return "redirect:/auth/login?error=not_authenticated";
+            }
+
+            String username = principal.getName();
+            Recruiter recruiter = recruiterRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+
+            List<Job> jobs = jobService.getJobsByRecruiter(recruiter);
+
+            model.addAttribute("jobs", jobs);
+            model.addAttribute("recruiter", recruiter);
+            model.addAttribute("currentUser", recruiter);
+            model.addAttribute("username", username);
+            model.addAttribute("fullName", recruiter.getFullName());
+
+            return "recruiter/jobs";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/recruiter/dashboard?error=" + e.getMessage();
+        }
     }
 
     @GetMapping("/candidates")

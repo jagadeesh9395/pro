@@ -99,7 +99,7 @@ public class JobController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Job posted successfully!",
-                    "redirectUrl", "/recruiter/jobs/success/" + createdJob.getId()));
+                    "redirectUrl", "/recruiter/jobs"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
@@ -247,7 +247,7 @@ public class JobController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Job updated successfully!",
-                    "redirectUrl", "/recruiter/jobs/success/" + id));
+                    "redirectUrl", "/recruiter/jobs"));
 
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
@@ -299,5 +299,82 @@ public class JobController {
             redirectAttributes.addFlashAttribute("error", "Error loading job: " + e.getMessage());
             return "redirect:/recruiter/dashboard";
         }
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteJob(
+            @PathVariable String id,
+            @AuthenticationPrincipal Object principal,
+            RedirectAttributes redirectAttributes) {
+
+        if (principal == null) {
+            return "redirect:/auth/login?error=not_authenticated";
+        }
+
+        try {
+            // Get the recruiter from the principal
+            Recruiter recruiter;
+            if (principal instanceof Recruiter) {
+                recruiter = (Recruiter) principal;
+            } else if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                recruiter = recruiterRepository.findByUsername(username)
+                        .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+            } else {
+                throw new AccessDeniedException("Invalid user session");
+            }
+
+            jobService.deleteJob(id, recruiter);
+            redirectAttributes.addFlashAttribute("success", "Job deleted successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting job: " + e.getMessage());
+        }
+
+        return "redirect:/recruiter/jobs";
+    }
+
+    @PostMapping("/{id}/toggle-status")
+    public String toggleJobStatus(
+            @PathVariable String id,
+            @AuthenticationPrincipal Object principal,
+            RedirectAttributes redirectAttributes) {
+
+        if (principal == null) {
+            return "redirect:/auth/login?error=not_authenticated";
+        }
+
+        try {
+            // Get the recruiter from the principal
+            Recruiter recruiter;
+            if (principal instanceof Recruiter) {
+                recruiter = (Recruiter) principal;
+            } else if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                recruiter = recruiterRepository.findByUsername(username)
+                        .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+            } else {
+                throw new AccessDeniedException("Invalid user session");
+            }
+
+            Job job = jobService.getJobById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
+
+            // Verify ownership
+            if (!job.getPostedBy().getId().equals(recruiter.getId())) {
+                throw new AccessDeniedException("You are not authorized to modify this job");
+            }
+
+            // Toggle status
+            job.setActive(!job.isActive());
+            jobService.saveJob(job);
+
+            String status = job.isActive() ? "activated" : "deactivated";
+            redirectAttributes.addFlashAttribute("success", "Job " + status + " successfully");
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error updating job status: " + e.getMessage());
+        }
+
+        return "redirect:/recruiter/jobs";
     }
 }

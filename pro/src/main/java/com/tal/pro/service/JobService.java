@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,7 @@ public class JobService {
         if (recruiter == null) {
             throw new SecurityException("You must be logged in as a recruiter to update a job");
         }
-        
+
         return jobRepository.findById(jobId)
                 .map(existingJob -> {
                     try {
@@ -115,7 +116,9 @@ public class JobService {
             throw new SecurityException("You are not authorized to delete this job");
         }
 
-        // Soft delete by setting active to false
+        // Soft delete by setting deleted to true
+        job.setDeleted(true);
+        // Also deactivate it to be safe
         job.setActive(false);
         jobRepository.save(job);
     }
@@ -145,7 +148,7 @@ public class JobService {
             log.warn("Invalid job ID format: {}", id);
             return Optional.empty();
         }
-        
+
         try {
             return jobRepository.findById(id);
         } catch (IllegalArgumentException e) {
@@ -158,7 +161,7 @@ public class JobService {
     }
 
     public List<Job> getJobsByRecruiter(Recruiter recruiter) {
-        return jobRepository.findByPostedBy(recruiter.getId());
+        return jobRepository.findByPostedBy_IdAndDeletedFalse(new ObjectId(recruiter.getId()));
     }
 
     public Page<Job> searchJobsWithFilters(String query, String location, Job.JobType jobType, Pageable pageable) {
@@ -173,8 +176,7 @@ public class JobService {
                     Criteria.where("jobTitle").regex(query, "i"),
                     Criteria.where("companyName").regex(query, "i"),
                     Criteria.where("description").regex(query, "i"),
-                    Criteria.where("skills").regex(query, "i")
-            ));
+                    Criteria.where("skills").regex(query, "i")));
         }
 
         if (location != null && !location.isEmpty()) {
