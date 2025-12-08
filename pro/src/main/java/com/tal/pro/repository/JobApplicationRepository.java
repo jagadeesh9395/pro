@@ -194,4 +194,42 @@ public interface JobApplicationRepository extends MongoRepository<JobApplication
                         "{ $limit: 10 }"
         })
         List<JobApplication> findRecentApplications();
+    @Query("{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'interviewDate': { $ne: null } }")
+    Page<JobApplication> findByJob_PostedByIdAndInterviewDateIsNotNull(String recruiterId, Pageable pageable);
+    
+    @Query(value = "{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'interviewDate': { $ne: null } }", count = true)
+    long countByJob_PostedByIdAndInterviewDateIsNotNull(String recruiterId);
+    
+    @Query("{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'interviewDate': { $gte: ?1, $lte: ?2 } }")
+    long countByJob_PostedByIdAndInterviewDateBetween(String recruiterId, LocalDateTime start, LocalDateTime end);
+    
+    @Query("{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'status': ?1 }")
+    long countByJob_PostedByIdAndStatus(String recruiterId, JobApplication.ApplicationStatus status);
+    
+    @Query("{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'interviewDate': { $ne: null }, 'status': ?1 }")
+    long countByJob_PostedByIdAndInterviewDateIsNotNullAndStatus(String recruiterId, JobApplication.ApplicationStatus status);
+
+    @Query("{ 'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 'status': ?1, 'interviewDate': { $ne: null } }")
+    Page<JobApplication> findByJob_PostedByIdAndStatusAndInterviewDateIsNotNull(
+            String recruiterId,
+            JobApplication.ApplicationStatus status,
+            Pageable pageable
+    );
+
+    @Query("""
+    { 
+        'job.postedBy.$id': ?#{ [0] != null && [0].matches('[0-9a-fA-F]{24}') ? new org.bson.types.ObjectId([0]) : [0] }, 
+        'interviewDate': { 
+            $gte: ?1, 
+            $lte: ?2 
+        }
+    }
+""")
+    List<JobApplication> findUpcomingInterviewsForRecruiter(
+            String recruiterId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
+
 }

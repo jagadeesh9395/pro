@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface JobApplicationService {
+    
+    Map<String, Long> getInterviewStats(String recruiterId);
+    
 
     JobApplication submitApplication(String jobId, Candidate candidate, JobApplication application);
 
@@ -96,6 +99,13 @@ public interface JobApplicationService {
     Page<JobApplication> getApplicationsByRecruiterId(String recruiterId, String jobId,
                                                       JobApplication.ApplicationStatus status,
                                                       Pageable pageable);
+                                                      
+    /**
+     * Find upcoming interviews for a recruiter
+     * @param recruiterEmail Email of the recruiter
+     * @return List of upcoming job applications with interview dates
+     */
+    List<JobApplication> findUpcomingInterviews(String recruiterEmail);
 
     /**
      * Get applications by status
@@ -165,5 +175,13 @@ public interface JobApplicationService {
      * @return List of job applications with scheduled interviews
      */
     List<JobApplication> findUpcomingInterviewsForCandidate(String candidateId, LocalDateTime startDate, LocalDateTime endDate);
-
+    
+    /**
+     * Find interviews for a recruiter with optional status filtering and pagination
+     * @param recruiterId ID of the recruiter
+     * @param status Optional status to filter by (can be null for all statuses)
+     * @param pageable Pagination information
+     * @return Page of job applications with scheduled interviews
+     */
+    Page<JobApplication> findInterviewsByRecruiter(String recruiterId, String status, Pageable pageable);
 }

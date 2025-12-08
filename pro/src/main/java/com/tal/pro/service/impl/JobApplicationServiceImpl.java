@@ -35,18 +35,20 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     private final NotificationService notificationService;
     private final RecruiterRepository recruiterRepository;
-
+    private final SimpMessagingTemplate messagingTemplate;
     @Autowired
     public JobApplicationServiceImpl(JobApplicationRepository jobApplicationRepository,
-            JobService jobService,
-            KafkaProducerService kafkaProducerService,
-            NotificationService notificationService,
-            RecruiterRepository recruiterRepository) {
+                                     JobService jobService,
+                                     KafkaProducerService kafkaProducerService,
+                                     NotificationService notificationService,
+                                     RecruiterRepository recruiterRepository,
+                                     SimpMessagingTemplate messagingTemplate) {
         this.jobApplicationRepository = jobApplicationRepository;
         this.jobService = jobService;
         this.kafkaProducerService = kafkaProducerService;
         this.notificationService = notificationService;
         this.recruiterRepository = recruiterRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -247,8 +249,6 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return updateApplicationStatus(applicationId, status, "Status updated", updatedBy);
     }
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -622,6 +622,14 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     public Optional<JobApplication> findByJobIdAndCandidateId(String jobId, String candidateId) {
         return jobApplicationRepository.findByJobIdAndCandidateId(jobId, candidateId);
     }
+
+    @Override
+    public List<JobApplication> findUpcomingInterviews(String recruiterEmail) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfDay = now.plusDays(7); // Get interviews for the next 7 days
+        return jobApplicationRepository.findByRecruiterEmailAndInterviewDateBetween(
+                recruiterEmail, now, endOfDay);
+    }
     
     @Override
     public List<JobApplication> findUpcomingInterviewsForRecruiter(String recruiterId, LocalDateTime startDate, LocalDateTime endDate) {
@@ -631,5 +639,43 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     @Override
     public List<JobApplication> findUpcomingInterviewsForCandidate(String candidateId, LocalDateTime startDate, LocalDateTime endDate) {
         return jobApplicationRepository.findUpcomingInterviewsByCandidateId(candidateId, startDate, endDate);
+    }
+    
+    @Override
+    public Page<JobApplication> findInterviewsByRecruiter(String recruiterId, String status, Pageable pageable) {
+        // If status is provided, filter by status, otherwise get all interviews for the recruiter
+        if (status != null && !status.isEmpty()) {
+            try {
+                JobApplication.ApplicationStatus statusEnum = JobApplication.ApplicationStatus.valueOf(status.toUpperCase());
+                return jobApplicationRepository.findByJob_PostedByIdAndStatusAndInterviewDateIsNotNull(
+                    recruiterId, statusEnum, pageable);
+            } catch (IllegalArgumentException e) {
+                // If invalid status is provided, return empty page
+                return Page.empty(pageable);
+            }
+        } else {
+            return jobApplicationRepository.findByJob_PostedByIdAndInterviewDateIsNotNull(
+                recruiterId, pageable);
+        }
+    }
+
+    @Override
+    public Map<String, Long> getInterviewStats(String recruiterId) {
+        List<JobApplication> recruiterApplications = jobApplicationRepository.findByJob_PostedById(recruiterId);
+
+        // Initialize counts for different interview statuses
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("TOTAL", (long) recruiterApplications.size());
+        stats.put("SCHEDULED", recruiterApplications.stream()
+                .filter(app -> app.getInterviewDate() != null && app.getInterviewDate().isAfter(LocalDateTime.now()))
+                .count());
+        stats.put("COMPLETED", recruiterApplications.stream()
+                .filter(app -> app.getInterviewDate() != null && app.getInterviewDate().isBefore(LocalDateTime.now()))
+                .count());
+        stats.put("PENDING_REVIEW", recruiterApplications.stream()
+                .filter(app -> "SUBMITTED".equals(app.getStatus()) || "UNDER_REVIEW".equals(app.getStatus()))
+                .count());
+
+        return stats;
     }
 }

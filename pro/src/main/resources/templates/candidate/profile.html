@@ -956,6 +956,123 @@
                 });
             }
         });
+        
+        // ============================================
+        // Profile Strength Calculation System
+        // ============================================
+        
+        /**
+         * Calculate profile strength based on completed fields
+         * Weights totaling exactly 100%:
+         * - Email (5%), Phone (5%), Location (5%), Experience (5%)
+         * - Profile/Full Name (5%), Skills (25%), Work Experience (25%)
+         * - Education (15%), Resume (10%)
+         */
+        function calculateProfileStrength() {
+            let totalStrength = 0;
+            
+            // 1. Profile Picture / Full Name (5%)
+            const fullNameField = document.querySelector('input[name="fullName"]');
+            if (fullNameField && fullNameField.value && fullNameField.value.trim() !== '') {
+                totalStrength += 5;
+            }
+            
+            // 2. Email (5%)
+            const emailField = document.querySelector('input[name="email"]');
+            if (emailField && emailField.value && emailField.value.trim() !== '') {
+                totalStrength += 5;
+            }
+            
+            // 3. Phone Number (5%)
+            const phoneField = document.querySelector('input[name="phoneNumber"]');
+            if (phoneField && phoneField.value && phoneField.value.trim() !== '') {
+                totalStrength += 5;
+            }
+            
+            // 4. Location (5%)
+            const locationField = document.querySelector('input[name="location"]');
+            if (locationField && locationField.value && locationField.value.trim() !== '') {
+                totalStrength += 5;
+            }
+            
+            // 5. Experience (5%)
+            const experienceField = document.querySelector('input[name="experience"]');
+            if (experienceField && experienceField.value && experienceField.value.trim() !== '') {
+                totalStrength += 5;
+            }
+            
+            // 6. Skills (25%)
+            const skillsField = document.getElementById('skills');
+            if (skillsField && skillsField.value && skillsField.value.trim() !== '') {
+                totalStrength += 25;
+            }
+            
+            // 7. Work Experience (25%)
+            // Check if at least one work experience exists
+            const experienceList = document.getElementById('experienceList');
+            const noExperienceMsg = document.getElementById('noExperienceMessage');
+            const hasExperience = experienceList && 
+                                  experienceList.children.length > 0 && 
+                                  (!noExperienceMsg || noExperienceMsg.style.display === 'none');
+            if (hasExperience) {
+                totalStrength += 25;
+            }
+            
+            // 8. Education (15%)
+            // Check if at least one education exists
+            const educationList = document.getElementById('educationList');
+            const noEducationMsg = document.getElementById('noEducationMessage');
+            const hasEducation = educationList && 
+                                 educationList.children.length > 0 && 
+                                 (!noEducationMsg || noEducationMsg.style.display === 'none');
+            if (hasEducation) {
+                totalStrength += 15;
+            }
+            
+            // 9. Resume (10%)
+            // Check resume status from the DOM
+            const resumeStatus = document.getElementById('resumeStatus');
+            if (resumeStatus) {
+                const resumeText = resumeStatus.textContent || resumeStatus.innerText;
+                if (resumeText && resumeText.includes('Resume Uploaded')) {
+                    totalStrength += 10;
+                }
+            }
+            
+            // Store in localStorage for dashboard
+            localStorage.setItem('profileStrength', Math.round(totalStrength));
+            localStorage.setItem('profileStrengthLastUpdated', new Date().toISOString());
+            
+            console.log('Profile Strength Calculated:', Math.round(totalStrength) + '%');
+            return Math.round(totalStrength);
+        }
+        
+        // Calculate and store profile strength on page load
+        calculateProfileStrength();
+        
+        // Recalculate when forms are submitted successfully
+        if (form) {
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    calculateProfileStrength();
+                }, 500);
+            });
+        }
+        
+        if (skillsForm) {
+            skillsForm.addEventListener('submit', function() {
+                setTimeout(() => {
+                    calculateProfileStrength();
+                }, 500);
+            });
+        }
+        
+        // Listen for experience/education updates
+        // We'll recalculate periodically to catch dynamic changes
+        setInterval(() => {
+            calculateProfileStrength();
+        }, 2000); // Check every 2 seconds
+        
     </script>
     
     <!-- Bootstrap Bundle with Popper -->

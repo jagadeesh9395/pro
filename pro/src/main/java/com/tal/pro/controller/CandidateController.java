@@ -172,7 +172,7 @@ public class CandidateController {
 
             // Get the current request path for navigation highlighting
             String currentPath = request.getRequestURI();
-            
+
             // Add data to the model
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
@@ -359,13 +359,13 @@ public class CandidateController {
 
             // Get the current request path for navigation highlighting
             String currentPath = request.getRequestURI();
-            
+
             model.addAttribute("candidate", candidate);
             model.addAttribute("currentUser", candidate);
             model.addAttribute("upcomingInterviews", upcomingInterviews);
             model.addAttribute("now", now);
             model.addAttribute("currentPath", currentPath);
-            
+
             // Add interview count for the notification badge
             model.addAttribute("upcomingInterviewCount", upcomingInterviews.size());
 
@@ -373,6 +373,65 @@ public class CandidateController {
         } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/candidate/dashboard?error=error_loading_interviews";
+        }
+    }
+
+    @GetMapping("/applications/{id}")
+    public String viewApplicationDetails(@PathVariable("id") String applicationId,
+            Model model,
+            Principal principal,
+            HttpServletRequest request) {
+        try {
+            if (principal == null) {
+                return "redirect:/auth/login?error=not_authenticated";
+            }
+
+            String username = principal.getName();
+            Candidate candidate = candidateRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Candidate not found"));
+
+            // Get the application by ID
+            JobApplication application = jobApplicationService.getApplicationById(applicationId)
+                    .orElseThrow(() -> new RuntimeException("Application not found"));
+
+            // Verify the application belongs to this candidate
+            if (!application.getCandidate().getId().equals(candidate.getId())) {
+                return "redirect:/candidate/dashboard?error=unauthorized_access";
+            }
+
+            // Sort status history by change date (newest first)
+            if (application.getStatusHistory() != null) {
+                application.getStatusHistory().sort((h1, h2) -> {
+                    if (h1 == null && h2 == null)
+                        return 0;
+                    if (h1 == null)
+                        return 1;
+                    if (h2 == null)
+                        return -1;
+                    if (h1.getUpdatedAt() == null && h2.getUpdatedAt() == null)
+                        return 0;
+                    if (h1.getUpdatedAt() == null)
+                        return 1;
+                    if (h2.getUpdatedAt() == null)
+                        return -1;
+                    return h2.getUpdatedAt().compareTo(h1.getUpdatedAt());
+                });
+            }
+
+            // Get the current request path for navigation highlighting
+            String currentPath = request.getRequestURI();
+
+            model.addAttribute("application", application);
+            model.addAttribute("candidate", candidate);
+            model.addAttribute("currentUser", candidate);
+            model.addAttribute("job", application.getJob());
+            model.addAttribute("currentPath", currentPath);
+            model.addAttribute("now", LocalDateTime.now());
+
+            return "candidate/application-details";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/candidate/dashboard?error=error_loading_application";
         }
     }
 

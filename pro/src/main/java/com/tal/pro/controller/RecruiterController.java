@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
@@ -67,7 +68,12 @@ public class RecruiterController {
     public String dashboard(Model model, Principal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            HttpServletRequest request) {
+
+        // Add current path for active menu highlighting
+        String requestURI = request.getRequestURI();
+        model.addAttribute("currentPath", requestURI);
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
@@ -144,6 +150,61 @@ public class RecruiterController {
         }
     }
 
+    /**
+     * View all interviews
+     */
+    @GetMapping("/interviews")
+    public String viewInterviews(
+            Model model,
+            Principal principal,
+            HttpServletRequest request) {
+
+        try {
+            if (principal == null) {
+                return "redirect:/auth/login?error=not_authenticated";
+            }
+
+            // Add current path for active menu highlighting
+            String requestURI = request.getRequestURI();
+            model.addAttribute("currentPath", requestURI);
+
+            String username = principal.getName();
+            Recruiter recruiter = recruiterRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Recruiter not found"));
+
+            // Get all upcoming interviews (next 3 months) sorted by date
+            LocalDateTime now = LocalDateTime.now();
+            List<JobApplication> upcomingInterviews = jobApplicationService
+                    .findUpcomingInterviewsForRecruiter(
+                            recruiter.getId(),
+                            now,
+                            now.plusMonths(3)) // Show next 3 months of interviews
+                    .stream()
+                    .sorted(Comparator.comparing(JobApplication::getInterviewDate))
+                    .collect(Collectors.toList());
+
+            // Calculate interview statistics
+            Map<String, Long> interviewStats = jobApplicationService.getInterviewStats(recruiter.getId());
+
+            // Add all necessary attributes to the model
+            model.addAttribute("recruiter", recruiter);
+            model.addAttribute("currentUser", recruiter);
+            model.addAttribute("upcomingInterviews", upcomingInterviews);
+            model.addAttribute("interviewStats", interviewStats);
+            model.addAttribute("now", now);
+
+            // Add interview count for the notification badge
+            model.addAttribute("upcomingInterviewCount", upcomingInterviews.size());
+
+            return "recruiter/interviews";
+
+        } catch (Exception e) {
+            log.error("Error loading interviews", e);
+            model.addAttribute("error", "Error loading interviews: " + e.getMessage());
+            return "error";
+        }
+    }
+
     @GetMapping("/applications")
     public String viewApplications(
             @RequestParam(required = false) String status,
@@ -151,12 +212,17 @@ public class RecruiterController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model,
-            Principal principal) {
+            Principal principal,
+            HttpServletRequest request) {
 
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
             }
+
+            // Add current path for active menu highlighting
+            String requestURI = request.getRequestURI();
+            model.addAttribute("currentPath", requestURI);
 
             String username = principal.getName();
             Recruiter recruiter = recruiterRepository.findByUsername(username)
@@ -705,12 +771,17 @@ public class RecruiterController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             Model model,
-            Principal principal) {
+            Principal principal,
+            HttpServletRequest request) {
 
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
             }
+
+            // Add current path for active menu highlighting
+            String requestURI = request.getRequestURI();
+            model.addAttribute("currentPath", requestURI);
 
             // Get current recruiter
             String username = principal.getName();
@@ -779,11 +850,15 @@ public class RecruiterController {
     }
 
     @GetMapping("/jobs")
-    public String jobs(Model model, Principal principal) {
+    public String jobs(Model model, Principal principal, HttpServletRequest request) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
             }
+
+            // Add current path for active menu highlighting
+            String requestURI = request.getRequestURI();
+            model.addAttribute("currentPath", requestURI);
 
             String username = principal.getName();
             Recruiter recruiter = recruiterRepository.findByUsername(username)
@@ -810,11 +885,15 @@ public class RecruiterController {
     }
 
     @GetMapping("/profile")
-    public String profile(Model model, Principal principal) {
+    public String profile(Model model, Principal principal, HttpServletRequest request) {
         try {
             if (principal == null) {
                 return "redirect:/auth/login?error=not_authenticated";
             }
+
+            // Add current path for active menu highlighting
+            String requestURI = request.getRequestURI();
+            model.addAttribute("currentPath", requestURI);
 
             String username = principal.getName();
             Recruiter recruiter = recruiterRepository.findByUsername(username)

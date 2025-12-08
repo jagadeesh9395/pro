@@ -838,16 +838,16 @@
                     <div class="card-body">
                         <div class="profile-strength">
                             <div class="profile-progress">
-                                <div class="progress-circle">
-                                    <div class="progress-inner">
-                                        75%
+                                <div class="progress-circle" id="progressCircle">
+                                    <div class="progress-inner" id="progressInner">
+                                        <span id="profilePercentage">0%</span>
                                     </div>
                                 </div>
                             </div>
-                            <h5>Good Profile!</h5>
-                            <p class="text-muted small">Complete your profile to increase your chances of getting hired.</p>
-                            <a href="/candidate/profile" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-person-plus me-1"></i>Complete Profile
+                            <h5 id="profileStatusTitle">Get Started!</h5>
+                            <p class="text-muted small" id="profileStatusMessage">Complete your profile to increase your chances of getting hired.</p>
+                            <a href="/candidate/profile" class="btn btn-sm btn-outline-primary" id="profileActionBtn">
+                                <i class="bi bi-person-plus me-1"></i><span id="profileActionText">Complete Profile</span>
                             </a>
                         </div>
                     </div>
@@ -919,6 +919,114 @@
                 alert.close();
             }, 5000);
         }
+        
+        // ============================================
+        // Profile Strength Display System
+        // ============================================
+        
+        /**
+         * Update profile strength display from localStorage
+         */
+        function updateProfileStrengthDisplay() {
+            const profileStrength = parseInt(localStorage.getItem('profileStrength')) || 0;
+            
+            // Update percentage text
+            const percentageElement = document.getElementById('profilePercentage');
+            if (percentageElement) {
+                percentageElement.textContent = profileStrength + '%';
+            }
+            
+            // Update circular progress
+            const progressCircle = document.getElementById('progressCircle');
+            if (progressCircle) {
+                // Calculate color based on strength
+                let color;
+                if (profileStrength <= 25) {
+                    color = '#ef4444'; // red/danger
+                } else if (profileStrength <= 50) {
+                    color = '#f59e0b'; // orange/warning
+                } else if (profileStrength <= 75) {
+                    color = '#3b82f6'; // blue/info
+                } else {
+                    color = '#10b981'; // green/success
+                }
+                
+                // Update conic-gradient
+                progressCircle.style.background = `conic-gradient(${color} ${profileStrength}%, #e9ecef 0)`;
+            }
+            
+            // Update status title
+            const statusTitle = document.getElementById('profileStatusTitle');
+            if (statusTitle) {
+                if (profileStrength <= 25) {
+                    statusTitle.textContent = 'Get Started!';
+                    statusTitle.style.color = '#ef4444';
+                } else if (profileStrength <= 50) {
+                    statusTitle.textContent = 'Keep Going!';
+                    statusTitle.style.color = '#f59e0b';
+                } else if (profileStrength <= 75) {
+                    statusTitle.textContent = 'Good Profile!';
+                    statusTitle.style.color = '#3b82f6';
+                } else {
+                    statusTitle.textContent = 'Excellent Profile!';
+                    statusTitle.style.color = '#10b981';
+                }
+            }
+            
+            // Update status message and button
+            const statusMessage = document.getElementById('profileStatusMessage');
+            const actionText = document.getElementById('profileActionText');
+            const actionBtn = document.getElementById('profileActionBtn');
+            
+            if (profileStrength === 100) {
+                if (statusMessage) {
+                    statusMessage.textContent = 'Your profile is 100% complete! You\'re ready to attract top employers.';
+                }
+                if (actionText) {
+                    actionText.textContent = 'View Profile';
+                }
+                if (actionBtn) {
+                    actionBtn.classList.remove('btn-outline-primary');
+                    actionBtn.classList.add('btn-success');
+                }
+            } else if (profileStrength >= 76) {
+                if (statusMessage) {
+                    statusMessage.textContent = 'Almost there! Just a few more details to reach 100%.';
+                }
+                if (actionText) {
+                    actionText.textContent = 'Complete Profile';
+                }
+            } else if (profileStrength >= 51) {
+                if (statusMessage) {
+                    statusMessage.textContent = 'You\'re making great progress! Keep adding more details.';
+                }
+                if (actionText) {
+                    actionText.textContent = 'Complete Profile';
+                }
+            } else if (profileStrength >= 26) {
+                if (statusMessage) {
+                    statusMessage.textContent = 'Good start! Add more information to boost your profile.';
+                }
+                if (actionText) {
+                    actionText.textContent = 'Continue Setup';
+                }
+            } else {
+                if (statusMessage) {
+                    statusMessage.textContent = 'Complete your profile to increase your chances of getting hired.';
+                }
+                if (actionText) {
+                    actionText.textContent = 'Complete Profile';
+                }
+            }
+            
+            console.log('Dashboard - Profile Strength:', profileStrength + '%');
+        }
+        
+        // Update on page load
+        updateProfileStrengthDisplay();
+        
+        // Update periodically to catch changes from profile page
+        setInterval(updateProfileStrengthDisplay, 3000); // Check every 3 seconds
     });
 </script>
 </body>

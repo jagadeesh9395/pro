@@ -421,7 +421,7 @@
                     <div class="card-body">
                         <div class="p-3" th:if="${!upcomingInterviews.isEmpty()}">
                             <div class="list-group list-group-flush">
-                                <div class="list-group-item border-0 py-3" th:each="app : ${upcomingInterviews}">
+                                <div class="list-group-item border-0 py-3" th:each="app, appStat : ${upcomingInterviews}">
                                     <div class="d-flex align-items-start">
                                         <div class="flex-shrink-0 me-3">
                                             <div class="avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center">
@@ -463,12 +463,16 @@
                                         </div>
                                         
                                         <div class="dropdown ms-2">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" 
+                                                    th:id="'dropdownMenu' + ${appStat.index}"
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
                                                 <i class="bi bi-three-dots-vertical"></i>
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
+                                            <ul class="dropdown-menu dropdown-menu-end" th:aria-labelledby="'dropdownMenu' + ${appStat.index}">
                                                 <li>
-                                                    <a class="dropdown-item" th:href="@{/candidate/applications/{id}(id=${app.id})}">
+                                                    <a class="dropdown-item" th:href="@{/jobs/applications/{id}(id=${app.id})}">
                                                         <i class="bi bi-eye me-2"></i>View Application
                                                     </a>
                                                 </li>
@@ -585,11 +589,6 @@
                             <i class="bi bi-calendar2-event text-muted" style="font-size: 2rem;"></i>
                             <p class="text-muted mt-2 mb-0">No upcoming events</p>
                             <small class="text-muted">Your scheduled events will appear here</small>
-                                            <p class="small text-muted mb-0">Dress as you would for an in-person interview, even for video calls.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -597,29 +596,7 @@
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Handle join meeting modal
-        document.addEventListener('DOMContentLoaded', function() {
-            var joinMeetingModal = document.getElementById('joinMeetingModal');
-            if (joinMeetingModal) {
-                joinMeetingModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var meetingLink = button.getAttribute('data-meeting-link');
-                    var modalLink = joinMeetingModal.querySelector('#joinMeetingLink');
-                    if (meetingLink && modalLink) {
-                        modalLink.href = meetingLink;
-                    }
-                });
-            }
-        });
-    </script>
+
 
     <!-- Join Meeting Modal -->
     <div class="modal fade" id="joinMeetingModal" tabindex="-1" aria-labelledby="joinMeetingModalLabel" aria-hidden="true">
@@ -754,6 +731,25 @@
                     const form = this.querySelector('form');
                     form.action = `/candidate/applications/${applicationId}/request-cancellation`;
                 });
+            }
+            
+            // Initialize all dropdowns explicitly with debugging
+            console.log('Initializing dropdowns...');
+            const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+            console.log('Found ' + dropdownElementList.length + ' dropdown buttons');
+            
+            if (dropdownElementList.length > 0) {
+                try {
+                    dropdownElementList.forEach((dropdownToggleEl, index) => {
+                        console.log('Initializing dropdown ' + index + ':', dropdownToggleEl.id);
+                        new bootstrap.Dropdown(dropdownToggleEl);
+                    });
+                    console.log('All dropdowns initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing dropdowns:', error);
+                }
+            } else {
+                console.warn('No dropdown buttons found!');
             }
         });
     </script>
