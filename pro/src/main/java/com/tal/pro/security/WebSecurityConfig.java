@@ -88,8 +88,8 @@ public class WebSecurityConfig {
                                     "/ws/**",
                                     "/topic/**",
                                     "/app/**",
-                                    "/user/**"
-                            );
+                                    "/user/**",
+                                    "/api/public/resume/**");
                     // Enable CSRF for all requests except the ignored ones
                     csrf.requireCsrfProtectionMatcher(
                             new AndRequestMatcher(
@@ -98,21 +98,18 @@ public class WebSecurityConfig {
                                     new NegatedRequestMatcher(new AntPathRequestMatcher("/ws/**")),
                                     new NegatedRequestMatcher(new AntPathRequestMatcher("/topic/**")),
                                     new NegatedRequestMatcher(new AntPathRequestMatcher("/app/**")),
-                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/user/**"))
-                            )
-                    );
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/user/**")),
+                                    new NegatedRequestMatcher(new AntPathRequestMatcher("/api/public/resume/**"))));
                 })
                 .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.disable())
-                )
+                        .frameOptions(frameOptions -> frameOptions.disable()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()
                         .invalidSessionUrl("/auth/login?expired")
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
-                        .expiredUrl("/auth/login?expired")
-                )
+                        .expiredUrl("/auth/login?expired"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
@@ -133,8 +130,10 @@ public class WebSecurityConfig {
                                 "/ws/**",
                                 "/topic/**",
                                 "/app/**",
-                                "/user/**"
-                        ).permitAll()
+                                "/user/**",
+                                "/resume-builder",
+                                "/api/public/resume/**")
+                        .permitAll()
                         .requestMatchers("/recruiter/**").hasRole("RECRUITER")
                         .requestMatchers("/candidate/**").hasRole("CANDIDATE")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -142,10 +141,9 @@ public class WebSecurityConfig {
                         .requestMatchers("/jobs/*/apply").authenticated()
                         .requestMatchers(
                                 "/api/education/**",
-                                "/api/experience/**"
-                        ).authenticated()
-                        .anyRequest().authenticated()
-                )
+                                "/api/experience/**")
+                        .authenticated()
+                        .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/auth/login")
                         .loginProcessingUrl("/auth/login")
@@ -161,7 +159,8 @@ public class WebSecurityConfig {
                             } else if (exception.getMessage().contains("User account has expired")) {
                                 errorMessage = "Your account has expired. Please contact support.";
                             }
-                            response.sendRedirect("/auth/login?error=true&message=" + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8));
+                            response.sendRedirect("/auth/login?error=true&message="
+                                    + URLEncoder.encode(errorMessage, StandardCharsets.UTF_8));
                         })
                         .successHandler((request, response, authentication) -> {
                             // Get the authenticated user's authorities
@@ -181,23 +180,19 @@ public class WebSecurityConfig {
                                     break;
                                 }
                             }
-                            
+
                             // Just redirect to the target URL without touching the authentication
                             response.sendRedirect(targetUrl);
                         })
-                        .permitAll()
-                )
+                        .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .logoutSuccessUrl("/auth/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
-                        .permitAll()
-                )
+                        .permitAll())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authenticationProvider(authenticationProvider());
 
         return http.build();
@@ -207,24 +202,21 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:8080",
-            "http://127.0.0.1:8080"
-        ));
+                "http://localhost:8080",
+                "http://127.0.0.1:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
-            "authorization",
-            "content-type",
-            "x-csrf-token",
-            "x-requested-with",
-            "x-xsrf-token"
-        ));
+                "authorization",
+                "content-type",
+                "x-csrf-token",
+                "x-requested-with",
+                "x-xsrf-token"));
         configuration.setExposedHeaders(Arrays.asList(
-            "authorization",
-            "content-type",
-            "x-csrf-token",
-            "x-requested-with",
-            "x-xsrf-token"
-        ));
+                "authorization",
+                "content-type",
+                "x-csrf-token",
+                "x-requested-with",
+                "x-xsrf-token"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // 1 hour
 
@@ -241,7 +233,7 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/topic/**", webSocketConfig);
         source.registerCorsConfiguration("/app/**", webSocketConfig);
         source.registerCorsConfiguration("/user/**", webSocketConfig);
-        
+
         return source;
     }
 
