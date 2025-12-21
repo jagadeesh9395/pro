@@ -374,13 +374,13 @@
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/applications')} ? 'active' : ''" 
+            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/applications')} ? 'active' : ''"
                th:href="@{/candidate/applications}">
                 <i class="bi bi-briefcase"></i> My Applications
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/interviews')} ? 'active' : ''" 
+            <a class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/candidate/interviews')} ? 'active' : ''"
                th:href="@{/candidate/interviews}">
                 <i class="bi bi-calendar-check"></i> Interviews
             </a>
@@ -593,87 +593,89 @@
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead class="table-light">
-                                    <tr>
-                                        <th>Position</th>
-                                        <th>Company</th>
-                                        <th>Location</th>
-                                        <th>Applied On</th>
-                                        <th>Last Updated</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Company</th>
+                                    <th>Location</th>
+                                    <th>Applied On</th>
+                                    <th>Last Updated</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Dynamic Applications from Database -->
-                                    <tr th:each="app : ${recentApplications}" 
-                                        th:with="job=${app.job},
+                                <!-- Dynamic Applications from Database -->
+                                <tr th:each="app : ${recentApplications}"
+                                    th:with="job=${app.job},
                                                 jobTitle=${job?.jobTitle} ?: 'N/A', 
                                                 companyName=${job?.companyName} ?: 'N/A',
                                                 location=${job?.location} ?: 'N/A',
                                                 appliedDate=${app.appliedAt != null ? #temporals.format(app.appliedAt, 'MMM d, yyyy') : 'N/A'},
                                                 updatedDate=${app.updatedAt != null ? #temporals.format(app.updatedAt, 'MMM d, yyyy') : 'N/A'},
                                                 statusText=${app.status != null ? #strings.capitalizeWords(#strings.toLowerCase(#strings.replace(app.status.name(), '_', ' '))) : 'N/A'}"
-                                        class="align-middle">
-                                        <td>
-                                            <a th:if="${job != null}" 
-                                               th:href="@{/jobs/view/} + ${job.id}" 
-                                               class="text-decoration-none fw-medium text-primary"
-                                               th:text="${jobTitle}">Software Engineer</a>
-                                            <span th:unless="${job != null}" class="fw-medium" th:text="${jobTitle}"></span>
-                                        </td>
-                                        <td th:text="${companyName}">Tech Corp</td>
-                                        <td th:text="${location}">Remote</td>
-                                        <td th:text="${appliedDate}" 
-                                            th:attr="data-bs-original-title=${'Applied on ' + appliedDate}" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="top">Jun 15, 2023</td>
-                                        <td th:text="${updatedDate}" 
-                                            th:attr="data-bs-original-title=${'Last updated on ' + updatedDate}" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="top">Jun 16, 2023</td>
-                                        <td>
-                                            <span class="badge" 
+                                    class="align-middle">
+                                    <td>
+                                        <a th:if="${job != null}"
+                                           th:href="@{/jobs/view/} + ${job.id}"
+                                           class="text-decoration-none fw-medium text-primary"
+                                           th:text="${jobTitle}">Software Engineer</a>
+                                        <span th:unless="${job != null}" class="fw-medium" th:text="${jobTitle}"></span>
+                                    </td>
+                                    <td th:text="${companyName}">Tech Corp</td>
+                                    <td th:text="${location}">Remote</td>
+                                    <td th:text="${appliedDate}"
+                                        th:attr="data-bs-original-title=${'Applied on ' + appliedDate}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top">Jun 15, 2023
+                                    </td>
+                                    <td th:text="${updatedDate}"
+                                        th:attr="data-bs-original-title=${'Last updated on ' + updatedDate}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top">Jun 16, 2023
+                                    </td>
+                                    <td>
+                                            <span class="badge"
                                                   th:classappend="${app.status != null ? 'status-' + #strings.toLowerCase(app.status.name()) : 'status-unknown'}"
                                                   th:text="${app.status?.displayName ?: 'Applied'}"
-                                                  data-bs-toggle="tooltip" 
+                                                  data-bs-toggle="tooltip"
                                                   th:attr="data-bs-title=${app.notes != null ? 'Notes: ' + app.notes : 'No additional notes'}">
                                                 Applied
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                <!-- View Application Details -->
-                                                <a th:href="@{/jobs/applications/__${app.id}__}" 
-                                                   class="btn btn-sm btn-outline-primary"
-                                                   title="View Application Details"
-                                                   data-bs-toggle="tooltip"
-                                                   data-bs-placement="top">
-                                                    <i class="bi bi-eye"></i> View
-                                                </a>
-                                                
-                                                <!-- Status Indicator for non-withdrawable applications -->
-                                                <span th:if="${!app.canWithdraw() and (app.status?.name() == 'WITHDRAWN' or app.status?.name() == 'REJECTED' or app.status?.name() == 'HIRED')}" 
-                                                      class="text-muted small align-self-center"
-                                                      th:text="${'Cannot withdraw - ' + app.status?.displayName}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <!-- View Application Details -->
+                                            <a th:href="@{/jobs/applications/__${app.id}__}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View Application Details"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="top">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+
+                                            <!-- Status Indicator for non-withdrawable applications -->
+                                            <span th:if="${!app.canWithdraw() and (app.status?.name() == 'WITHDRAWN' or app.status?.name() == 'REJECTED' or app.status?.name() == 'HIRED')}"
+                                                  class="text-muted small align-self-center"
+                                                  th:text="${'Cannot withdraw - ' + app.status?.displayName}">
                                                 </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    
-                                    <!-- Fallback dummy data when no applications exist -->
-                                    <tr th:if="${#lists.isEmpty(recentApplications)}">
-                                        <td colspan="7" class="text-center py-4">
-                                            <div class="text-muted">
-                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                                <h5>No applications found</h5>
-                                                <p class="mb-0">You haven't applied to any jobs yet.</p>
-                                                <a href="/jobs" class="btn btn-primary mt-3">Browse Jobs</a>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Fallback dummy data when no applications exist -->
+                                <tr th:if="${#lists.isEmpty(recentApplications)}">
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                            <h5>No applications found</h5>
+                                            <p class="mb-0">You haven't applied to any jobs yet.</p>
+                                            <a href="/jobs" class="btn btn-primary mt-3">Browse Jobs</a>
+                                        </div>
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
-                            
+
                             <!-- View All Applications Link -->
                             <div class="text-end mt-3" th:if="${not #lists.isEmpty(recentApplications)}">
                                 <a th:href="@{/candidate/applications}" class="btn btn-link text-decoration-none">
@@ -713,20 +715,20 @@
                                             <span th:text="${#temporals.format(app.interviewDate, 'h:mm a')}">Time</span>
                                         </div>
                                         <div class="mt-2">
-                                            <span class="badge bg-soft-primary text-primary" 
+                                            <span class="badge bg-soft-primary text-primary"
                                                   th:with="today=${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}, interviewDay=${#temporals.format(app.interviewDate, 'yyyy-MM-dd')}"
                                                   th:classappend="${today == interviewDay} ? 'bg-soft-warning text-warning' : ''"
                                                   th:text="${today == interviewDay ? 'Today' : app.interviewType}">
                                                 Interview Type
                                             </span>
-                                            <a th:if="${app.interviewLocation != null && app.interviewLocation.startsWith('http')}" 
-                                               th:href="${app.interviewLocation}" 
-                                               target="_blank" 
+                                            <a th:if="${app.interviewLocation != null && app.interviewLocation.startsWith('http')}"
+                                               th:href="${app.interviewLocation}"
+                                               target="_blank"
                                                class="btn btn-sm btn-outline-primary ms-2">
                                                 <i class="bi bi-camera-video me-1"></i> Join
                                             </a>
-                                            <span th:if="${app.interviewLocation != null && !app.interviewLocation.startsWith('http')}" 
-                                                  class="ms-2 small text-muted" 
+                                            <span th:if="${app.interviewLocation != null && !app.interviewLocation.startsWith('http')}"
+                                                  class="ms-2 small text-muted"
                                                   th:text="${app.interviewLocation}">
                                                 Location details
                                             </span>
@@ -809,9 +811,14 @@
                             </div>
                             <h5 id="profileStatusTitle">Get Started!</h5>
                             <p class="text-muted small" id="profileStatusMessage">Complete your profile to increase your chances of getting hired.</p>
-                            <a href="/candidate/profile" class="btn btn-sm btn-outline-primary" id="profileActionBtn">
-                                <i class="bi bi-person-plus me-1"></i><span id="profileActionText">Complete Profile</span>
-                            </a>
+                            <div class="d-grid gap-2">
+                                <a href="/candidate/profile" class="btn btn-sm btn-outline-primary" id="profileActionBtn">
+                                    <i class="bi bi-person-plus me-1"></i><span id="profileActionText">Complete Profile</span>
+                                </a>
+                                <button class="btn btn-sm btn-outline-secondary" id="recalculateStrengthBtn" title="Force recalculate profile strength">
+                                    <i class="bi bi-arrow-clockwise"></i> Recalculate
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -826,18 +833,52 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Add SockJS and STOMP for WebSocket support -->
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-<script>
-    // Make Stomp available globally (stomp.js v2 exports 'Stomp')
-    window.StompJs = Stomp;
-    console.log('STOMP client loaded:', !!window.StompJs);
-</script>
 <!-- Load notifications script -->
 <script th:src="@{/js/notifications.js}" defer></script>
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function() {
+        // Profile strength from localStorage
+        function updateDashboardStrength() {
+            const storedStrength = parseInt(localStorage.getItem('profileStrength') || '0', 10);
+            updateStrengthUI(storedStrength);
+        }
+
+        // Function to update the UI with the strength value
+        function updateStrengthUI(strength) {
+            const strengthElement = document.getElementById('profileStrength');
+            const progressBar = document.querySelector('.profile-strength .progress-bar');
+            
+            if (strengthElement) {
+                strengthElement.textContent = `${strength}%`;
+            }
+            
+            if (progressBar) {
+                progressBar.style.width = `${strength}%`;
+                progressBar.setAttribute('aria-valuenow', strength);
+                
+                // Update progress bar color based on strength
+                progressBar.className = strength < 30 ? 'progress-bar bg-danger' :
+                                      strength < 70 ? 'progress-bar bg-warning' :
+                                      'progress-bar bg-success';
+                
+                // Update the percentage text inside the progress bar if it exists
+                const progressText = progressBar.querySelector('span');
+                if (progressText) {
+                    progressText.textContent = `${strength}%`;
+                }
+            }
+        }
+
+        // Initial update
+        updateDashboardStrength();
+
+        // Also update when the page becomes visible again
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateDashboardStrength();
+            }
+        });
+
         // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -892,13 +933,24 @@
          */
         function updateProfileStrengthDisplay() {
             const profileStrength = parseInt(localStorage.getItem('profileStrength')) || 0;
+            const lastUpdated = localStorage.getItem('profileStrengthLastUpdated');
+            
+            console.group('Profile Strength Update');
+            console.log('Current Strength:', profileStrength + '%');
+            console.log('Last Updated:', lastUpdated ? new Date(lastUpdated).toLocaleString() : 'Never');
+            console.groupEnd();
             
             // Update percentage text
             const percentageElement = document.getElementById('profilePercentage');
             if (percentageElement) {
                 percentageElement.textContent = profileStrength + '%';
             }
-            
+            // Add event listener for the recalculate button
+document.getElementById('recalculateStrengthBtn')?.addEventListener('click', function() {
+    console.log('Force recalculating profile strength...');
+    // Force a page reload to ensure we're getting fresh data
+    window.location.reload();
+});
             // Update circular progress
             const progressCircle = document.getElementById('progressCircle');
             if (progressCircle) {
@@ -985,11 +1037,25 @@
             console.log('Dashboard - Profile Strength:', profileStrength + '%');
         }
         
+        // Function to check for profile strength updates
+        function checkForProfileUpdates() {
+            const lastUpdated = localStorage.getItem('profileStrengthLastUpdated');
+            const lastChecked = window.lastProfileCheck || 0;
+            
+            if (lastUpdated && new Date(lastUpdated).getTime() > lastChecked) {
+                updateProfileStrengthDisplay();
+                window.lastProfileCheck = new Date().getTime();
+            }
+        }
+        
         // Update on page load
         updateProfileStrengthDisplay();
         
-        // Update periodically to catch changes from profile page
-        setInterval(updateProfileStrengthDisplay, 3000); // Check every 3 seconds
+        // Check for updates periodically
+        setInterval(checkForProfileUpdates, 2000);
+        
+        // Also check when the window gains focus
+        window.addEventListener('focus', checkForProfileUpdates);
     });
 </script>
 </body>

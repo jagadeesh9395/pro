@@ -77,65 +77,67 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/candidate/dashboard">TalentPro</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/candidate/dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/candidate/profile">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/candidate/applications">My Applications</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/candidate/jobs">Find Jobs</a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i>
-                            <span th:text="${fullName}">User</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="/candidate/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                        </ul>
-                    </div>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/candidate/dashboard">TalentPro</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/candidate/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/candidate/profile">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/candidate/applications">My Applications</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/candidate/jobs">Find Jobs</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span th:text="${fullName}">User</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="/candidate/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <!-- Main Content -->
-    <div class="container py-3">
-        <!-- Page Header with Back Button -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center">
-                <a href="/candidate/dashboard" class="btn btn-outline-secondary btn-sm me-3">
-                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+<!-- Main Content -->
+<div class="container py-3">
+    <!-- Page Header with Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <a href="/candidate/dashboard" class="btn btn-outline-secondary btn-sm me-3">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            <h4 class="mb-0">My Profile</h4>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                <a href="#" class="text-dark">
+                    <i class="bi bi-bell fs-5"></i>
                 </a>
-                <h4 class="mb-0">My Profile</h4>
             </div>
             <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <a href="#" class="text-dark">
-                        <i class="bi bi-bell fs-5"></i>
-                    </a>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="profile-img me-2 d-inline-block"
-                         th:with="nameParts=${candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
+                <div class="profile-img me-2 d-inline-block"
+                     th:with="nameParts=${candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
                                  firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
                                  lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
                                  initials=${#strings.toUpperCase(
@@ -145,36 +147,106 @@
                                              #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
                                          ) : 'US'
                                  )}"
-                         th:text="${initials}">
-                        US
-                    </div>
-                    <div class="d-inline-block">
-                        <div class="fw-medium" th:text="${candidate.fullName}">John Doe</div>
-                        <small class="text-muted">Candidate</small>
-                    </div>
+                     th:text="${initials}">
+                    US
+                </div>
+                <div class="d-inline-block">
+                    <div class="fw-medium" th:text="${candidate.fullName}">John Doe</div>
+                    <small class="text-muted">Candidate</small>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Success/Error Messages -->
-        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <span th:text="${param.success[0]}">Profile updated successfully!</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${param.error[0]}">An error occurred while updating your profile.</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <!-- Success/Error Messages -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${param.success[0]}">Profile updated successfully!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${param.error[0]}">An error occurred while updating your profile.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 
-        <div class="row">
-            <!-- Left Sidebar -->
-            <div class="col-lg-3">
-                <div class="card mb-4">
-                    <div class="card-body text-center">
-                        <div class="profile-pic mb-3" 
-                             th:with="nameParts=${candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-lg-3">
+            <!-- Profile Strength Bar -->
+            <div class="card mb-4">
+                <div class="card-header bg-white border-bottom-0 pb-0">
+                    <h6 class="mb-0">Profile Strength</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="profile-strength-bar">
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" id="profileStrengthBar" style="width: 0%">
+                                <span id="profileStrengthText">0%</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small>Profile Complete</small>
+                                <small class="fw-bold" id="profileCompletePercent">0%</small>
+                            </div>
+                            <div class="strength-sections">
+                                <div class="strength-section" data-section="personal">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Personal Info</small>
+                                        <small class="section-percent">0%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-section" data-section="skills">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Skills</small>
+                                        <small class="section-percent">0%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-section" data-section="experience">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Experience</small>
+                                        <small class="section-percent">0%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-section" data-section="education">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Education</small>
+                                        <small class="section-percent">0%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="strength-section" data-section="resume">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Resume</small>
+                                        <small class="section-percent">0%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Card -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-pic mb-3"
+                         th:with="nameParts=${candidate.fullName != null ? #strings.arraySplit(candidate.fullName, ' ') : null},
                                      firstName=${nameParts != null && nameParts.length > 0 ? #strings.trim(nameParts[0]) : ''},
                                      lastName=${nameParts != null && nameParts.length > 1 ? #strings.trim(nameParts[1]) : ''},
                                      initials=${#strings.toUpperCase(
@@ -184,517 +256,619 @@
                                                  #strings.substring(firstName, 0, #math.min(2, #strings.length(firstName)))
                                              ) : 'US'
                                      )}">
-                            <span th:text="${initials}">US</span>
-                        </div>
-                        <h5 class="mb-1" th:text="${candidate.fullName}">John Doe</h5>
-                        <p class="text-muted mb-3" th:text="'@' + ${candidate.username}">@johndoe</p>
-                        <div class="d-flex justify-content-center mb-3">
-                            <a href="#" class="btn btn-outline-primary btn-sm me-2">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-download"></i> Resume
-                            </a>
-                        </div>
+                        <span th:text="${initials}">US</span>
                     </div>
-                    <div class="list-group list-group-flush">
-                        <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="pill">
-                            <i class="bi bi-person me-2"></i> Profile
+                    <h5 class="mb-1" th:text="${candidate.fullName}">John Doe</h5>
+                    <p class="text-muted mb-3" th:text="'@' + ${candidate.username}">@johndoe</p>
+                    <div class="d-flex justify-content-center mb-3">
+                        <a href="#" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="bi bi-pencil"></i> Edit
                         </a>
-                        <a href="#resume" class="list-group-item list-group-item-action" data-bs-toggle="pill">
-                            <i class="bi bi-file-earmark-text me-2"></i> Resume
-                        </a>
-                        <a href="#settings" class="list-group-item list-group-item-action" data-bs-toggle="pill">
-                            <i class="bi bi-gear me-2"></i> Settings
-                        </a>
-                        <a href="#privacy" class="list-group-item list-group-item-action" data-bs-toggle="pill">
-                            <i class="bi bi-shield-lock me-2"></i> Privacy
+                        <a href="#" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-download"></i> Resume
                         </a>
                     </div>
                 </div>
-                
-                <div class="card mb-4 d-none d-lg-block">
-                    <div class="card-header">
-                        <h6 class="mb-0">Profile Completion</h6>
+                <div class="list-group list-group-flush">
+                    <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="pill">
+                        <i class="bi bi-person me-2"></i> Profile
+                    </a>
+                    <a href="#resume" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-file-earmark-text me-2"></i> Resume
+                    </a>
+                    <a href="#settings" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-gear me-2"></i> Settings
+                    </a>
+                    <a href="#privacy" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-shield-lock me-2"></i> Privacy
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mb-4 d-none d-lg-block">
+                <div class="card-header">
+                    <h6 class="mb-0">Profile Completion</h6>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <div class="card-body">
-                        <div class="progress mb-3" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    <p class="mb-0 text-muted small">Complete your profile to increase your chances of getting hired.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Personal Information</h5>
+                    <button class="btn btn-sm btn-link text-primary" id="editProfileBtn">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm" th:action="@{/candidate/profile/update-personal}" method="post">
+                        <input type="hidden" name="_method" value="put" th:if="${_csrf}"/>
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}"/>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" name="fullName" th:value="${candidate.fullName}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" name="email" th:value="${candidate.email}" readonly>
+                                </div>
+                            </div>
                         </div>
-                        <p class="mb-0 text-muted small">Complete your profile to increase your chances of getting hired.</p>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                    <input type="tel" class="form-control" name="phoneNumber" th:value="${candidate.phoneNumber}" placeholder="Enter phone number" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" name="location" th:value="${candidate.location}" placeholder="Enter your location" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Experience (Years)</label>
+                                    <input type="number" class="form-control" name="experience" th:value="${candidate.experience}" min="0" max="50" step="0.5" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 d-none" id="formButtons">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="cancelEdit">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Skills Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Skills</h5>
+                    <button type="button" class="btn btn-sm btn-link text-primary" id="editSkillsBtn">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form id="skillsForm" th:action="@{/candidate/profile/update-skills}" method="post">
+                        <input type="hidden" name="_method" value="put" th:if="${_csrf}"/>
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}"/>
+                        <input type="hidden" name="id" th:value="${candidate.id}"/>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
+                                <input type="text" class="form-control" id="skills" name="skills"
+                                       th:value="${candidate.skills}"
+                                       placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes"
+                                       required readonly>
+                            </div>
+                            <div class="form-text">List your technical and soft skills, separated by commas.</div>
+                            <div class="invalid-feedback">Please add your skills.</div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3 d-none" id="skillsFormButtons">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="cancelSkillsEdit">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Skills</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Work Experience Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Work Experience</h5>
+                    <button class="btn btn-sm btn-primary" id="addExperienceBtn">
+                        <i class="bi bi-plus-lg me-1"></i> Add Experience
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="experienceList">
+                        <!-- Experience items will be loaded here -->
+                        <div id="noExperienceMessage" class="text-center py-4">
+                            <i class="bi bi-briefcase text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No work experience added yet. Add your work history to showcase your professional background.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Main Content -->
-            <div class="col-lg-9">
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Personal Information</h5>
-                        <button class="btn btn-sm btn-link text-primary" id="editProfileBtn">
-                            <i class="bi bi-pencil"></i> Edit
-                        </button>
+
+            <!-- Education Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Education</h5>
+                    <button type="button" class="btn btn-sm btn-primary" id="addEducationBtn" data-bs-toggle="modal" data-bs-target="#educationModal">
+                        <i class="bi bi-plus-lg"></i> Add Education
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="educationList">
+                        <!-- Education items will be loaded here dynamically -->
+                        <div class="text-center text-muted py-4" id="noEducationMessage">
+                            <i class="bi bi-mortarboard" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No education added yet. Click 'Add Education' to get started.</p>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <form id="profileForm" th:action="@{/candidate/profile/update-personal}" method="post">
-                            <input type="hidden" name="_method" value="put" th:if="${_csrf}" />
-                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}" />
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Full Name</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                        <input type="text" class="form-control" name="fullName" th:value="${candidate.fullName}" readonly>
+                </div>
+            </div>
+
+            <!-- Add/Edit Education Modal -->
+            <div class="modal fade" id="educationModal" tabindex="-1" aria-labelledby="educationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="educationModalLabel">Add Education</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="educationForm">
+                                <input type="hidden" id="educationId">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="institution" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="degree" class="form-label">Degree <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="degree" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="fieldOfStudy" class="form-label">Field of Study <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="fieldOfStudy" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                        <input type="month" class="form-control" id="startDate" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="month" class="form-control" id="endDate">
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="currentlyStudying">
+                                            <label class="form-check-label" for="currentlyStudying">
+                                                Currently Studying
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" rows="4"
+                                                  placeholder="Add details about your education, achievements, or relevant coursework"></textarea>
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                        <input type="email" class="form-control" name="email" th:value="${candidate.email}" readonly>
+                            </form>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="saveEducationBtn">
+                                <i class="bi bi-save me-1"></i> Save Education
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Work Experience Modal -->
+            <div class="modal fade" id="experienceModal" tabindex="-1" aria-labelledby="experienceModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="experienceModalLabel">Add Work Experience</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form id="experienceForm">
+                                <input type="hidden" id="experienceId">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="company" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="position" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="employmentType" class="form-label">Employment Type</label>
+                                        <select class="form-select" id="employmentType">
+                                            <option value="FULL_TIME">Full-time</option>
+                                            <option value="PART_TIME">Part-time</option>
+                                            <option value="CONTRACT">Contract</option>
+                                            <option value="FREELANCE">Freelance</option>
+                                            <option value="INTERNSHIP">Internship</option>
+                                            <option value="APPRENTICESHIP">Apprenticeship</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="expLocation" class="form-label">Location</label>
+                                        <input type="text" class="form-control" id="expLocation">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="startDateExp" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                        <input type="month" class="form-control" id="startDateExp" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="endDateExp" class="form-label">End Date</label>
+                                        <input type="month" class="form-control" id="endDateExp">
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="currentlyWorking">
+                                            <label class="form-check-label" for="currentlyWorking">
+                                                Currently Working
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="descriptionExp" class="form-label">Description</label>
+                                        <textarea class="form-control" id="descriptionExp" rows="4" placeholder="Describe your role, responsibilities, and achievements"></textarea>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Phone Number</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                        <input type="tel" class="form-control" name="phoneNumber" th:value="${candidate.phoneNumber}" placeholder="Enter phone number" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Location</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                        <input type="text" class="form-control" name="location" th:value="${candidate.location}" placeholder="Enter your location" readonly>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Experience (Years)</label>
-                                        <input type="number" class="form-control" name="experience" th:value="${candidate.experience}" min="0" max="50" step="0.5" readonly>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-end mt-4 d-none" id="formButtons">
-                                <button type="button" class="btn btn-outline-secondary me-2" id="cancelEdit">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <!-- Skills Section -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Skills</h5>
-                        <button type="button" class="btn btn-sm btn-link text-primary" id="editSkillsBtn">
-                            <i class="bi bi-pencil"></i> Edit
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <form id="skillsForm" th:action="@{/candidate/profile/update-skills}" method="post">
-                            <input type="hidden" name="_method" value="put" th:if="${_csrf}" />
-                            <input type="hidden" name="_csrf" th:value="${_csrf.token}" th:if="${_csrf}" />
-                            <input type="hidden" name="id" th:value="${candidate.id}" />
-                            <div class="mb-3">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-code-slash"></i></span>
-                                    <input type="text" class="form-control" id="skills" name="skills" 
-                                           th:value="${candidate.skills}" 
-                                           placeholder="e.g., Java, Spring Boot, React, AWS, SQL, Docker, Kubernetes" 
-                                           required readonly>
-                                <div class="form-text">List your technical and soft skills, separated by commas.</div>
-                                <div class="invalid-feedback">Please add your skills.</div>
-                            </div>
-                            <div class="d-flex justify-content-end mt-3 d-none" id="skillsFormButtons">
-                                <button type="button" class="btn btn-outline-secondary me-2" id="cancelSkillsEdit">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Save Skills</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <!-- Work Experience Section -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Work Experience</h5>
-                        <button class="btn btn-sm btn-primary" id="addExperienceBtn">
-                            <i class="bi bi-plus-lg me-1"></i> Add Experience
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="experienceList">
-                            <!-- Experience items will be loaded here -->
-                            <div id="noExperienceMessage" class="text-center py-4">
-                                <i class="bi bi-briefcase text-muted" style="font-size: 2rem;"></i>
-                                <p class="text-muted mt-2 mb-0">No work experience added yet. Add your work history to showcase your professional background.</p>
-                            </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="saveExperienceBtn">
+                                <i class="bi bi-save me-1"></i> Save Experience
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Education Section -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Education</h5>
-                        <button type="button" class="btn btn-sm btn-primary" id="addEducationBtn" data-bs-toggle="modal" data-bs-target="#educationModal">
-                            <i class="bi bi-plus-lg"></i> Add Education
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div id="educationList">
-                            <!-- Education items will be loaded here dynamically -->
-                            <div class="text-center text-muted py-4" id="noEducationMessage">
-                                <i class="bi bi-mortarboard" style="font-size: 2rem;"></i>
-                                <p class="mt-2 mb-0">No education added yet. Click 'Add Education' to get started.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            </div>
 
-                <!-- Add/Edit Education Modal -->
-                <div class="modal fade" id="educationModal" tabindex="-1" aria-labelledby="educationModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title" id="educationModalLabel">Add Education</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body p-4">
-                                <form id="educationForm">
-                                    <input type="hidden" id="educationId">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label for="institution" class="form-label">Institution <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="institution" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="degree" class="form-label">Degree <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="degree" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="fieldOfStudy" class="form-label">Field of Study <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="fieldOfStudy" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                            <input type="month" class="form-control" id="startDate" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="endDate" class="form-label">End Date</label>
-                                            <input type="month" class="form-control" id="endDate">
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="currentlyStudying">
-                                                <label class="form-check-label" for="currentlyStudying">
-                                                    Currently Studying
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <label for="description" class="form-label">Description</label>
-                                            <textarea class="form-control" id="description" rows="4" placeholder="Add details about your education, achievements, or relevant coursework"></textarea>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer bg-light">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-lg me-1"></i> Cancel
-                                </button>
-                                <button type="button" class="btn btn-primary" id="saveEducationBtn">
-                                    <i class="bi bi-save me-1"></i> Save Education
-                                </button>
-                            </div>
+            <!-- Delete Confirmation Modal for Work Experience -->
+            <div class="modal fade" id="deleteExperienceModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete this work experience entry? This action cannot be undone.
+                            <input type="hidden" id="deleteExperienceId">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteExperience">Delete</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Add/Edit Work Experience Modal -->
-                <div class="modal fade" id="experienceModal" tabindex="-1" aria-labelledby="experienceModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title" id="experienceModalLabel">Add Work Experience</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body p-4">
-                                <form id="experienceForm">
-                                    <input type="hidden" id="experienceId">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label for="company" class="form-label">Company <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="company" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="position" class="form-label">Position <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="position" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="employmentType" class="form-label">Employment Type</label>
-                                            <select class="form-select" id="employmentType">
-                                                <option value="FULL_TIME">Full-time</option>
-                                                <option value="PART_TIME">Part-time</option>
-                                                <option value="CONTRACT">Contract</option>
-                                                <option value="FREELANCE">Freelance</option>
-                                                <option value="INTERNSHIP">Internship</option>
-                                                <option value="APPRENTICESHIP">Apprenticeship</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="expLocation" class="form-label">Location</label>
-                                            <input type="text" class="form-control" id="expLocation">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="startDateExp" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                            <input type="month" class="form-control" id="startDateExp" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="endDateExp" class="form-label">End Date</label>
-                                            <input type="month" class="form-control" id="endDateExp">
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" id="currentlyWorking">
-                                                <label class="form-check-label" for="currentlyWorking">
-                                                    Currently Working
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <label for="descriptionExp" class="form-label">Description</label>
-                                            <textarea class="form-control" id="descriptionExp" rows="4" placeholder="Describe your role, responsibilities, and achievements"></textarea>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer bg-light">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-lg me-1"></i> Cancel
-                                </button>
-                                <button type="button" class="btn btn-primary" id="saveExperienceBtn">
-                                    <i class="bi bi-save me-1"></i> Save Experience
-                                </button>
-                            </div>
+            <!-- Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteEducationModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete this education entry? This action cannot be undone.
+                            <input type="hidden" id="deleteEducationId">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteEducation">Delete</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Delete Confirmation Modal for Work Experience -->
-                <div class="modal fade" id="deleteExperienceModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to delete this work experience entry? This action cannot be undone.
-                                <input type="hidden" id="deleteExperienceId">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="confirmDeleteExperience">Delete</button>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Resume Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Resume Status</h5>
                 </div>
-
-                <!-- Delete Confirmation Modal -->
-                <div class="modal fade" id="deleteEducationModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                Are you sure you want to delete this education entry? This action cannot be undone.
-                                <input type="hidden" id="deleteEducationId">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="confirmDeleteEducation">Delete</button>
-                            </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">
+                                <span th:if="${candidate?.resume != null}">Resume Uploaded</span>
+                                <span th:unless="${candidate?.resume != null}">No Resume Uploaded</span>
+                            </h6>
+                            <small class="text-muted" th:if="${candidate?.resume != null}">
+                                Uploaded on <span th:text="${#temporals.format(candidate.resume.uploadedAt, 'MMM d, yyyy')}"></span>
+                            </small>
                         </div>
                     </div>
-                </div>
-
-                <!-- Resume Status -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Resume Status</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="me-3">
-                                <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0">
-                                    <span th:if="${candidate?.resume != null}">Resume Uploaded</span>
-                                    <span th:unless="${candidate?.resume != null}">No Resume Uploaded</span>
-                                </h6>
-                                <small class="text-muted" th:if="${candidate?.resume != null}">
-                                    Uploaded on <span th:text="${#temporals.format(candidate.resume.uploadedAt, 'MMM d, yyyy')}"></span>
-                                </small>
-                            </div>
+                    <div th:if="${candidate?.resume != null}" class="border-top pt-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            <span class="me-2" th:text="${candidate.resume.originalFileName}"></span>
+                            <a th:href="@{'/api/resumes/' + ${candidate.resume.id} + '/download'}" class="btn btn-sm btn-outline-primary" download>
+                                <i class="bi bi-download me-1"></i> Download
+                            </a>
                         </div>
-                        <div th:if="${candidate?.resume != null}" class="border-top pt-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-file-earmark-text me-2"></i>
-                                <span class="me-2" th:text="${candidate.resume.originalFileName}"></span>
-                                <a th:href="@{'/api/resumes/' + ${candidate.resume.id} + '/download'}" class="btn btn-sm btn-outline-primary" download>
-                                    <i class="bi bi-download me-1"></i> Download
-                                </a>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <a th:href="@{/candidate/upload-resume}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-arrow-repeat me-1"></i> Update Resume
-                                </a>
-                            </div>
-                        </div>
-                        <div th:unless="${candidate?.resume != null}" class="d-grid gap-2">
-                            <a th:href="@{/candidate/upload-resume}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-upload me-1"></i> Upload Resume
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/candidate/upload-resume}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-repeat me-1"></i> Update Resume
                             </a>
                         </div>
                     </div>
+                    <div th:unless="${candidate?.resume != null}" class="d-grid gap-2">
+                        <a th:href="@{/candidate/upload-resume}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload me-1"></i> Upload Resume
+                        </a>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Change Password Card -->
-                <div class="card" id="change-password">
-                    <div class="card-header">
-                        <h5 class="mb-0">Change Password</h5>
-                    </div>
-                    <div class="card-body">
-                        <form th:action="@{/candidate/profile/change-password}" method="post">
-                            <div class="mb-3">
-                                <label for="currentPassword" class="form-label">Current Password</label>
-                                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="newPassword" class="form-label">New Password</label>
-                                <input type="password" class="form-control" id="newPassword" name="newPassword" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-                            </div>
-                            <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary">Update Password</button>
-                            </div>
-                        </form>
-                    </div>
+            <!-- Change Password Card -->
+            <div class="card" id="change-password">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/candidate/profile/change-password}" method="post">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Update Password</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="bg-white py-4 mt-auto">
-        <div class="container">
-            <div class="text-center text-muted">
-                <p class="mb-0">&copy; 2023 TalentPro. All rights reserved.</p>
-            </div>
+<!-- Footer -->
+<footer class="bg-white py-4 mt-auto">
+    <div class="container">
+        <div class="text-center text-muted">
+            <p class="mb-0">&copy; 2023 TalentPro. All rights reserved.</p>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Enable/disable form fields for editing
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize form elements
-            const editBtn = document.getElementById('editProfileBtn');
-            const cancelBtn = document.getElementById('cancelEdit');
-            const form = document.getElementById('profileForm');
-            let inputs = [];
-            if (form) {
-                // Get all input, select, and textarea elements that are read-only
-                inputs = Array.from(form.querySelectorAll('input:not([type="hidden"]), select, textarea'))
-                    .filter(input => input.readOnly);
-            }
-            const formButtons = document.getElementById('formButtons');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const resumeUpload = document.getElementById('resumeUpload');
-            
-            // Initialize skills elements
-            const editSkillsBtn = document.getElementById('editSkillsBtn');
-            const cancelSkillsEdit = document.getElementById('cancelSkillsEdit');
-            const skillsForm = document.getElementById('skillsForm');
-            const skillsInput = document.getElementById('skills');
-            const skillsFormButtons = document.getElementById('skillsFormButtons');
-            
-            // Store original form data for cancel functionality
-            let originalFormData = {};
-            if (form) {
-                form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
-                    originalFormData[input.name] = input.value;
-                });
-            }
-            
-            // Personal Information Edit Functionality
-            if (editBtn) {
-                editBtn.addEventListener('click', function() {
-                    if (inputs) {
-                        inputs.forEach(input => {
-                            if (input) {
-                                input.readOnly = false;
-                                input.classList.add('editable');
-                            }
-                        });
-                    }
-                    
-                    if (uploadBtn) uploadBtn.disabled = false;
-                    if (resumeUpload) resumeUpload.disabled = false;
-                    if (formButtons) formButtons.classList.remove('d-none');
-                    editBtn.classList.add('d-none');
-                });
-            }
-            
-            // Cancel Edit for Personal Information
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Restore original values
-                    if (form) {
-                        form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
-                            if (originalFormData[input.name] !== undefined) {
-                                input.value = originalFormData[input.name];
-                            }
-                            input.readOnly = true;
-                            input.classList.remove('editable');
-                        });
-                    }
-                    
-                    if (uploadBtn) uploadBtn.disabled = true;
-                    if (resumeUpload) resumeUpload.disabled = true;
-                    if (formButtons) formButtons.classList.add('d-none');
-                    if (editBtn) editBtn.classList.remove('d-none');
-                });
-            }
-            
-            // Handle form submission for personal information
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Make sure all fields are writable before submission
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Enable/disable form fields for editing
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize form elements
+        const editBtn = document.getElementById('editProfileBtn');
+        const cancelBtn = document.getElementById('cancelEdit');
+        const form = document.getElementById('profileForm');
+        let inputs = [];
+        if (form) {
+            // Get all input, select, and textarea elements that are read-only
+            inputs = Array.from(form.querySelectorAll('input:not([type="hidden"]), select, textarea'))
+                .filter(input => input.readOnly);
+        }
+        const formButtons = document.getElementById('formButtons');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resumeUpload = document.getElementById('resumeUpload');
+
+        // Initialize skills elements
+        const editSkillsBtn = document.getElementById('editSkillsBtn');
+        const cancelSkillsEdit = document.getElementById('cancelSkillsEdit');
+        const skillsForm = document.getElementById('skillsForm');
+        const skillsInput = document.getElementById('skills');
+        const skillsFormButtons = document.getElementById('skillsFormButtons');
+
+        // Store original form data for cancel functionality
+        let originalFormData = {};
+        if (form) {
+            form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
+                originalFormData[input.name] = input.value;
+            });
+        }
+
+        // Personal Information Edit Functionality
+        if (editBtn) {
+            editBtn.addEventListener('click', function() {
+                if (inputs) {
                     inputs.forEach(input => {
                         if (input) {
                             input.readOnly = false;
+                            input.classList.add('editable');
                         }
                     });
-                    
+                }
+
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (resumeUpload) resumeUpload.disabled = false;
+                if (formButtons) formButtons.classList.remove('d-none');
+                editBtn.classList.add('d-none');
+            });
+        }
+
+        // Cancel Edit for Personal Information
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Restore original values
+                if (form) {
+                    form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
+                        if (originalFormData[input.name] !== undefined) {
+                            input.value = originalFormData[input.name];
+                        }
+                        input.readOnly = true;
+                        input.classList.remove('editable');
+                    });
+                }
+
+                if (uploadBtn) uploadBtn.disabled = true;
+                if (resumeUpload) resumeUpload.disabled = true;
+                if (formButtons) formButtons.classList.add('d-none');
+                if (editBtn) editBtn.classList.remove('d-none');
+            });
+        }
+
+        // Handle form submission for personal information
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Make sure all fields are writable before submission
+                inputs.forEach(input => {
+                    if (input) {
+                        input.readOnly = false;
+                    }
+                });
+
+                // Submit the form via AJAX
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        return response.text().then(text => {
+                            try {
+                                return text ? JSON.parse(text) : {}
+                            } catch (e) {
+                                console.error('Error parsing response:', e);
+                                return {};
+                            }
+                        });
+                    }
+                })
+                .then(data => {
+                    // Show success message
+                    if (data && data.success) {
+                        // Reload the page to show updated data
+                        window.location.reload();
+                    } else if (data && data.error) {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving. Please try again.');
+                });
+            });
+        }
+
+        // Skills Edit Functionality
+        if (editSkillsBtn && skillsInput) {
+            let originalSkills = skillsInput.value;
+
+            // Initialize as read-only
+            skillsInput.readOnly = true;
+
+            editSkillsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Store current value before editing
+                originalSkills = skillsInput.value;
+
+                // Make input editable
+                skillsInput.readOnly = false;
+                skillsInput.classList.add('editable');
+
+                // Show form buttons and hide edit button
+                if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
+                editSkillsBtn.classList.add('d-none');
+
+                // Focus the input
+                setTimeout(() => {
+                    skillsInput.focus();
+                    skillsInput.select();
+                }, 100);
+            });
+
+            // Handle cancel button for skills
+            if (cancelSkillsEdit) {
+                cancelSkillsEdit.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Restore original value
+                    skillsInput.value = originalSkills;
+                    skillsInput.readOnly = true;
+                    skillsInput.classList.remove('editable');
+
+                    // Hide form buttons and show edit button
+                    if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
+                    editSkillsBtn.classList.remove('d-none');
+                });
+            }
+
+            // Handle form submission for skills
+            if (skillsForm) {
+                skillsForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // Clean up skills input
+                    let skills = skillsInput.value
+                        .split(',')
+                        .map(skill => skill.trim())
+                        .filter(skill => skill.length > 0)
+                        .join(', ');
+
+                    // Update the input value with cleaned skills
+                    skillsInput.value = skills;
+
+                    // Make sure the field is not read-only when submitting
+                    skillsInput.readOnly = false;
+
                     // Submit the form via AJAX
                     fetch(this.action, {
                         method: 'POST',
@@ -707,379 +881,546 @@
                         if (response.redirected) {
                             window.location.href = response.url;
                         } else {
-                            return response.text().then(text => {
-                                try {
-                                    return text ? JSON.parse(text) : {}
-                                } catch (e) {
-                                    console.error('Error parsing response:', e);
-                                    return {};
-                                }
-                            });
+                            return response.json();
                         }
                     })
                     .then(data => {
-                        // Show success message
                         if (data && data.success) {
                             // Reload the page to show updated data
                             window.location.reload();
-                        } else if (data && data.error) {
-                            alert('Error: ' + data.error);
                         }
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while saving. Please try again.');
-                    });
+                    .catch(error => console.error('Error:', error));
                 });
             }
-            
-            // Skills Edit Functionality
-            if (editSkillsBtn && skillsInput) {
-                let originalSkills = skillsInput.value;
-                
-                // Initialize as read-only
-                skillsInput.readOnly = true;
-                
-                editSkillsBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Store current value before editing
-                    originalSkills = skillsInput.value;
-                    
-                    // Make input editable
-                    skillsInput.readOnly = false;
-                    skillsInput.classList.add('editable');
-                    
-                    // Show form buttons and hide edit button
-                    if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
-                    editSkillsBtn.classList.add('d-none');
-                    
-                    // Focus the input
-                    setTimeout(() => {
-                        skillsInput.focus();
-                        skillsInput.select();
-                    }, 100);
-                });
-                
-                // Handle cancel button for skills
-                if (cancelSkillsEdit) {
-                    cancelSkillsEdit.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        
-                        // Restore original value
-                        skillsInput.value = originalSkills;
-                        skillsInput.readOnly = true;
-                        skillsInput.classList.remove('editable');
-                        
-                        // Hide form buttons and show edit button
-                        if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
-                        editSkillsBtn.classList.remove('d-none');
-                    });
-                }
-                
-                // Handle form submission for skills
-                if (skillsForm) {
-                    skillsForm.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        
-                        // Clean up skills input
-                        let skills = skillsInput.value
-                            .split(',')
-                            .map(skill => skill.trim())
-                            .filter(skill => skill.length > 0)
-                            .join(', ');
-                        
-                        // Update the input value with cleaned skills
-                        skillsInput.value = skills;
-                        
-                        // Make sure the field is not read-only when submitting
-                        skillsInput.readOnly = false;
-                        
-                        // Submit the form via AJAX
-                        fetch(this.action, {
-                            method: 'POST',
-                            body: new FormData(this),
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => {
-                            if (response.redirected) {
-                                window.location.href = response.url;
-                            } else {
-                                return response.json();
-                            }
-                        })
-                        .then(data => {
-                            if (data && data.success) {
-                                // Reload the page to show updated data
-                                window.location.reload();
-                            }
-                        })
-                        .catch(error => console.error('Error:', error));
-                    });
-                }
-            }
-            
-            // Update the hidden input before form submission for the main profile form
-            if (form) {
-                form.addEventListener('submit', function() {
-                    // Make sure all form data is properly submitted
-                    const inputs = this.querySelectorAll('input, textarea, select');
-                    inputs.forEach(input => {
-                        if (input.readOnly) {
-                            input.readOnly = false;
-                        }
-                    });
-                });
-            }
-            
-            // Toggle edit mode for profile if elements exist
-            if (editBtn) {
-                editBtn.addEventListener('click', function() {
-                    if (inputs) {
-                        inputs.forEach(input => {
-                            if (input) {
-                                input.readOnly = false;
-                                input.classList.add('editable');
-                            }
-                        });
-                    }
-                    
-                    if (uploadBtn) uploadBtn.disabled = false;
-                    if (resumeUpload) resumeUpload.disabled = false;
-                    if (formButtons) formButtons.classList.remove('d-none');
-                    editBtn.classList.add('d-none');
-                });
-            }
-            
-            // Skills edit functionality is already initialized above
-            
-            if (editSkillsBtn && skillsInput) {
-                // Store original skills value for cancel
-                let originalSkills = skillsInput.value;
-                
-                // Initialize the input as read-only
-                skillsInput.readOnly = true;
-                
-                editSkillsBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Store current value before editing
-                    originalSkills = skillsInput.value;
-                    
-                    // Make input editable
-                    skillsInput.readOnly = false;
-                    skillsInput.classList.add('editable');
-                    
-                    // Show form buttons and hide edit button
-                    if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
-                    editSkillsBtn.classList.add('d-none');
-                    
-                    // Focus the input
-                    setTimeout(() => {
-                        skillsInput.focus();
-                        skillsInput.select();
-                    }, 100);
-                });
-                
-                // Handle cancel button
-                if (cancelSkillsEdit) {
-                    cancelSkillsEdit.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        
-                        // Restore original value
-                        skillsInput.value = originalSkills;
-                        skillsInput.readOnly = true;
-                        skillsInput.classList.remove('editable');
-                        
-                        // Hide form buttons and show edit button
-                        if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
-                        editSkillsBtn.classList.remove('d-none');
-                    });
-                }
-                
-                // Handle form submission
-                if (skillsForm) {
-                    skillsForm.addEventListener('submit', function(e) {
-                        // Clean up skills input
-                        let skills = skillsInput.value
-                            .split(',')
-                            .map(skill => skill.trim())
-                            .filter(skill => skill.length > 0)
-                            .join(', ');
-                        
-                        // Update the input value with cleaned skills
-                        skillsInput.value = skills;
-                        
-                        // Make sure the field is not read-only when submitting
-                        skillsInput.readOnly = false;
-                        
-                        // The form will submit normally after this
-                    });
-                }
-            }
-            
-            // Cancel edit if elements exist
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    if (inputs) {
-                        inputs.forEach(input => {
-                            if (input) {
-                                input.readOnly = true;
-                                input.classList.remove('editable');
-                            }
-                        });
-                    }
-                    
-                    if (uploadBtn) uploadBtn.disabled = true;
-                    if (resumeUpload) resumeUpload.disabled = true;
-                    if (formButtons) formButtons.classList.add('d-none');
-                    if (editBtn) editBtn.classList.remove('d-none');
-                });
-            }
-            
-            // Handle file upload button if elements exist
-            if (uploadBtn && resumeUpload) {
-                uploadBtn.addEventListener('click', function() {
-                    resumeUpload.click();
-                });
-                
-                // Show file name when selected
-                resumeUpload.addEventListener('change', function() {
-                    if (this.files && this.files[0]) {
-                        const fileName = this.files[0].name;
-                        if (this.previousElementSibling) {
-                            this.previousElementSibling.value = fileName;
-                        }
-                    }
-                });
-            }
-        });
-        
-        // ============================================
-        // Profile Strength Calculation System
-        // ============================================
-        
-        /**
-         * Calculate profile strength based on completed fields
-         * Weights totaling exactly 100%:
-         * - Email (5%), Phone (5%), Location (5%), Experience (5%)
-         * - Profile/Full Name (5%), Skills (25%), Work Experience (25%)
-         * - Education (15%), Resume (10%)
-         */
-        function calculateProfileStrength() {
-            let totalStrength = 0;
-            
-            // 1. Profile Picture / Full Name (5%)
-            const fullNameField = document.querySelector('input[name="fullName"]');
-            if (fullNameField && fullNameField.value && fullNameField.value.trim() !== '') {
-                totalStrength += 5;
-            }
-            
-            // 2. Email (5%)
-            const emailField = document.querySelector('input[name="email"]');
-            if (emailField && emailField.value && emailField.value.trim() !== '') {
-                totalStrength += 5;
-            }
-            
-            // 3. Phone Number (5%)
-            const phoneField = document.querySelector('input[name="phoneNumber"]');
-            if (phoneField && phoneField.value && phoneField.value.trim() !== '') {
-                totalStrength += 5;
-            }
-            
-            // 4. Location (5%)
-            const locationField = document.querySelector('input[name="location"]');
-            if (locationField && locationField.value && locationField.value.trim() !== '') {
-                totalStrength += 5;
-            }
-            
-            // 5. Experience (5%)
-            const experienceField = document.querySelector('input[name="experience"]');
-            if (experienceField && experienceField.value && experienceField.value.trim() !== '') {
-                totalStrength += 5;
-            }
-            
-            // 6. Skills (25%)
-            const skillsField = document.getElementById('skills');
-            if (skillsField && skillsField.value && skillsField.value.trim() !== '') {
-                totalStrength += 25;
-            }
-            
-            // 7. Work Experience (25%)
-            // Check if at least one work experience exists
-            const experienceList = document.getElementById('experienceList');
-            const noExperienceMsg = document.getElementById('noExperienceMessage');
-            const hasExperience = experienceList && 
-                                  experienceList.children.length > 0 && 
-                                  (!noExperienceMsg || noExperienceMsg.style.display === 'none');
-            if (hasExperience) {
-                totalStrength += 25;
-            }
-            
-            // 8. Education (15%)
-            // Check if at least one education exists
-            const educationList = document.getElementById('educationList');
-            const noEducationMsg = document.getElementById('noEducationMessage');
-            const hasEducation = educationList && 
-                                 educationList.children.length > 0 && 
-                                 (!noEducationMsg || noEducationMsg.style.display === 'none');
-            if (hasEducation) {
-                totalStrength += 15;
-            }
-            
-            // 9. Resume (10%)
-            // Check resume status from the DOM
-            const resumeStatus = document.getElementById('resumeStatus');
-            if (resumeStatus) {
-                const resumeText = resumeStatus.textContent || resumeStatus.innerText;
-                if (resumeText && resumeText.includes('Resume Uploaded')) {
-                    totalStrength += 10;
-                }
-            }
-            
-            // Store in localStorage for dashboard
-            localStorage.setItem('profileStrength', Math.round(totalStrength));
-            localStorage.setItem('profileStrengthLastUpdated', new Date().toISOString());
-            
-            console.log('Profile Strength Calculated:', Math.round(totalStrength) + '%');
-            return Math.round(totalStrength);
         }
-        
-        // Calculate and store profile strength on page load
-        calculateProfileStrength();
-        
-        // Recalculate when forms are submitted successfully
+
+        // Update the hidden input before form submission for the main profile form
         if (form) {
             form.addEventListener('submit', function() {
-                setTimeout(() => {
-                    calculateProfileStrength();
-                }, 500);
+                // Make sure all form data is properly submitted
+                const inputs = this.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    if (input.readOnly) {
+                        input.readOnly = false;
+                    }
+                });
             });
         }
-        
-        if (skillsForm) {
-            skillsForm.addEventListener('submit', function() {
-                setTimeout(() => {
-                    calculateProfileStrength();
-                }, 500);
+
+        // Toggle edit mode for profile if elements exist
+        if (editBtn) {
+            editBtn.addEventListener('click', function() {
+                if (inputs) {
+                    inputs.forEach(input => {
+                        if (input) {
+                            input.readOnly = false;
+                            input.classList.add('editable');
+                        }
+                    });
+                }
+
+                if (uploadBtn) uploadBtn.disabled = false;
+                if (resumeUpload) resumeUpload.disabled = false;
+                if (formButtons) formButtons.classList.remove('d-none');
+                editBtn.classList.add('d-none');
             });
         }
-        
-        // Listen for experience/education updates
-        // We'll recalculate periodically to catch dynamic changes
-        setInterval(() => {
-            calculateProfileStrength();
-        }, 2000); // Check every 2 seconds
-        
-    </script>
-    
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Education Script -->
-    <script th:src="@{/js/education.js}"></script>
-    <script th:src="@{/js/experience.js}"></script>
+
+        // Skills edit functionality is already initialized above
+
+        if (editSkillsBtn && skillsInput) {
+            // Store original skills value for cancel
+            let originalSkills = skillsInput.value;
+
+            // Initialize the input as read-only
+            skillsInput.readOnly = true;
+
+            editSkillsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Store current value before editing
+                originalSkills = skillsInput.value;
+
+                // Make input editable
+                skillsInput.readOnly = false;
+                skillsInput.classList.add('editable');
+
+                // Show form buttons and hide edit button
+                if (skillsFormButtons) skillsFormButtons.classList.remove('d-none');
+                editSkillsBtn.classList.add('d-none');
+
+                // Focus the input
+                setTimeout(() => {
+                    skillsInput.focus();
+                    skillsInput.select();
+                }, 100);
+            });
+
+            // Handle cancel button
+            if (cancelSkillsEdit) {
+                cancelSkillsEdit.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Restore original value
+                    skillsInput.value = originalSkills;
+                    skillsInput.readOnly = true;
+                    skillsInput.classList.remove('editable');
+
+                    // Hide form buttons and show edit button
+                    if (skillsFormButtons) skillsFormButtons.classList.add('d-none');
+                    editSkillsBtn.classList.remove('d-none');
+                });
+            }
+
+            // Handle form submission
+            if (skillsForm) {
+                skillsForm.addEventListener('submit', function(e) {
+                    // Clean up skills input
+                    let skills = skillsInput.value
+                        .split(',')
+                        .map(skill => skill.trim())
+                        .filter(skill => skill.length > 0)
+                        .join(', ');
+
+                    // Update the input value with cleaned skills
+                    skillsInput.value = skills;
+
+                    // Make sure the field is not read-only when submitting
+                    skillsInput.readOnly = false;
+
+                    // The form will submit normally after this
+                });
+            }
+        }
+
+        // Cancel edit if elements exist
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                if (inputs) {
+                    inputs.forEach(input => {
+                        if (input) {
+                            input.readOnly = true;
+                            input.classList.remove('editable');
+                        }
+                    });
+                }
+
+                if (uploadBtn) uploadBtn.disabled = true;
+                if (resumeUpload) resumeUpload.disabled = true;
+                if (formButtons) formButtons.classList.add('d-none');
+                if (editBtn) editBtn.classList.remove('d-none');
+            });
+        }
+
+        // Handle file upload button if elements exist
+        if (uploadBtn && resumeUpload) {
+            uploadBtn.addEventListener('click', function() {
+                resumeUpload.click();
+            });
+
+            // Show file name when selected
+            resumeUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const fileName = this.files[0].name;
+                    if (this.previousElementSibling) {
+                        this.previousElementSibling.value = fileName;
+                    }
+                }
+            });
+        }
+    });
+
+    // ============================================
+    // Profile Strength Calculation System
+    // ============================================
+
+
+function calculateProfileStrength() {
+    let totalStrength = 0;
+    const sectionProgress = {
+        personal: 0,
+        skills: 0,
+        experience: 0,
+        education: 0,
+        resume: 0
+    };
+
+    // 1. Personal Info Section (20% of total) - Fixed calculation
+    const personalFields = [
+        { id: 'fullName', selector: '[name="fullName"]', weight: 0.25 },
+        { id: 'email', selector: '[name="email"]', weight: 0.25 },
+        { id: 'phoneNumber', selector: '[name="phoneNumber"]', weight: 0.25 },
+        { id: 'location', selector: '[name="location"]', weight: 0.25 }
+    ];
+
+    let personalInfoComplete = true;
+    let personalInfoScore = 0;
+
+    personalFields.forEach(field => {
+        const element = document.querySelector(field.selector);
+        if (element) {
+            const value = element.value || element.textContent || '';
+            if (value.trim() !== '') {
+                personalInfoScore += field.weight;
+            } else {
+                personalInfoComplete = false;
+            }
+        } else {
+            personalInfoComplete = false;
+        }
+    });
+
+    // Only set personal info to 100% if all fields are filled
+    if (personalInfoComplete && personalInfoScore > 0) {
+        sectionProgress.personal = 100;
+    } else {
+        sectionProgress.personal = Math.floor(personalInfoScore * 100);
+    }
+
+    // Add personal info to total (20% of total)
+    totalStrength += Math.floor(sectionProgress.personal * 0.2);
+
+    console.log('Personal Info Calculation:', {
+        personalInfoScore,
+        personalInfoComplete,
+        sectionProgressPersonal: sectionProgress.personal
+    });
+
+    // 2. Skills (25% of total)
+    const skillsField = document.getElementById('skills');
+    if (skillsField && skillsField.value && skillsField.value.trim() !== '') {
+        sectionProgress.skills = 100;
+        totalStrength += 25;
+    }
+
+    // 3. Work Experience (25% of total)
+    const experienceList = document.getElementById('experienceList');
+    if (experienceList) {
+        const children = Array.from(experienceList.children);
+        const hasExperience = children.some(child =>
+            child.id !== 'noExperienceMessage' && child.offsetParent !== null
+        );
+
+        if (hasExperience) {
+            sectionProgress.experience = 100;
+            totalStrength += 25;
+        }
+    }
+
+    // 4. Education (15% of total)
+    const educationList = document.getElementById('educationList');
+    if (educationList) {
+        const children = Array.from(educationList.children);
+        const hasEducation = children.some(child =>
+            child.id !== 'noEducationMessage' && child.offsetParent !== null
+        );
+
+        if (hasEducation) {
+            sectionProgress.education = 100;
+            totalStrength += 15;
+        }
+    }
+
+    // 5. Resume (15% of total) - Enhanced resume detection with better browser compatibility
+    const resumeElements = [];
+
+    // Try to find resume status in card with heading "Resume Status"
+    const resumeCards = Array.from(document.querySelectorAll('.card'));
+    const resumeCard = resumeCards.find(card => {
+        const heading = card.querySelector('h5, h4, h3, h2, h1, .card-title');
+        return heading && heading.textContent.toLowerCase().includes('resume status');
+    });
+    if (resumeCard) {
+        const cardText = resumeCard.querySelector('.card-text');
+        if (cardText) resumeElements.push(cardText);
+    }
+
+    // Try to find any element with resume status text
+    const allElements = Array.from(document.querySelectorAll('*'));
+    const resumeTextElement = allElements.find(el => {
+        const text = (el.textContent || '').toLowerCase().trim();
+        return ['resume status', 'resume uploaded', 'resume available'].some(
+            term => text.includes(term)
+        ) && !resumeElements.includes(el);
+    });
+    if (resumeTextElement) resumeElements.push(resumeTextElement);
+
+    // Try download resume button or link
+    const resumeLink = document.querySelector('a[href*="resume"], a[href*="download"]');
+    if (resumeLink && !resumeElements.includes(resumeLink)) {
+        resumeElements.push(resumeLink);
+    }
+
+    // Try any element with id containing 'resume'
+    const resumeById = document.querySelector('[id*="resume"]');
+    if (resumeById && !resumeElements.includes(resumeById)) {
+        resumeElements.push(resumeById);
+    }
+
+    // Check if any resume element indicates a resume is available
+    const hasResume = resumeElements.some(element => {
+        if (!element) return false;
+
+        const text = (element.textContent || element.innerText || '').toLowerCase().trim();
+        const href = element.getAttribute('href') || '';
+        const hasResumeText = text.includes('resume') || 
+                             text.includes('cv') || 
+                             text.includes('curriculum vitae');
+        const hasResumeLink = href.toLowerCase().includes('resume') || 
+                             href.toLowerCase().includes('cv') ||
+                             (element.tagName === 'A' && href && !href.startsWith('#'));
+
+        return hasResumeText || hasResumeLink;
+    });
+
+    if (hasResume) {
+        sectionProgress.resume = 100;
+        totalStrength += 15;
+        console.log('Resume detected in elements:', resumeElements);
+    } else {
+        console.log('No resume detected. Checked elements:', resumeElements);
+    }
+
+    // Ensure total doesn't exceed 100%
+    totalStrength = Math.min(100, totalStrength);
+
+    // Update the UI with the calculated values
+    updateProfileStrengthUI(totalStrength, sectionProgress);
+
+    // Debug output
+    console.log('Profile Strength Calculation:', {
+        sectionProgress,
+        totalStrength,
+        hasResume,
+        resumeElements: resumeElements.map(el => el.outerHTML)
+    });
+
+    return totalStrength;
+}
+
+// Update the updateProfileStrengthUI function
+function updateProfileStrengthUI(totalStrength, sectionProgress) {
+    // Update the main progress bar
+    const profileStrengthBar = document.getElementById('profileStrengthBar');
+    const profileStrengthText = document.getElementById('profileStrengthText');
+    const profileCompletePercent = document.getElementById('profileCompletePercent');
+
+    // Ensure total strength is within bounds
+    totalStrength = Math.min(100, Math.max(0, Math.round(totalStrength)));
+
+    if (profileStrengthBar && profileStrengthText && profileCompletePercent) {
+        // Update the main progress bar
+        profileStrengthBar.style.width = totalStrength + '%';
+        profileStrengthText.textContent = totalStrength + '%';
+        profileCompletePercent.textContent = totalStrength + '%';
+
+        // Update progress bar color based on completion
+        if (totalStrength < 30) {
+            profileStrengthBar.className = 'progress-bar bg-danger';
+        } else if (totalStrength < 70) {
+            profileStrengthBar.className = 'progress-bar bg-warning';
+        } else {
+            profileStrengthBar.className = 'progress-bar bg-success';
+        }
+    }
+
+    // Store the total strength in localStorage for UI updates
+    localStorage.setItem('profileStrength', totalStrength);
+    localStorage.setItem('profileStrengthLastUpdated', new Date().toISOString());
+
+    // Update section progress
+    const sectionMap = {
+        'personal': 'Personal Info',
+        'skills': 'Skills',
+        'experience': 'Experience',
+        'education': 'Education',
+        'resume': 'Resume'
+    };
+
+    for (const [section, name] of Object.entries(sectionMap)) {
+        const sectionElement = document.querySelector(`.strength-section[data-section="${section}"]`);
+        if (sectionElement) {
+            const progressBar = sectionElement.querySelector('.progress-bar');
+            const percentElement = sectionElement.querySelector('.section-percent');
+
+            if (progressBar && percentElement) {
+                let percent = 0;
+
+                if (section === 'personal') {
+                    // For personal info, we need to calculate the percentage
+                    const personalFields = [
+                        { id: 'fullName', weight: 25 },
+                        { id: 'email', weight: 25 },
+                        { id: 'phoneNumber', weight: 25 },
+                        { id: 'location', weight: 25 }
+                    ];
+
+                    let personalScore = 0;
+                    personalFields.forEach(field => {
+                        const element = document.querySelector(`[name="${field.id}"]`);
+                        if (element) {
+                            const value = element.value || element.textContent || '';
+                            if (value.trim() !== '') {
+                                personalScore += field.weight;
+                            }
+                        }
+                    });
+
+                    percent = personalScore;
+                } else {
+                    // For other sections, use the provided progress
+                    percent = sectionProgress[section] || 0;
+                }
+
+                progressBar.style.width = percent + '%';
+                percentElement.textContent = percent + '%';
+
+                // Update progress bar color based on completion
+                if (percent < 30) {
+                    progressBar.className = 'progress-bar bg-danger';
+                } else if (percent < 70) {
+                    progressBar.className = 'progress-bar bg-warning';
+                } else {
+                    progressBar.className = 'progress-bar bg-success';
+                }
+            }
+        }
+    }
+
+    // Store the total strength in localStorage for the dashboard
+    localStorage.setItem('profileStrength', totalStrength);
+    localStorage.setItem('profileStrengthLastUpdated', new Date().toISOString());
+}
+
+// Update the updateProfileStrength function
+function updateProfileStrength() {
+    const profileStrength = calculateProfileStrength();
+    return profileStrength;
+}
+
+// Run on page load and set up event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial calculation with a small delay to ensure all elements are loaded
+    setTimeout(updateProfileStrength, 500);
+
+    // Recalculate when forms are submitted
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            setTimeout(updateProfileStrength, 1000);
+        });
+    });
+
+    // Recalculate periodically to catch dynamic changes
+    setInterval(updateProfileStrength, 2000);
+});
+
+    // Function to update the profile strength UI
+    function updateProfileStrengthUI(totalStrength, sectionProgress) {
+        // Update the main progress bar
+        const profileStrengthBar = document.getElementById('profileStrengthBar');
+        const profileStrengthText = document.getElementById('profileStrengthText');
+        const profileCompletePercent = document.getElementById('profileCompletePercent');
+
+        if (profileStrengthBar && profileStrengthText && profileCompletePercent) {
+            // Ensure total strength is within bounds
+            totalStrength = Math.min(100, Math.max(0, totalStrength));
+
+            // Update the main progress bar
+            profileStrengthBar.style.width = totalStrength + '%';
+            profileStrengthText.textContent = totalStrength + '%';
+            if (profileCompletePercent) {
+                profileCompletePercent.textContent = totalStrength + '%';
+            }
+
+            // Update progress bar color based on completion
+            if (totalStrength < 30) {
+                profileStrengthBar.className = 'progress-bar bg-danger';
+            } else if (totalStrength < 70) {
+                profileStrengthBar.className = 'progress-bar bg-warning';
+            } else {
+                profileStrengthBar.className = 'progress-bar bg-success';
+            }
+        }
+
+        // Update section progress
+        const sectionMap = {
+            'personal': 'Personal Info',
+            'skills': 'Skills',
+            'experience': 'Experience',
+            'education': 'Education',
+            'resume': 'Resume'
+        };
+
+        for (const [section, name] of Object.entries(sectionMap)) {
+            const sectionElement = document.querySelector(`.strength-section[data-section="${section}"]`);
+            if (sectionElement) {
+                const progressBar = sectionElement.querySelector('.progress-bar');
+                const percentElement = sectionElement.querySelector('.section-percent');
+
+                if (progressBar && percentElement) {
+                    const percent = sectionProgress[section] || 0;
+                    progressBar.style.width = percent + '%';
+                    percentElement.textContent = percent + '%';
+
+                    // Update progress bar color based on completion
+                    if (percent < 30) {
+                        progressBar.className = 'progress-bar bg-danger';
+                    } else if (percent < 70) {
+                        progressBar.className = 'progress-bar bg-warning';
+                    } else {
+                        progressBar.className = 'progress-bar bg-success';
+                    }
+                }
+            }
+        }
+
+        // Store the total strength in localStorage for the dashboard
+        localStorage.setItem('profileStrength', totalStrength);
+        localStorage.setItem('profileStrengthLastUpdated', new Date().toISOString());
+    }
+
+    // Function to update profile strength and refresh dashboard display
+    function updateProfileStrength() {
+        const profileStrength = calculateProfileStrength();
+        return profileStrength;
+    }
+
+    // Calculate and store profile strength on page load
+    updateProfileStrength();
+
+    // Recalculate when forms are submitted successfully
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            setTimeout(() => {
+                updateProfileStrength();
+            }, 500);
+        });
+    });
+
+    // Also update when skills are edited
+    const skillsForm = document.getElementById('skillsForm');
+    if (skillsForm) {
+        skillsForm.addEventListener('submit', function() {
+            setTimeout(() => {
+                updateProfileStrength();
+            }, 500);
+        });
+    }
+
+    // Listen for experience/education updates
+    // We'll recalculate periodically to catch dynamic changes
+    setInterval(() => {
+        calculateProfileStrength();
+    }, 2000); // Check every 2 seconds
+
+</script>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Education Script -->
+<script th:src="@{/js/education.js}"></script>
+<script th:src="@{/js/experience.js}"></script>
 </body>
 </html>
