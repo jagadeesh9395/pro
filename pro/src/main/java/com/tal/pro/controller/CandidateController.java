@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,7 @@ public class CandidateController {
     public String dashboard(Model model, Principal principal, HttpServletRequest request,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") int recommendedPage,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String location) {
         try {
@@ -195,6 +197,16 @@ public class CandidateController {
             model.addAttribute("currentPage", jobsPage.getNumber());
             model.addAttribute("totalItems", jobsPage.getTotalElements());
             model.addAttribute("pageSize", size);
+            
+            // Add recommended jobs with pagination (5 per page)
+            int recommendedPageSize = 5;
+            Pageable recommendedPageable = PageRequest.of(recommendedPage, recommendedPageSize, Sort.by("postedAt").descending());
+            Page<Job> recommendedJobsPage = jobService.getAllActiveJobs(recommendedPageable);
+            model.addAttribute("recommendedJobs", recommendedJobsPage.getContent());
+            model.addAttribute("recommendedCurrentPage", recommendedPage);
+            model.addAttribute("recommendedTotalPages", recommendedJobsPage.getTotalPages());
+            model.addAttribute("recommendedPageSize", recommendedPageSize);
+            model.addAttribute("hasRecommendedJobs", !recommendedJobsPage.isEmpty());
 
             // Add search parameters for pagination and form population
             if (query != null && !query.isEmpty()) {

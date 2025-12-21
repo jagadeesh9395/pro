@@ -484,7 +484,7 @@
         <div class="row">
             <!-- Main Content -->
             <div class="col-lg-8">
-                <!-- Job Listings -->
+                <!-- Recommended Jobs -->
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recommended Jobs</h5>
@@ -500,12 +500,14 @@
                         </div>
                     </div>
                     <div class="list-group list-group-flush">
-                        <!-- Job Listing Items -->
-                        <div th:if="${jobs.empty}" class="text-center p-4">
-                            <p class="text-muted">No jobs available at the moment. Please check back later.</p>
+                        <!-- Recommended Jobs List -->
+                        <div th:if="${!hasRecommendedJobs}" class="text-center p-4">
+                            <i class="bi bi-lightbulb text-muted" style="font-size: 2.5rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No recommended jobs at the moment</p>
+                            <small class="text-muted">Complete your profile to get personalized job recommendations</small>
                         </div>
 
-                        <div th:each="job : ${jobs}" class="list-group-item p-4">
+                        <div th:each="job : ${recommendedJobs}" class="list-group-item p-4">
                             <div class="d-flex justify-content-between mb-2">
                                 <h5 class="mb-1">
                                     <a th:href="@{/jobs/view/} + ${job.id}" class="text-decoration-none" th:text="${job.jobTitle}"></a>
@@ -519,10 +521,10 @@
                                 <span class="text-success" th:text="${#temporals.format(job.postedAt, 'MMM d, yyyy')}"></span>
                             </p>
                             <div class="d-flex flex-wrap gap-2 mb-2" th:if="${job.skills != null && !job.skills.isEmpty()}">
-                                    <span th:each="skill : ${#strings.arraySplit(job.skills, ',')}"
-                                          class="badge bg-light text-dark"
-                                          th:text="${#strings.trim(skill)}">
-                                    </span>
+                                <span th:each="skill : ${#strings.arraySplit(job.skills, ',')}"
+                                      class="badge bg-light text-dark"
+                                      th:text="${#strings.trim(skill)}">
+                                </span>
                             </div>
                             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
                                 <div class="d-flex align-items-center text-muted mb-2 mb-md-0">
@@ -533,54 +535,48 @@
                                     <i class="bi bi-currency-rupee ms-2 me-1"></i>
                                     <span th:if="${job.minSalary != null && job.maxSalary != null}"
                                           th:text="'₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' - ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                        </span>
+                                    </span>
                                     <span th:if="${job.minSalary != null && job.maxSalary == null}"
                                           th:text="'From ₹' + ${#numbers.formatDecimal(job.minSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                        </span>
+                                    </span>
                                     <span th:if="${job.minSalary == null && job.maxSalary != null}"
                                           th:text="'Up to ₹' + ${#numbers.formatDecimal(job.maxSalary/100000.0, 1, 2, 'POINT')} + ' LPA'">
-                                        </span>
+                                    </span>
                                 </div>
                                 <a th:href="@{/jobs/view/} + ${job.id}" class="btn btn-outline-primary btn-sm">View Details</a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pagination -->
-                    <div class="card-footer bg-white" th:if="${totalPages > 1}">
-                        <nav aria-label="Job listings pagination">
+                    <!-- Recommended Jobs Pagination -->
+                    <div class="card-footer bg-white" th:if="${recommendedTotalPages > 1}">
+                        <nav aria-label="Recommended jobs pagination">
                             <ul class="pagination justify-content-center mb-0">
-                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                                <li class="page-item" th:classappend="${recommendedCurrentPage == 0} ? 'disabled' : ''">
                                     <a class="page-link"
-                                       th:if="${currentPage > 0}"
-                                       th:with="prevPage=${currentPage - 1},
-                                               queryStr=${param.query != null ? '&query=' + param.query[0] : ''}, 
-                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
-                                       th:href="@{${'/candidate/dashboard?page=' + prevPage + '&size=' + pageSize + queryStr + locationStr}}"
+                                       th:if="${recommendedCurrentPage > 0}"
+                                       th:with="prevPage=${recommendedCurrentPage - 1}"
+                                       th:href="@{${'/candidate/dashboard?recommendedPage=' + prevPage + '&page=' + currentPage}}"
                                        aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
-                                    <span class="page-link disabled" th:unless="${currentPage > 0}" aria-hidden="true">&laquo;</span>
+                                    <span class="page-link disabled" th:unless="${recommendedCurrentPage > 0}" aria-hidden="true">&laquo;</span>
                                 </li>
-                                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                                    th:class="${'page-item' + (currentPage == i ? ' active' : '')}">
-                                    <a class="page-link" 
-                                       th:with="queryStr=${param.query != null ? 'query=' + param.query[0] : ''},
-                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
-                                       th:href="@{${'/candidate/dashboard?page=' + i + '&size=' + pageSize + (queryStr != '' ? '&' + queryStr : '') + locationStr}}"
+                                <li th:each="i : ${#numbers.sequence(0, recommendedTotalPages - 1)}"
+                                    th:class="'page-item' + (recommendedCurrentPage == i ? ' active' : '')">
+                                    <a class="page-link"
+                                       th:href="@{${'/candidate/dashboard?recommendedPage=' + i + '&page=' + currentPage}}"
                                        th:text="${i + 1}"></a>
                                 </li>
-                                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
-                                    <a class="page-link" 
-                                       th:if="${currentPage < totalPages - 1}"
-                                       th:with="nextPage=${currentPage + 1},
-                                               queryStr=${param.query != null ? '&query=' + param.query[0] : ''}, 
-                                               locationStr=${param.location != null ? '&location=' + param.location[0] : ''}"
-                                       th:href="@{${'/candidate/dashboard?page=' + nextPage + '&size=' + pageSize + queryStr + locationStr}}"
+                                <li class="page-item" th:classappend="${recommendedCurrentPage == recommendedTotalPages - 1} ? 'disabled' : ''">
+                                    <a class="page-link"
+                                       th:if="${recommendedCurrentPage < recommendedTotalPages - 1}"
+                                       th:with="nextPage=${recommendedCurrentPage + 1}"
+                                       th:href="@{${'/candidate/dashboard?recommendedPage=' + nextPage + '&page=' + currentPage}}"
                                        aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
-                                    <span class="page-link disabled" th:unless="${currentPage < totalPages - 1}" aria-hidden="true">&raquo;</span>
+                                    <span class="page-link disabled" th:unless="${recommendedCurrentPage < recommendedTotalPages - 1}" aria-hidden="true">&raquo;</span>
                                 </li>
                             </ul>
                         </nav>
@@ -687,39 +683,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Recommended Jobs -->
-<!--                <div class="card">-->
-<!--                    <div class="card-header">-->
-<!--                        <h5 class="mb-0">Recommended Jobs</h5>-->
-<!--                    </div>-->
-<!--                    <div class="card-body">-->
-<!--                        <div class="row">-->
-<!--                            <div class="col-md-6 mb-4">-->
-<!--                                <div class="card h-100">-->
-<!--                                    <div class="card-body">-->
-<!--                                        <h6 class="card-title">Senior Java Developer</h6>-->
-<!--                                        <p class="card-text text-muted small mb-2">Tech Solutions Inc.</p>-->
-<!--                                        <p class="card-text small"><i class="bi bi-geo-alt"></i> Remote</p>-->
-<!--                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> ₹10,00,000 - ₹12,50,000</p>-->
-<!--                                        <a href="#" class="btn btn-sm btn-primary w-100">Apply Now</a>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                            <div class="col-md-6 mb-4">-->
-<!--                                <div class="card h-100">-->
-<!--                                    <div class="card-body">-->
-<!--                                        <h6 class="card-title">Frontend Developer (React)</h6>-->
-<!--                                        <p class="card-text text-muted small mb-2">Web Innovations</p>-->
-<!--                                        <p class="card-text small"><i class="bi bi-geo-alt"></i> New York, NY</p>-->
-<!--                                        <p class="card-text small"><i class="bi bi-cash-stack"></i> ₹7,50,000 - ₹10,00,000</p>-->
-<!--                                        <a href="#" class="btn btn-sm btn-outline-primary w-100">View Details</a>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
             </div>
 
             <!-- Sidebar -->
