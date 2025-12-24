@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Skills - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .skill-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #EEF2FF;
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        .skill-tag i { cursor: pointer; }
+    </style>
+</head>
+<body style="background: #F9FAFB;">
+    <div class="container" style="max-width: 1400px;">
+        <header style="margin-bottom: 2rem;">
+            <a href="/" class="logo">SmartAiResume</a>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 280px 1fr 400px; gap: 2rem; height: calc(100vh - 120px);">
+             <div class="sidebar-nav" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border);">
+                <a href="/resume-builder/edit/personal" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-person"></i> Personal Info
+                </a>
+                <a href="/resume-builder/edit/experience" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-briefcase"></i> Experience
+                </a>
+                <a href="/resume-builder/edit/education" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-mortarboard"></i> Education
+                </a>
+                <a href="/resume-builder/edit/skills" class="nav-item active" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; background: #EEF2FF; color: var(--primary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-tools"></i> Skills
+                </a>
+                <a href="/resume-builder/edit/summary" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-card-text"></i> Summary
+                </a>
+            </div>
+
+            <div class="form-section" style="background: white; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); overflow-y: auto;">
+                <h2 style="margin-bottom: 2rem;">Skills</h2>
+                <div class="form-group">
+                    <label>Add a Skill</label>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="e.g. React.js">
+                        <button class="btn btn-primary" style="padding: 0.75rem 1.5rem;">Add</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+                    <label>Current Skills</label>
+                    <div class="skills-container">
+                        <div th:each="skill : ${analysis.extractedData.skills}" class="skill-tag">
+                            <span th:text="${skill}"></span>
+                            <i class="bi bi-x"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between">
+                    <button class="btn btn-outline" onclick="location.href='/resume-builder/edit/education'"><i class="bi bi-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-primary" style="padding: 1rem 3rem; border-radius: 50px;" 
+                            onclick="saveAndContinue()">
+                        Continue <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-pane" style="background: #F3F4F6; border-radius: 16px; padding: 2rem; overflow-y: auto;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase;">Section Preview</h3>
+                <div id="skillsPreview" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <span th:each="skill : ${analysis.extractedData.skills}" 
+                              style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;" 
+                              th:text="${skill}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function saveAndContinue() {
+            const skills = [];
+            document.querySelectorAll('.skill-tag span').forEach(tag => {
+                skills.push(tag.textContent);
+            });
+
+            const data = {
+                extractedData: {
+                    skills: skills
+                }
+            };
+
+            const response = await fetch('/resume-builder/edit/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                location.href = '/resume-builder/edit/summary';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Strategy - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .strategy-card {
+            background: #F8FAFC;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 6px solid #10B981;
+        }
+        .strategy-card.improve {
+            border-left-color: #FBBF24;
+        }
+        .check-item {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">SmartAiResume</a>
+        </header>
+
+        <main class="flex" style="gap: 100px; padding-top: 40px;">
+            <div style="flex: 1;">
+                 <div style="width: 100%; height: 350px; background: #EEF2FF; border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-graph-up-arrow" style="font-size: 10rem; color: var(--primary);"></i>
+                </div>
+            </div>
+
+            <div style="flex: 1.5;">
+                <h1 style="margin-bottom: 0.5rem;">You're off to a great start!</h1>
+                <p class="subtitle">Here's what you got right and some areas we'll help you improve.</p>
+
+                <div class="strategy-card">
+                    <div class="flex justify-between items-center">
+                        <h3 style="font-weight: 800;">You got it right</h3>
+                        <i class="bi bi-trophy" style="font-size: 1.5rem; color: var(--primary);"></i>
+                    </div>
+                    <div class="check-item">
+                        <i class="bi bi-check-circle-fill" style="color: #10B981;"></i>
+                        <p>You included all the sections employers look for on a resume.</p>
+                    </div>
+                    <div class="check-item">
+                        <i class="bi bi-check-circle-fill" style="color: #10B981;"></i>
+                        <p>You listed <span th:text="${analysis.extractedData.skills.size()}">43</span> skills. Great job! Employers like to see at least 6.</p>
+                    </div>
+                </div>
+
+                <div class="strategy-card improve">
+                    <div class="flex justify-between items-center">
+                        <h3 style="font-weight: 800;">How we'll help you improve</h3>
+                        <i class="bi bi-lightbulb" style="font-size: 1.5rem; color: #FBBF24;"></i>
+                    </div>
+                    <div th:each="suggestion : ${analysis.suggestions}" class="check-item">
+                        <i class="bi bi-star-fill" style="color: #FBBF24; font-size: 0.8rem; margin-top: 4px;"></i>
+                        <p th:text="${suggestion}">We'll suggest section titles that match the ones employers scan for.</p>
+                    </div>
+                    <div th:if="${analysis.suggestions.isEmpty()}" class="check-item">
+                        <i class="bi bi-star-fill" style="color: #FBBF24; font-size: 0.8rem; margin-top: 4px;"></i>
+                        <p>Optimize your summary for better ATS scores.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <a th:href="@{/resume-builder/templates}" class="btn btn-primary" style="padding: 1.25rem 4rem; border-radius: 50px; font-size: 1.1rem;">
+                        Continue
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

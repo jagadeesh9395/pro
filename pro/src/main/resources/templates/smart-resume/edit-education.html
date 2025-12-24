@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Education - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body style="background: #F9FAFB;">
+    <div class="container" style="max-width: 1400px;">
+        <header style="margin-bottom: 2rem;">
+            <a href="/" class="logo">SmartAiResume</a>
+            <div class="flex gap-4">
+                <button class="btn btn-primary">Save & Exit</button>
+            </div>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 280px 1fr 400px; gap: 2rem; height: calc(100vh - 120px);">
+            <div class="sidebar-nav" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border);">
+                <a href="/resume-builder/edit/personal" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-person"></i> Personal Info
+                </a>
+                <a href="/resume-builder/edit/experience" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-briefcase"></i> Experience
+                </a>
+                <a href="/resume-builder/edit/education" class="nav-item active" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; background: #EEF2FF; color: var(--primary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-mortarboard-fill"></i> Education
+                </a>
+                <a href="/resume-builder/edit/skills" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-tools"></i> Skills
+                </a>
+                <a href="/resume-builder/edit/summary" class="nav-item" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem;">
+                    <i class="bi bi-card-text"></i> Summary
+                </a>
+            </div>
+
+            <div class="form-section" style="background: white; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); overflow-y: auto;">
+                <h2 style="margin-bottom: 2rem;">Education</h2>
+                <div id="educationList">
+                    <div th:each="edu : ${analysis.extractedData.education}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative;">
+                        <div class="form-group">
+                            <label>School / University</label>
+                            <input type="text" th:value="${edu.school}" placeholder="e.g. Stanford University">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div class="form-group">
+                                <label>Degree</label>
+                                <input type="text" th:value="${edu.degree}" placeholder="e.g. B.S. Case Computer Science">
+                            </div>
+                            <div class="form-group">
+                                <label>Graduation Year</label>
+                                <input type="text" th:value="${edu.year}" placeholder="e.g. 2020">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button style="border: 2px dashed var(--border); width: 100%; padding: 1rem; border-radius: 12px; color: var(--text-secondary); font-weight: 600; cursor: pointer; background: none;">
+                    <i class="bi bi-plus"></i> Add Another Education
+                </button>
+                
+                <div class="mt-8 flex justify-between">
+                    <button class="btn btn-outline" onclick="location.href='/resume-builder/edit/experience'"><i class="bi bi-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-primary" style="padding: 1rem 3rem; border-radius: 50px;" 
+                            onclick="saveAndContinue()">
+                        Continue <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-pane" style="background: #F3F4F6; border-radius: 16px; padding: 2rem; overflow-y: auto;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase;">Section Preview</h3>
+                <div id="educationPreview" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div th:each="edu : ${analysis.extractedData.education}" style="margin-bottom: 1.5rem;">
+                        <div class="flex justify-between">
+                            <strong th:text="${edu.school}"></strong>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" th:text="${edu.year}"></span>
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);" th:text="${edu.degree}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const educationList = document.getElementById('educationList');
+        const educationPreview = document.getElementById('educationPreview');
+
+        function updatePreview() {
+            educationPreview.innerHTML = '';
+            document.querySelectorAll('#educationList > div').forEach(item => {
+                const inputs = item.querySelectorAll('input');
+                const school = inputs[0].value;
+                const degree = inputs[1].value;
+                const year = inputs[2].value;
+
+                const eduDiv = document.createElement('div');
+                eduDiv.style.marginBottom = '1.5rem';
+                eduDiv.innerHTML = `
+                    <div class="flex justify-between">
+                        <strong>${school}</strong>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">${year}</span>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${degree}</div>
+                `;
+                educationPreview.appendChild(eduDiv);
+            });
+        }
+
+        educationList.addEventListener('input', updatePreview);
+
+        async function saveAndContinue() {
+            const educationItems = [];
+            document.querySelectorAll('#educationList > div').forEach(item => {
+                const inputs = item.querySelectorAll('input');
+                educationItems.push({
+                    school: inputs[0].value,
+                    degree: inputs[1].value,
+                    year: inputs[2].value
+                });
+            });
+
+            const data = {
+                extractedData: {
+                    education: educationItems
+                }
+            };
+
+            const response = await fetch('/resume-builder/edit/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                location.href = '/resume-builder/edit/skills';
+            }
+        }
+    </script>
+</body>
+</html>

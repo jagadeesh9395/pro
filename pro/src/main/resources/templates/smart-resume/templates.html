@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Template - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            align-items: center;
+        }
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .template-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .template-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+        }
+        .template-preview {
+            aspect-ratio: 1 / 1.4;
+            background: #f1f5f9;
+            padding: 1rem;
+        }
+        .template-name {
+            padding: 1rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        .badge-recommended {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(79, 70, 229, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 1200px;">
+        <header>
+            <a href="/" class="logo">SmartAiResume</a>
+        </header>
+
+        <main>
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Templates we recommend for you</h1>
+                <p class="subtitle">You can always change your template later.</p>
+            </div>
+
+            <div class="filter-bar">
+                <span style="font-weight: 700; margin-right: 1rem;">Filter by</span>
+                <select class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                    <option>Headshot</option>
+                </select>
+                <select class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                    <option>Graphics</option>
+                </select>
+                <select class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                    <option>Columns</option>
+                </select>
+                <div style="flex: 1;"></div>
+                <div class="flex gap-2 items-center">
+                    <span>Colors</span>
+                    <div style="display: flex; gap: 8px;">
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #4F46E5; cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1px #4F46E5;"></div>
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #EF4444; cursor: pointer;"></div>
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #10B981; cursor: pointer;"></div>
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #F59E0B; cursor: pointer;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="template-grid">
+                <!-- Template 1 -->
+                <div class="template-card" onclick="location.href='/resume-builder/edit/personal'">
+                    <div class="badge-recommended">Recommended</div>
+                    <div class="template-preview">
+                        <!-- Simplified Resume Mockup -->
+                        <div style="background: white; height: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 1.5rem;">
+                            <div style="height: 10px; width: 60%; background: #444; margin-bottom: 10px;"></div>
+                            <div style="height: 6px; width: 40%; background: #999; margin-bottom: 20px;"></div>
+                            <div style="height: 60px; width: 100%; background: #f8fafc; margin-bottom: 15px;"></div>
+                            <div style="height: 10px; width: 30%; background: #444; margin-bottom: 10px;"></div>
+                            <div style="height: 40px; width: 100%; background: #f8fafc;"></div>
+                        </div>
+                    </div>
+                    <div class="btn btn-primary" style="width: 100%; border-radius: 0; padding: 1rem;">Choose template</div>
+                </div>
+
+                <!-- Template 2 -->
+                <div class="template-card" onclick="location.href='/resume-builder/edit/personal'">
+                    <div class="template-preview">
+                        <div style="background: white; height: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; gap: 15px;">
+                            <div style="width: 30%; height: 100%; background: #F1F5F9;"></div>
+                            <div style="width: 70%;">
+                                <div style="height: 10px; width: 80%; background: #444; margin-bottom: 20px;"></div>
+                                <div style="height: 6px; width: 100%; background: #f1f5f9; margin-bottom: 10px;"></div>
+                                <div style="height: 6px; width: 100%; background: #f1f5f9; margin-bottom: 10px;"></div>
+                                <div style="height: 6px; width: 90%; background: #f1f5f9;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="btn btn-primary" style="width: 100%; border-radius: 0; padding: 1rem;">Choose template</div>
+                </div>
+
+                 <!-- Template 3 -->
+                 <div class="template-card" onclick="location.href='/resume-builder/edit/personal'">
+                    <div class="badge-recommended">Recommended</div>
+                    <div class="template-preview">
+                        <div style="background: white; height: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 1.5rem;">
+                             <div class="flex items-center gap-4" style="margin-bottom: 20px;">
+                                 <div style="width: 40px; height: 40px; border-radius: 50%; background: #E5E7EB;"></div>
+                                 <div style="flex: 1;">
+                                     <div style="height: 10px; width: 60%; background: #444; margin-bottom: 5px;"></div>
+                                     <div style="height: 6px; width: 40%; background: #999;"></div>
+                                 </div>
+                             </div>
+                            <div style="height: 60px; width: 100%; background: #f8fafc; margin-bottom: 15px;"></div>
+                            <div style="height: 10px; width: 30%; background: #444; margin-bottom: 10px;"></div>
+                            <div style="height: 40px; width: 100%; background: #f8fafc;"></div>
+                        </div>
+                    </div>
+                    <div class="btn btn-primary" style="width: 100%; border-radius: 0; padding: 1rem;">Choose template</div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

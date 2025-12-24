@@ -30,7 +30,6 @@ public class ResumeParserService {
     private final ResumeSectionSplitterService sectionSplitterService;
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ResumeParserService.class);
 
-
     public ResumeParserService(ResumeSectionSplitterService sectionSplitterService) {
         this.sectionSplitterService = sectionSplitterService;
     }
@@ -43,7 +42,8 @@ public class ResumeParserService {
             System.out.println("Extracted Text Length: " + text.length());
 
             Map<String, String> sections = sectionSplitterService.split(text);
-            String skillsText = sectionSplitterService.getSectionOrFallback(sections, ResumeSectionSplitterService.SKILLS, text);
+            String skillsText = sectionSplitterService.getSectionOrFallback(sections,
+                    ResumeSectionSplitterService.SKILLS, text);
             String educationText = sections.get(ResumeSectionSplitterService.EDUCATION);
             if (educationText == null || educationText.isBlank()) {
                 educationText = sectionSplitterService.guessEducationSection(text);
@@ -51,10 +51,14 @@ public class ResumeParserService {
             if (educationText == null) {
                 educationText = "";
             }
-            String experienceText = sectionSplitterService.getSectionOrFallback(sections, ResumeSectionSplitterService.EXPERIENCE, text);
-            String projectsText = sectionSplitterService.getSectionOrFallback(sections, ResumeSectionSplitterService.PROJECTS, text);
-            String languagesText = sectionSplitterService.getSectionOrFallback(sections, ResumeSectionSplitterService.LANGUAGES, text);
-            String achievementsText = sectionSplitterService.getSectionOrFallback(sections, ResumeSectionSplitterService.ACHIEVEMENTS, text);
+            String experienceText = sectionSplitterService.getSectionOrFallback(sections,
+                    ResumeSectionSplitterService.EXPERIENCE, text);
+            String projectsText = sectionSplitterService.getSectionOrFallback(sections,
+                    ResumeSectionSplitterService.PROJECTS, text);
+            String languagesText = sectionSplitterService.getSectionOrFallback(sections,
+                    ResumeSectionSplitterService.LANGUAGES, text);
+            String achievementsText = sectionSplitterService.getSectionOrFallback(sections,
+                    ResumeSectionSplitterService.ACHIEVEMENTS, text);
 
             // 2. Parse Details using Regex
             resume.setFullName(extractName(text));
@@ -77,7 +81,7 @@ public class ResumeParserService {
         return resume;
     }
 
-    private String extractText(MultipartFile file) throws Exception {
+    public String extractText(MultipartFile file) throws Exception {
         Parser parser = new AutoDetectParser();
         BodyContentHandler handler = new BodyContentHandler(-1); // No limit
         Metadata metadata = new Metadata();
@@ -152,15 +156,19 @@ public class ResumeParserService {
 
         // Enhanced education pattern
         Pattern eduPattern = Pattern.compile(
-                "(?i)(?<degree>Bachelor(?:'s)?(?:\\s*\\(?=B\\)|\\s*\\(?=BS\\)|\\s*\\(?=B\\.S\\.\\)|\\s*\\(?=B\\.Sc\\.\\)|\\s*\\(?=B\\.?[A-Za-z]+\\))?|" +
-                        "Master(?:'s)?(?:\\s*\\(?=M\\)|\\s*\\(?=MS\\)|\\s*\\(?=M\\.S\\.\\)|\\s*\\(?=M\\.?[A-Za-z]+\\))?|" +
-                        "Ph\\s*D|Doctorate|B\\.?[A-Z]+\\.?|M\\.?[A-Z]+\\.?|Diploma|Associate(?:'s)?|Certificate|Certification)" +
+                "(?i)(?<degree>Bachelor(?:'s)?(?:\\s*\\(?=B\\)|\\s*\\(?=BS\\)|\\s*\\(?=B\\.S\\.\\)|\\s*\\(?=B\\.Sc\\.\\)|\\s*\\(?=B\\.?[A-Za-z]+\\))?|"
+                        +
+                        "Master(?:'s)?(?:\\s*\\(?=M\\)|\\s*\\(?=MS\\)|\\s*\\(?=M\\.S\\.\\)|\\s*\\(?=M\\.?[A-Za-z]+\\))?|"
+                        +
+                        "Ph\\s*D|Doctorate|B\\.?[A-Z]+\\.?|M\\.?[A-Z]+\\.?|Diploma|Associate(?:'s)?|Certificate|Certification)"
+                        +
                         "\\s*(?:in|of|,)?\\s*([A-Za-z\\.\\s&]+)?" +
-                        "(?:\\s*[\\(\\[]?(?<start>20\\d{2}|19\\d{2}|[A-Za-z]{3,}\\s+\\d{4})?\\s*[-–—]\\s*(?<end>20\\d{2}|19\\d{2}|Present|Current|[A-Za-z]{3,}\\s+\\d{4}|Ongoing)?[\\]\\)])?\\s*" +
-                        "(?:at|from|,)?\\s*(?<institution>[A-Z][A-Za-z\\.\\s&'-]+(?:University|College|Institute|School|Academy|Polytechnic|Univ\\.?|Coll\\.?|Inst\\.?|Sch\\.?)?)" +
+                        "(?:\\s*[\\(\\[]?(?<start>20\\d{2}|19\\d{2}|[A-Za-z]{3,}\\s+\\d{4})?\\s*[-–—]\\s*(?<end>20\\d{2}|19\\d{2}|Present|Current|[A-Za-z]{3,}\\s+\\d{4}|Ongoing)?[\\]\\)])?\\s*"
+                        +
+                        "(?:at|from|,)?\\s*(?<institution>[A-Z][A-Za-z\\.\\s&'-]+(?:University|College|Institute|School|Academy|Polytechnic|Univ\\.?|Coll\\.?|Inst\\.?|Sch\\.?)?)"
+                        +
                         "(?:,|\\s*\\()?\\s*(?<location>(?:[A-Z][a-z]+[\\s,]*)+[A-Z]{2,}|[A-Z][a-z]+(?:[\\s,]*[A-Z][a-z]+)*)?",
-                Pattern.MULTILINE | Pattern.DOTALL
-        );
+                Pattern.MULTILINE | Pattern.DOTALL);
 
         Matcher matcher = eduPattern.matcher(text);
 
@@ -204,7 +212,8 @@ public class ResumeParserService {
         // Fallback to simpler pattern if no matches found
         if (eduList.isEmpty()) {
             String[] lines = text.split("\\n");
-            Pattern degreePattern = Pattern.compile("(?i)\\b(?:Bachelor(?:'s)?(?:\\s+(?:of|in)\\s+[A-Za-z.& ]{2,40})?|Master(?:'s)?(?:\\s+(?:of|in)\\s+[A-Za-z.& ]{2,40})?|B\\.?\\s?Tech|M\\.?\\s?Tech|B\\.?\\s?E|M\\.?\\s?E|B\\.?\\s?Sc|M\\.?\\s?Sc|B\\.?\\s?S|M\\.?\\s?S|BCA|MCA|MBA|PGDM|BBA|BA|MA|B\\.?\\s?Com|M\\.?\\s?Com|Ph\\.?\\s?D|Doctorate|Diploma|Associate(?:'s)?|Certificate|Certification)\\b");
+            Pattern degreePattern = Pattern.compile(
+                    "(?i)\\b(?:Bachelor(?:'s)?(?:\\s+(?:of|in)\\s+[A-Za-z.& ]{2,40})?|Master(?:'s)?(?:\\s+(?:of|in)\\s+[A-Za-z.& ]{2,40})?|B\\.?\\s?Tech|M\\.?\\s?Tech|B\\.?\\s?E|M\\.?\\s?E|B\\.?\\s?Sc|M\\.?\\s?Sc|B\\.?\\s?S|M\\.?\\s?S|BCA|MCA|MBA|PGDM|BBA|BA|MA|B\\.?\\s?Com|M\\.?\\s?Com|Ph\\.?\\s?D|Doctorate|Diploma|Associate(?:'s)?|Certificate|Certification)\\b");
             Pattern yearPattern = Pattern.compile("(\\d{4})\\s*[–-]\\s*(\\d{4}|Present|Current)");
 
             for (int i = 0; i < lines.length; i++) {
@@ -244,14 +253,16 @@ public class ResumeParserService {
 
         // Enhanced work experience pattern
         Pattern expPattern = Pattern.compile(
-                "(?i)(?<title>(?:(?:Senior|Junior|Lead|Principal|Staff|Associate|Intern(?:al|ship)?|Full[- ]?Stack|Front[- ]?End|Back[- ]?End|Software|Web|Mobile|UI/UX|Data|DevOps|QA|Test|Automation|Cloud|Security|Network|Systems|Database|AI|ML|Machine Learning|Artificial Intelligence|Big Data|Business Intelligence|Product|Project|Program|Technical|Solution|Enterprise|Application|Embedded|Firmware|Game|Mobile|Android|iOS|React|Angular|Vue|Node\\.?js|Python|Java|JavaScript|TypeScript|Ruby|PHP|C#|C\\+\\+|Go|Rust|Scala|Kotlin|Swift|Dart|Flutter|React Native|Xamarin|Ionic|PhoneGap|Cordova|Electron|jQuery|Bootstrap|Sass|Less|Webpack|Babel|Gulp|Grunt|Docker|Kubernetes|AWS|Azure|GCP|Google Cloud Platform|Amazon Web Services|Microsoft Azure|Heroku|Firebase|MongoDB|PostgreSQL|MySQL|SQL|NoSQL|Redis|Elasticsearch|GraphQL|REST|API|Microservices|CI/CD|Jenkins|GitHub Actions|GitLab CI|CircleCI|Travis CI|Agile|Scrum|Kanban|TDD|BDD|DDD|OOP|Functional Programming|Procedural Programming|Object-Oriented Programming)[\\s-]?){1,3})" +
+                "(?i)(?<title>(?:(?:Senior|Junior|Lead|Principal|Staff|Associate|Intern(?:al|ship)?|Full[- ]?Stack|Front[- ]?End|Back[- ]?End|Software|Web|Mobile|UI/UX|Data|DevOps|QA|Test|Automation|Cloud|Security|Network|Systems|Database|AI|ML|Machine Learning|Artificial Intelligence|Big Data|Business Intelligence|Product|Project|Program|Technical|Solution|Enterprise|Application|Embedded|Firmware|Game|Mobile|Android|iOS|React|Angular|Vue|Node\\.?js|Python|Java|JavaScript|TypeScript|Ruby|PHP|C#|C\\+\\+|Go|Rust|Scala|Kotlin|Swift|Dart|Flutter|React Native|Xamarin|Ionic|PhoneGap|Cordova|Electron|jQuery|Bootstrap|Sass|Less|Webpack|Babel|Gulp|Grunt|Docker|Kubernetes|AWS|Azure|GCP|Google Cloud Platform|Amazon Web Services|Microsoft Azure|Heroku|Firebase|MongoDB|PostgreSQL|MySQL|SQL|NoSQL|Redis|Elasticsearch|GraphQL|REST|API|Microservices|CI/CD|Jenkins|GitHub Actions|GitLab CI|CircleCI|Travis CI|Agile|Scrum|Kanban|TDD|BDD|DDD|OOP|Functional Programming|Procedural Programming|Object-Oriented Programming)[\\s-]?){1,3})"
+                        +
                         "\\s*(?:at|@|\\|\\s*|\\s+at\\s+|\\s+@\\s+)\\s*" +
-                        "(?<company>[A-Z][A-Za-z0-9&\\-\\s\\.',]+(?:Inc\\.?|LLC|L\\.L\\.C\\.?|Ltd\\.?|Corp\\.?|Corporation|Company|Co\\.?|Pvt\\.?|L\\.P\\.?|LLP|GmbH|AG|S\\.A\\.?|P\\.?L\\.?C\\.?|Group|Technologies|Solutions|Systems|Software|Consulting|Services)?)" +
+                        "(?<company>[A-Z][A-Za-z0-9&\\-\\s\\.',]+(?:Inc\\.?|LLC|L\\.L\\.C\\.?|Ltd\\.?|Corp\\.?|Corporation|Company|Co\\.?|Pvt\\.?|L\\.P\\.?|LLP|GmbH|AG|S\\.A\\.?|P\\.?L\\.?C\\.?|Group|Technologies|Solutions|Systems|Software|Consulting|Services)?)"
+                        +
                         "\\s*" +
-                        "(?:\\(?(?<start>[A-Za-z]{3,}\\s+\\d{4}|\\d{1,2}/\\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4})\\s*[-–—]\\s*(?<end>[A-Za-z]{3,}\\s+\\d{4}|\\d{1,2}/\\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4}|Present|Current|Now|Till Date|Till Now|Present\\)?|Ongoing)\\)?)?" +
+                        "(?:\\(?(?<start>[A-Za-z]{3,}\\s+\\d{4}|\\d{1,2}/\\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4})\\s*[-–—]\\s*(?<end>[A-Za-z]{3,}\\s+\\d{4}|\\d{1,2}/\\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4}|Present|Current|Now|Till Date|Till Now|Present\\)?|Ongoing)\\)?)?"
+                        +
                         "(?:\\s*\\|\\s*(?<location>[A-Z][A-Za-z\\s,]+(?:,\\s*[A-Z]{2})?(?:,\\s*[A-Z]{2,3})?))?",
-                Pattern.MULTILINE | Pattern.DOTALL
-        );
+                Pattern.MULTILINE | Pattern.DOTALL);
 
         Matcher matcher = expPattern.matcher(text);
 
@@ -297,7 +308,8 @@ public class ResumeParserService {
                 nextSection = end + nextExpMatcher.start();
             } else {
                 // Look for education section
-                Pattern eduSectionPattern = Pattern.compile("(?i)(?:education|academic background|degrees)", Pattern.MULTILINE);
+                Pattern eduSectionPattern = Pattern.compile("(?i)(?:education|academic background|degrees)",
+                        Pattern.MULTILINE);
                 Matcher eduMatcher = eduSectionPattern.matcher(text.substring(end));
                 if (eduMatcher.find()) {
                     nextSection = end + eduMatcher.start();
@@ -318,10 +330,10 @@ public class ResumeParserService {
 
         Pattern yearRangePattern = Pattern.compile("(?i)(\\d{4})\\s*[–—-]\\s*(\\d{4}|Present|Current|Now|Ongoing)");
         Pattern durationPattern = Pattern.compile(
-                "(?i)(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4})\\s*[–—-]\\s*(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4}|Present|Current|Now|Ongoing)"
-        );
+                "(?i)(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4})\\s*[–—-]\\s*(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4}|Present|Current|Now|Ongoing)");
         Pattern workedLinePattern = Pattern.compile(
-                "(?i)\\b(?:currently\\s+working|presently\\s+working|currently\\s+at|working\\s+at|working\\s+in|previously\\s+worked|worked\\s+at|worked\\s+in)\\b" +
+                "(?i)\\b(?:currently\\s+working|presently\\s+working|currently\\s+at|working\\s+at|working\\s+in|previously\\s+worked|worked\\s+at|worked\\s+in)\\b"
+                        +
                         "(?:\\s+as\\s+(?<role>[^,()\\n]{2,80}))?" +
                         "(?:\\s+(?:at|in))?\\s+" +
                         "(?<company>[^,()\\n]{2,120})" +
@@ -329,13 +341,15 @@ public class ResumeParserService {
                         "(?:\\s*\\((?<duration>[^)\\n]{3,80})\\))?");
         Pattern locationRoleFromToPattern = Pattern.compile(
                 "(?i)^\\s*(?<location>[A-Za-z][A-Za-z\\s]{1,80})\\s+as\\s+(?<role>[^,()\\n]{2,120}?)\\s+from\\s+" +
-                        "(?<start>(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4}))\\s+" +
+                        "(?<start>(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4}))\\s+"
+                        +
                         "(?:to|[-–—])\\s+" +
                         "(?<end>(?:\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\b\\s+\\d{4}|\\d{1,2}/\\d{4}|\\d{4}|Present|Current|Now|Ongoing))\\s*$");
         Pattern roleHintPattern = Pattern.compile(
                 "(?i)\\b(?:Senior|Junior|Lead|Principal|Staff|Associate)?\\s*(?:Software\\s+Engineer|Software\\s+Developer|Developer|Engineer|SDE|SDET|Manager|Product\\s+Manager|Project\\s+Manager|Analyst|Business\\s+Analyst|Designer|Specialist|Consultant|Architect|Administrator|Intern(?:ship)?|Director|Coordinator|Officer|QA|Tester|DevOps|Data\\s+Scientist)\\b");
         Pattern bulletLinePattern = Pattern.compile("^\\s*(?:[-*•]|\\d+\\.)\\s+.+");
-        Pattern headerStopPattern = Pattern.compile("(?i)^\\s*(?:education|skills|projects|languages|certifications|certificates|licenses|achievements|awards|honors)\\b.*$");
+        Pattern headerStopPattern = Pattern.compile(
+                "(?i)^\\s*(?:education|skills|projects|languages|certifications|certificates|licenses|achievements|awards|honors)\\b.*$");
 
         String[] linesForWorked = text.split("\\n");
         for (int i = 0; i < linesForWorked.length; i++) {
@@ -602,7 +616,7 @@ public class ResumeParserService {
                 .replaceAll("\\s+", " ")
                 .replaceAll("\\s*[-–—]\\s*", " - ");
     }
-    
+
     /**
      * Formats the duration string consistently using the same logic as the sorting
      */
@@ -610,21 +624,21 @@ public class ResumeParserService {
         if (duration == null || duration.trim().isEmpty()) {
             return "";
         }
-        
+
         // First try to extract years for consistent formatting
         int startYear = extractStartYearScore(duration);
         int endYear = extractEndYearScore(duration);
-        
+
         if (startYear > 0 || endYear > 0) {
             String startStr = startYear > 0 ? String.valueOf(startYear) : "";
             String endStr = "";
-            
+
             if (endYear == 9999) {
                 endStr = "Present";
             } else if (endYear > 0) {
                 endStr = String.valueOf(endYear);
             }
-            
+
             if (!startStr.isEmpty() && !endStr.isEmpty()) {
                 return startStr + " - " + endStr;
             } else if (!startStr.isEmpty()) {
@@ -633,7 +647,7 @@ public class ResumeParserService {
                 return endStr + " - Present";
             }
         }
-        
+
         // Fallback to cleaned duration if year extraction fails
         return duration.replaceAll("\\s*[-–—]\\s*", " - ").trim();
     }

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Personal Info - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 400px;
+            gap: 2rem;
+            height: calc(100vh - 120px);
+        }
+        .sidebar-nav {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+        .nav-item.active {
+            background: #EEF2FF;
+            color: var(--primary);
+        }
+        .nav-item i { font-size: 1.25rem; }
+        
+        .form-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow-y: auto;
+        }
+        .preview-pane {
+            background: #F3F4F6;
+            border-radius: 16px;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+    </style>
+</head>
+<body style="background: #F9FAFB;">
+    <div class="container" style="max-width: 1400px;">
+        <header style="margin-bottom: 2rem;">
+            <a href="/" class="logo">SmartAiResume</a>
+            <div class="flex gap-4">
+                <button class="btn btn-outline" onclick="location.href='/resume-builder/templates'"><i class="bi bi-arrow-left"></i> Back</button>
+                <button class="btn btn-primary">Save & Exit</button>
+            </div>
+        </header>
+
+        <div class="editor-layout">
+            <!-- Sidebar -->
+            <div class="sidebar-nav">
+                <a href="/resume-builder/edit/personal" class="nav-item active">
+                    <i class="bi bi-person-fill"></i> Personal Info
+                </a>
+                <a href="/resume-builder/edit/experience" class="nav-item">
+                    <i class="bi bi-briefcase"></i> Experience
+                </a>
+                <a href="/resume-builder/edit/education" class="nav-item">
+                    <i class="bi bi-mortarboard"></i> Education
+                </a>
+                <a href="/resume-builder/edit/skills" class="nav-item">
+                    <i class="bi bi-tools"></i> Skills
+                </a>
+                <a href="/resume-builder/edit/summary" class="nav-item">
+                    <i class="bi bi-card-text"></i> Summary
+                </a>
+            </div>
+
+            <!-- Editor -->
+            <div class="form-section">
+                <h2 style="margin-bottom: 2rem;">Personal Information</h2>
+                <form id="personalForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" th:value="${analysis.fullName}" placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" th:value="${analysis.extractedData.email}" placeholder="e.g. john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" th:value="${analysis.extractedData.phone}" placeholder="e.g. +1 234 567 890">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="text" th:value="${analysis.extractedData.linkedinUrl}" placeholder="linkedin.com/in/username">
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between">
+                        <div></div>
+                        <button type="button" class="btn btn-primary" style="padding: 1rem 3rem; border-radius: 50px;" 
+                                onclick="saveAndContinue()">
+                            Continue <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preview (Section Preview Only) -->
+            <div class="preview-pane">
+                <h3 style="margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Section Preview</h3>
+                <div style="background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h1 id="previewName" style="font-size: 2rem; margin-bottom: 0.5rem;" th:text="${analysis.fullName}">Jagadeeshwar</h1>
+                    <div style="display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.875rem; flex-wrap: wrap;">
+                        <span id="previewEmailSpan"><i class="bi bi-envelope"></i> <span id="previewEmail" th:text="${analysis.extractedData.email}"></span></span>
+                        <span id="previewPhoneSpan"><i class="bi bi-telephone"></i> <span id="previewPhone" th:text="${analysis.extractedData.phone}"></span></span>
+                        <span id="previewLinkedinSpan"><i class="bi bi-linkedin"></i> LinkedIn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('personalForm');
+        const inputs = form.querySelectorAll('input');
+        
+        // Real-time preview
+        inputs[0].addEventListener('input', (e) => document.getElementById('previewName').textContent = e.target.value);
+        inputs[1].addEventListener('input', (e) => document.getElementById('previewEmail').textContent = e.target.value);
+        inputs[2].addEventListener('input', (e) => document.getElementById('previewPhone').textContent = e.target.value);
+
+        async function saveAndContinue() {
+            const data = {
+                fullName: inputs[0].value,
+                extractedData: {
+                    fullName: inputs[0].value,
+                    email: inputs[1].value,
+                    phone: inputs[2].value,
+                    linkedinUrl: inputs[3].value
+                }
+            };
+
+            const response = await fetch('/resume-builder/edit/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                location.href = '/resume-builder/edit/experience';
+            }
+        }
+    </script>
+</body>
+</html>

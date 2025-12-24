@@ -131,7 +131,7 @@ public class WebSecurityConfig {
                                 "/topic/**",
                                 "/app/**",
                                 "/user/**",
-                                "/resume-builder",
+                                "/resume-builder/**",
                                 "/api/public/resume/**")
                         .permitAll()
                         .requestMatchers("/recruiter/**").hasRole("RECRUITER")

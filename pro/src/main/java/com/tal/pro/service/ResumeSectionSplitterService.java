@@ -60,14 +60,22 @@ public class ResumeSectionSplitterService {
         List<SectionMatch> matches = new ArrayList<>();
 
         Map<String, Pattern> headerPatterns = new LinkedHashMap<>();
-        headerPatterns.put(SUMMARY, Pattern.compile("(?im)^\\s*(?:summary|professional summary|profile|objective)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(SKILLS, Pattern.compile("(?im)^\\s*(?:skills|technical skills|core skills|key skills|technologies)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(EXPERIENCE, Pattern.compile("(?im)^\\s*(?:experience|work experience|professional experience|employment history)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(EDUCATION, Pattern.compile("(?im)^\\s*(?:education|academic background|academics|qualifications)(?:\\s*&\\s*(?:certifications|certificates|courses))?\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(PROJECTS, Pattern.compile("(?im)^\\s*(?:projects|project experience)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(CERTIFICATIONS, Pattern.compile("(?im)^\\s*(?:certifications|certificates|licenses)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(ACHIEVEMENTS, Pattern.compile("(?im)^\\s*(?:achievements|awards|honors)\\s*[:\\-–—]?\\s*$"));
-        headerPatterns.put(LANGUAGES, Pattern.compile("(?im)^\\s*(?:languages)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(SUMMARY,
+                Pattern.compile(
+                        "(?im)^(?:\\s*|[-•*•\\s]*)(?:summary|professional summary|profile|objective)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(SKILLS, Pattern.compile(
+                "(?im)^(?:\\s*|[-•*•\\s]*)(?:skills|technical skills|core skills|key skills|technologies)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(EXPERIENCE, Pattern.compile(
+                "(?im)^(?:\\s*|[-•*•\\s]*)(?:experience|work experience|professional_experience|employment history)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(EDUCATION, Pattern.compile(
+                "(?im)^(?:\\s*|[-•*•\\s]*)(?:education|educational|educational qualification|academic background|academics|qualifications)(?:\\s*&\\s*(?:certifications|certificates|courses))?\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(PROJECTS,
+                Pattern.compile("(?im)^(?:\\s*|[-•*•\\s]*)(?:projects|project experience)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(CERTIFICATIONS,
+                Pattern.compile("(?im)^(?:\\s*|[-•*•\\s]*)(?:certifications|certificates|licenses)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(ACHIEVEMENTS,
+                Pattern.compile("(?im)^(?:\\s*|[-•*•\\s]*)(?:achievements|awards|honors)\\s*[:\\-–—]?\\s*$"));
+        headerPatterns.put(LANGUAGES, Pattern.compile("(?im)^(?:\\s*|[-•*•\\s]*)(?:languages)\\s*[:\\-–—]?\\s*$"));
 
         for (Map.Entry<String, Pattern> entry : headerPatterns.entrySet()) {
             Matcher m = entry.getValue().matcher(text);
@@ -143,6 +151,7 @@ public class ResumeSectionSplitterService {
             return false;
         }
         String lower = text.toLowerCase(Locale.ROOT);
-        return lower.contains("education") || lower.contains("experience") || lower.contains("skills") || lower.contains("projects");
+        return lower.contains("education") || lower.contains("experience") || lower.contains("skills")
+                || lower.contains("projects");
     }
 }

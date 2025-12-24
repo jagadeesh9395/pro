@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Summary - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body style="background: #F9FAFB;">
+    <div class="container" style="max-width: 1400px;">
+        <header style="margin-bottom: 2rem;">
+            <a href="/" class="logo">SmartAiResume</a>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 280px 1fr 400px; gap: 2rem; height: calc(100vh - 120px);">
+             <div class="sidebar-nav" style="background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border);">
+                <a href="/resume-builder/edit/personal" class="nav-item">
+                    <i class="bi bi-person"></i> Personal Info
+                </a>
+                <a href="/resume-builder/edit/experience" class="nav-item">
+                    <i class="bi bi-briefcase"></i> Experience
+                </a>
+                <a href="/resume-builder/edit/education" class="nav-item">
+                    <i class="bi bi-mortarboard"></i> Education
+                </a>
+                <a href="/resume-builder/edit/skills" class="nav-item">
+                    <i class="bi bi-tools"></i> Skills
+                </a>
+                <a href="/resume-builder/edit/summary" class="nav-item active" style="background: #EEF2FF; color: var(--primary);">
+                    <i class="bi bi-card-text-fill"></i> Summary
+                </a>
+            </div>
+
+            <div class="form-section" style="background: white; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); overflow-y: auto;">
+                <h2 style="margin-bottom: 2rem;">Professional Summary</h2>
+                <div class="form-group">
+                    <label>Summary</label>
+                    <textarea style="width: 100%; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; min-height: 250px; font-family: inherit; font-size: 1rem; line-height: 1.6;" 
+                              th:text="${analysis.summary}" placeholder="Briefly describe your career achievements and goals..."></textarea>
+                </div>
+                
+                <div class="flex gap-4 mt-4">
+                    <button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);">
+                        <i class="bi bi-magic"></i> AI Re-write
+                    </button>
+                </div>
+
+                <div class="mt-8 flex justify-between">
+                    <button class="btn btn-outline" onclick="location.href='/resume-builder/edit/skills'"><i class="bi bi-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-primary" style="padding: 1rem 3rem; border-radius: 50px;" 
+                            onclick="saveSummary()">
+                        Finish & Preview
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-pane" style="background: #F3F4F6; border-radius: 16px; padding: 2rem; overflow-y: auto;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase;">Section Preview</h3>
+                <div style="background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <p id="summaryPreview" style="font-size: 0.95rem; line-height: 1.8; color: var(--text-primary);" th:text="${analysis.summary}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const summaryTextarea = document.querySelector('textarea');
+        const summaryPreview = document.getElementById('summaryPreview');
+
+        summaryTextarea.addEventListener('input', (e) => {
+            summaryPreview.textContent = e.target.value;
+        });
+
+        async function saveSummary() {
+            const data = {
+                summary: summaryTextarea.value,
+                extractedData: {
+                    summary: summaryTextarea.value
+                }
+            };
+
+            const response = await fetch('/resume-builder/edit/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert('Resume Saved Successfully!');
+            }
+        }
+    </script>
+</body>
+</html>

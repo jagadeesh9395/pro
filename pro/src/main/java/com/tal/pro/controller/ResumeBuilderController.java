@@ -26,6 +26,97 @@ public class ResumeBuilderController {
     @Autowired
     private AiSuggestionService aiSuggestionService;
 
+    @Autowired
+    private com.tal.pro.service.resume.SmartResumeService smartResumeService;
+
+    @GetMapping("/resume-builder/upload")
+    public String showUploadPage() {
+        return "smart-resume/upload";
+    }
+
+    @PostMapping("/resume-builder/upload")
+    public String handleUpload(@RequestParam("file") MultipartFile file, jakarta.servlet.http.HttpSession session)
+            throws Exception {
+        com.tal.pro.service.resume.ResumeAnalysisResult result = smartResumeService.initialAnalyze(file);
+        session.setAttribute("analysis", result);
+        return "redirect:/resume-builder/welcome";
+    }
+
+    @GetMapping("/resume-builder/welcome")
+    public String showWelcomePage(jakarta.servlet.http.HttpSession session, Model model) {
+        Object analysis = session.getAttribute("analysis");
+        if (analysis == null)
+            return "redirect:/resume-builder/upload";
+        model.addAttribute("analysis", analysis);
+        return "smart-resume/welcome";
+    }
+
+    @GetMapping("/resume-builder/analysis")
+    public String showStrategyPage(jakarta.servlet.http.HttpSession session, Model model) {
+        Object analysis = session.getAttribute("analysis");
+        if (analysis == null)
+            return "redirect:/resume-builder/upload";
+        model.addAttribute("analysis", analysis);
+        return "smart-resume/strategy";
+    }
+
+    @GetMapping("/resume-builder/templates")
+    public String showTemplatesPage(jakarta.servlet.http.HttpSession session, Model model) {
+        return "smart-resume/templates";
+    }
+
+    @PostMapping("/resume-builder/edit/save")
+    @ResponseBody
+    public ResponseEntity<String> saveSection(@RequestBody com.tal.pro.service.resume.ResumeAnalysisResult updatedData,
+            jakarta.servlet.http.HttpSession session) {
+        com.tal.pro.service.resume.ResumeAnalysisResult analysis = (com.tal.pro.service.resume.ResumeAnalysisResult) session
+                .getAttribute("analysis");
+        if (analysis == null)
+            return ResponseEntity.status(401).body("Session expired");
+
+        // Update the session data
+        if (updatedData.getFullName() != null)
+            analysis.setFullName(updatedData.getFullName());
+        if (updatedData.getSummary() != null)
+            analysis.setSummary(updatedData.getSummary());
+        if (updatedData.getExtractedData() != null) {
+            ResumeDocument currentDoc = analysis.getExtractedData();
+            ResumeDocument newDoc = updatedData.getExtractedData();
+
+            if (newDoc.getEmail() != null)
+                currentDoc.setEmail(newDoc.getEmail());
+            if (newDoc.getPhone() != null)
+                currentDoc.setPhone(newDoc.getPhone());
+            if (newDoc.getLinkedinUrl() != null)
+                currentDoc.setLinkedinUrl(newDoc.getLinkedinUrl());
+            if (newDoc.getExperience() != null)
+                currentDoc.setExperience(newDoc.getExperience());
+            if (newDoc.getEducation() != null)
+                currentDoc.setEducation(newDoc.getEducation());
+            if (newDoc.getSkills() != null)
+                currentDoc.setSkills(newDoc.getSkills());
+            if (newDoc.getSummary() != null)
+                currentDoc.setSummary(newDoc.getSummary());
+        }
+
+        session.setAttribute("analysis", analysis);
+        return ResponseEntity.ok("Saved");
+    }
+
+    @GetMapping("/resume-builder/edit/{section}")
+    public String editSection(@PathVariable String section, jakarta.servlet.http.HttpSession session, Model model) {
+        com.tal.pro.service.resume.ResumeAnalysisResult analysis = (com.tal.pro.service.resume.ResumeAnalysisResult) session
+                .getAttribute("analysis");
+        if (analysis == null)
+            return "redirect:/resume-builder/upload";
+
+        model.addAttribute("analysis", analysis);
+        model.addAttribute("section", section);
+
+        // Map section to specific fragment/form
+        return "smart-resume/edit-" + section;
+    }
+
     @GetMapping("/resume-builder")
     public String resumeBuilder(@RequestParam(required = false) String id, Model model) {
         if (id != null) {

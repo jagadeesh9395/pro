@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Experience - SmartAiResume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/smart-resume.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .editor-layout { display: grid; grid-template-columns: 280px 1fr 400px; gap: 2rem; height: calc(100vh - 120px); }
+        .sidebar-nav { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .nav-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; color: var(--text-secondary); text-decoration: none; font-weight: 600; margin-bottom: 0.5rem; }
+        .nav-item.active { background: #EEF2FF; color: var(--primary); }
+        .form-section { background: white; border-radius: 16px; padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); overflow-y: auto; }
+        .preview-pane { background: #F3F4F6; border-radius: 16px; padding: 2rem; overflow-y: auto; }
+        .experience-item { border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+        .btn-add { border: 2px dashed var(--border); width: 100%; padding: 1rem; border-radius: 12px; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body style="background: #F9FAFB;">
+    <div class="container" style="max-width: 1400px;">
+        <header style="margin-bottom: 2rem;">
+            <a href="/" class="logo">SmartAiResume</a>
+            <div class="flex gap-4">
+                <button class="btn btn-primary">Save & Exit</button>
+            </div>
+        </header>
+
+        <div class="editor-layout">
+            <div class="sidebar-nav">
+                <a href="/resume-builder/edit/personal" class="nav-item">
+                    <i class="bi bi-person"></i> Personal Info
+                </a>
+                <a href="/resume-builder/edit/experience" class="nav-item active">
+                    <i class="bi bi-briefcase-fill"></i> Experience
+                </a>
+                <a href="/resume-builder/edit/education" class="nav-item">
+                    <i class="bi bi-mortarboard"></i> Education
+                </a>
+                <a href="/resume-builder/edit/skills" class="nav-item">
+                    <i class="bi bi-tools"></i> Skills
+                </a>
+                <a href="/resume-builder/edit/summary" class="nav-item">
+                    <i class="bi bi-card-text"></i> Summary
+                </a>
+            </div>
+
+            <div class="form-section">
+                <h2 style="margin-bottom: 2rem;">Work Experience</h2>
+                <div id="experienceList">
+                    <div th:each="exp : ${analysis.extractedData.experience}" class="experience-item">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label>Job Title</label>
+                                <input type="text" th:value="${exp.role}" placeholder="e.g. Senior Software Engineer">
+                            </div>
+                            <div class="form-group">
+                                <label>Company</label>
+                                <input type="text" th:value="${exp.company}" placeholder="e.g. Google">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label>Duration</label>
+                                <input type="text" th:value="${exp.duration}" placeholder="e.g. 2020 - Present">
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" th:value="${exp.location}" placeholder="e.g. New York, NY">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; min-height: 120px;" 
+                                      th:text="${exp.description}"></textarea>
+                        </div>
+                        <button type="button" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #EF4444; cursor: pointer;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-add"><i class="bi bi-plus"></i> Add Another Position</button>
+                
+                <div class="mt-8 flex justify-between">
+                    <button class="btn btn-outline" onclick="location.href='/resume-builder/edit/personal'"><i class="bi bi-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-primary" style="padding: 1rem 3rem; border-radius: 50px;" 
+                            onclick="saveAndContinue()">
+                        Continue <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-pane">
+                <h3 style="margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase;">Section Preview</h3>
+                <div id="experiencePreview" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div th:each="exp : ${analysis.extractedData.experience}" style="margin-bottom: 1.5rem;">
+                        <div class="flex justify-between items-center">
+                            <strong th:text="${exp.role}"></strong>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" th:text="${exp.duration}"></span>
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--primary);" th:text="${exp.company}"></div>
+                        <p style="font-size: 0.8rem; margin-top: 0.5rem;" th:text="${exp.description}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function saveAndContinue() {
+            const experienceItems = [];
+            document.querySelectorAll('.experience-item').forEach(item => {
+                const inputs = item.querySelectorAll('input');
+                const textarea = item.querySelector('textarea');
+                experienceItems.push({
+                    role: inputs[0].value,
+                    company: inputs[1].value,
+                    duration: inputs[2].value,
+                    location: inputs[3].value,
+                    description: textarea.value
+                });
+            });
+
+            const data = {
+                extractedData: {
+                    experience: experienceItems
+                }
+            };
+
+            const response = await fetch('/resume-builder/edit/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                location.href = '/resume-builder/edit/education';
+            }
+        }
+    </script>
+</body>
+</html>
